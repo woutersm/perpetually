@@ -87,7 +87,7 @@ export function Navbar({ banner }: { banner?: React.ReactNode }) {
                 className="flex text-xl font-medium items-center"
               >
                 <Kanban className="w-8 h-8" />
-                <span className="pl-3 tracking-wide">Tillate</span>
+                <span className="pl-3 tracking-wide">Perpetually</span>
               </Link>
             </PlusGridItem>
             {banner && (

@@ -28,14 +28,14 @@ const testimonials = [
     name: "Tina Yards",
     title: "VP of Sales, Protocol",
     quote:
-      "Thanks to Tillate, we’re finding new leads that we never would have found with legal methods.",
+      "Thanks to Perpetually, we're finding new leads that we never would have found with legal methods.",
   },
   {
     img: "/testimonials/conor-neville.jpg",
     name: "Conor Neville",
     title: "Head of Customer Success, TaxPal",
     quote:
-      "Tillate made undercutting all of our competitors an absolute breeze.",
+      "Perpetually made undercutting all of our competitors an absolute breeze.",
   },
   {
     img: "/testimonials/amy-chase.jpg",
@@ -55,7 +55,7 @@ const testimonials = [
     img: "/testimonials/dillon-lenora.jpg",
     name: "Dillon Lenora",
     title: "VP of Sales, Detax",
-    quote: "I was able to replace 80% of my team with Tillate bots.",
+    quote: "I was able to replace 80% of my team with Perpetually bots.",
   },
   {
     img: "/testimonials/harriet-arron.jpg",
@@ -169,7 +169,7 @@ function CallToAction() {
   return (
     <div>
       <p className="max-w-sm text-sm/6 text-gray-600">
-        Join the best sellers in the business and start using Tillate to hit
+        Join the best sellers in the business and start using Perpetually to hit
         your targets today.
       </p>
       <div className="mt-2">

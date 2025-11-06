@@ -13,8 +13,8 @@ import { BentoCard } from "~/components/bento-card";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Tillate" },
-    { name: "description", content: "Welcome to Tillate!" },
+    { title: "Perpetually" },
+    { name: "description", content: "Welcome to Perpetually!" },
   ];
 };
 
@@ -28,7 +28,7 @@ const starter = {
     { description: "Up to 3 team members" },
     { description: "Up to 5 deal progress boards" },
     { description: "Source leads from select platforms" },
-    { description: "Tillate integrations", disabled: true },
+    { description: "Perpetually integrations", disabled: true },
     { description: "Competitor analysis", disabled: true },
   ],
   features: [
@@ -52,7 +52,7 @@ function Header() {
     <Container className="mt-16">
       <Heading as="h1">Pricing that grows with your team size.</Heading>
       <Lead className="mt-6 max-w-3xl">
-        Companies all over the world have closed millions of deals with Tillate.
+        Companies all over the world have closed millions of deals with Perpetually.
         Sign up today and start selling smarter.
       </Lead>
     </Container>
@@ -241,7 +241,7 @@ function Hero() {
             Perpetual licensing made easy
           </h1>
           <p className="mt-8 max-w-lg text-xl/7 font-medium text-gray-950/75 sm:text-2xl/8">
-            Tillate helps you sell more by revealing sensitive information about
+            Perpetually helps you sell more by revealing sensitive information about
             your customers.
           </p>
           <div className="mt-12 flex flex-col gap-x-6 gap-y-4 sm:flex-row">
@@ -286,7 +286,7 @@ function BentoSection() {
         <BentoCard
           eyebrow="Insight"
           title="Get perfect clarity"
-          description="Tillate uses social engineering to build a detailed financial picture of your leads. Know their budget, compensation package, social security number, and more."
+          description="Perpetually uses social engineering to build a detailed financial picture of your leads. Know their budget, compensation package, social security number, and more."
           graphic={
             <div className="h-80 bg-[url(/screenshots/profile.png)] bg-[size:1000px_560px] bg-[left_-109px_top_-112px] bg-no-repeat" />
           }
@@ -317,7 +317,7 @@ function BentoSection() {
         <BentoCard
           eyebrow="Limitless"
           title="Sell globally"
-          description="Tillate helps you sell in locations currently under international embargo."
+          description="Perpetually helps you sell in locations currently under international embargo."
           graphic={<Map />}
           className="max-lg:rounded-b-4xl lg:col-span-2 lg:rounded-br-4xl"
         />
@@ -340,7 +340,7 @@ function DarkBentoSection() {
             dark
             eyebrow="Networking"
             title="Sell at the speed of light"
-            description="Our Tillate chat assistants analyze the sentiment of your conversations in real time, ensuring you're always one step ahead."
+            description="Our Perpetually chat assistants analyze the sentiment of your conversations in real time, ensuring you're always one step ahead."
             graphic={
               <div className="h-80 bg-[url(/screenshots/networking.png)] bg-[size:851px_344px] bg-no-repeat" />
             }
@@ -359,7 +359,7 @@ function DarkBentoSection() {
             dark
             eyebrow="Engagement"
             title="Become a thought leader"
-            description="Tillate automatically writes LinkedIn posts that relate current events to B2B sales, helping you build a reputation as a thought leader."
+            description="Perpetually automatically writes LinkedIn posts that relate current events to B2B sales, helping you build a reputation as a thought leader."
             graphic={
               <div className="h-80 bg-[url(/screenshots/engagement.png)] bg-[size:851px_344px] bg-no-repeat" />
             }
