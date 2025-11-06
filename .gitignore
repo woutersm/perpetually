@@ -70,4 +70,4 @@ data/
 
 # Misc
 .turbopack
-ci/
+credentials.yaml
