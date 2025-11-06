@@ -8,5 +8,11 @@ export default defineConfig({
     environment: "node",
     include: ["**/*.test.ts"],
     pool: "forks",
+    poolOptions: {
+      forks: {
+        singleThread: true,
+      },
+    },
+    setupFiles: ["./vitest.setup.ts"],
   },
 });
