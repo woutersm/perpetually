@@ -1,0 +1,297 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: License Management API
+  description: API for validating and activating licenses
+servers:
+  - url: http://{base_url}/api
+    variables:
+      base_url:
+        default: my.app.com
+        description: server
+
+paths:
+  /v1/validate:
+    post:
+      summary: Validate a license
+      description: Validates a license using the provided license ID and key
+      operationId: validateLicense
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - licenseId
+                - key
+              properties:
+                licenseId:
+                  type: string
+                key:
+                  type: string
+      responses:
+        "200":
+          description: License validation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  error:
+                    type: string
+                    nullable: true
+                  license:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      key:
+                        type: string
+                      createdAt:
+                        type: string
+                        # format: date-time
+                      expiresAt:
+                        type: string
+                        # format: date-time
+                      activations:
+                        type: integer
+                      activationLimit:
+                        type: integer
+        "400":
+          description: Invalid license
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: License not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/activate:
+    post:
+      summary: Activate a license
+      description: Activates a license using the provided license ID
+      operationId: activateLicense
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - licenseId
+              properties:
+                licenseId:
+                  type: string
+                name:
+                  type: string
+      responses:
+        "200":
+          description: License activation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activated:
+                    type: boolean
+                  error:
+                    type: string
+                    nullable: true
+                  activation:
+                    type: object
+                    # You may want to define the properties of the activation object here
+        "400":
+          description: Activation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: License not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /v1/deactivate:
+    post:
+      summary: Deactivate a license activation
+      description: Deactivates a specific license activation using the provided activation ID
+      operationId: deactivateLicense
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - activationId
+              properties:
+                activationId:
+                  type: string
+      responses:
+        "200":
+          description: License activation successfully deactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deactivated:
+                    type: boolean
+                  error:
+                    type: string
+                    nullable: true
+        "403":
+          description: Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Activation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/licenses:
+    post:
+      summary: Create a new license
+      description: Creates a new license for a product
+      operationId: createLicense
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - name
+                - email
+              properties:
+                productId:
+                  type: string
+                name:
+                  type: string
+                email:
+                  type: string
+      responses:
+        "200":
+          description: License created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: boolean
+                  error:
+                    type: string
+                    nullable: true
+                  license:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      productId:
+                        type: string
+                      teamId:
+                        type: string
+                      customerId:
+                        type: string
+                      key:
+                        type: string
+                      keyCreatedAt:
+                        type: string
+                      expiresAt:
+                        type: string
+                      status:
+                        type: string
+                      activationLimit:
+                        type: integer
+                        nullable: true
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        type:
+          type: string
+        error:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

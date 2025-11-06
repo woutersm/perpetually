@@ -1,0 +1,7 @@
+pre-push:
+  parallel: true
+  commands:
+    typecheck:
+      run: turbo run typecheck
+    test:
+      run: turbo run test:ci

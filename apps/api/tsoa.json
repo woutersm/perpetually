@@ -1,0 +1,18 @@
+{
+  "entryFile": "server/api.ts",
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": ["server/controllers/**/*Controller.ts"],
+  "spec": {
+    "outputDirectory": ".",
+    "specVersion": 3,
+    "specMerging": "recursive",
+    "filename": "api.yaml",
+    "basePath": "/v1"
+  },
+  "routes": {
+    "basePath": "/v1",
+    "routesDir": "server",
+    "routesFileName": "routes.ts"
+  },
+  "authenticationModule": "server/authentication"
+}

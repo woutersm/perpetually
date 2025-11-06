@@ -1,0 +1,4 @@
+dbs:
+  - path: /data/sqlite.db
+    replicas:
+      - url: s3://lite.ams3.digitaloceanspaces.com/noshenreader

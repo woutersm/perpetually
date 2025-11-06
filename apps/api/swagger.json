@@ -1,0 +1,619 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"LicenseDetails": {
+				"description": "License details in validation response",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"key": {
+						"type": "string"
+					},
+					"createdAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"expiresAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"activations": {
+						"type": "number",
+						"format": "double"
+					},
+					"activationLimit": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"id",
+					"key",
+					"createdAt",
+					"expiresAt",
+					"activations",
+					"activationLimit"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ValidateResponse": {
+				"description": "Response from license validation endpoint",
+				"properties": {
+					"valid": {
+						"type": "boolean"
+					},
+					"error": {
+						"type": "string",
+						"nullable": true
+					},
+					"license": {
+						"$ref": "#/components/schemas/LicenseDetails"
+					}
+				},
+				"required": [
+					"valid",
+					"error"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ValidateRequest": {
+				"description": "Request body for license validation",
+				"properties": {
+					"licenseId": {
+						"type": "string"
+					},
+					"key": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"licenseId",
+					"key"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActivationDetails": {
+				"description": "Activation details in response",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"createdAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"updatedAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"teamId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string",
+						"nullable": true
+					},
+					"licenseId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"createdAt",
+					"updatedAt",
+					"teamId",
+					"name",
+					"licenseId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActivateResponse": {
+				"description": "Response from license activation endpoint",
+				"properties": {
+					"activated": {
+						"type": "boolean"
+					},
+					"error": {
+						"type": "string",
+						"nullable": true
+					},
+					"activation": {
+						"$ref": "#/components/schemas/ActivationDetails"
+					}
+				},
+				"required": [
+					"activated",
+					"error"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActivateRequest": {
+				"description": "Request body for license activation",
+				"properties": {
+					"licenseId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"licenseId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreatedLicense": {
+				"description": "License object in create response",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"createdAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"updatedAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"expiresAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"status": {
+						"type": "string"
+					},
+					"keyCreatedAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"key": {
+						"type": "string"
+					},
+					"activationLimit": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"productId": {
+						"type": "string"
+					},
+					"teamId": {
+						"type": "string"
+					},
+					"customerId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"createdAt",
+					"updatedAt",
+					"expiresAt",
+					"status",
+					"keyCreatedAt",
+					"key",
+					"activationLimit",
+					"productId",
+					"teamId",
+					"customerId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateLicenseResponse": {
+				"description": "Response from license creation endpoint",
+				"properties": {
+					"created": {
+						"type": "boolean"
+					},
+					"error": {
+						"type": "string",
+						"nullable": true
+					},
+					"license": {
+						"$ref": "#/components/schemas/CreatedLicense"
+					}
+				},
+				"required": [
+					"created",
+					"error"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateLicenseRequest": {
+				"description": "Request body for creating a license",
+				"properties": {
+					"productId": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"email": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"productId",
+					"name",
+					"email"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DeactivateResponse": {
+				"description": "Response from deactivation endpoint",
+				"properties": {
+					"deactivated": {
+						"type": "boolean"
+					},
+					"error": {
+						"type": "string",
+						"nullable": true
+					},
+					"activation": {
+						"type": "number",
+						"enum": [
+							null
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"deactivated",
+					"error",
+					"activation"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DeactivateRequest": {
+				"description": "Request body for deactivating a license activation",
+				"properties": {
+					"activationId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"activationId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "api",
+		"version": "1.0.0",
+		"contact": {}
+	},
+	"paths": {
+		"/validate": {
+			"post": {
+				"operationId": "Validate",
+				"responses": {
+					"200": {
+						"description": "License validation successful",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ValidateResponse"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"valid": true,
+											"error": null,
+											"license": {
+												"id": "550e8400-e29b-41d4-a716-446655440000",
+												"key": "4b6f-1234-5678-9abc",
+												"createdAt": "2024-01-15T10:30:00.000Z",
+												"expiresAt": "2025-01-15T10:30:00.000Z",
+												"activations": 1,
+												"activationLimit": 5
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid license key"
+					},
+					"403": {
+						"description": "Invalid or missing API key"
+					},
+					"404": {
+						"description": "License not found"
+					}
+				},
+				"description": "Validate a license using the provided license ID and key.\nReturns the license details if the key is valid.",
+				"summary": "Validate License",
+				"tags": [
+					"Licenses"
+				],
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ValidateRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/activate": {
+			"post": {
+				"operationId": "Activate",
+				"responses": {
+					"200": {
+						"description": "License activation successful",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ActivateResponse"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"activated": true,
+											"error": null,
+											"activation": {
+												"id": "550e8400-e29b-41d4-a716-446655440000",
+												"createdAt": "2024-01-15T10:30:00.000Z",
+												"updatedAt": "2024-01-15T10:30:00.000Z",
+												"teamId": "550e8400-e29b-41d4-a716-446655440000",
+												"name": "user@example.com",
+												"licenseId": "550e8400-e29b-41d4-a716-446655440000"
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Activation failed (e.g., activation limit exceeded)"
+					},
+					"403": {
+						"description": "Invalid or missing API key"
+					},
+					"404": {
+						"description": "License not found"
+					}
+				},
+				"description": "Activate a license using the provided license ID.\nEach activation can be tracked with an optional name.",
+				"summary": "Activate License",
+				"tags": [
+					"Licenses"
+				],
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ActivateRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/licenses": {
+			"post": {
+				"operationId": "CreateLicense",
+				"responses": {
+					"200": {
+						"description": "License created successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CreateLicenseResponse"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"created": true,
+											"error": null,
+											"license": {
+												"id": "550e8400-e29b-41d4-a716-446655440000",
+												"createdAt": "2024-01-15T10:30:00.000Z",
+												"updatedAt": "2024-01-15T10:30:00.000Z",
+												"expiresAt": "2025-01-15T10:30:00.000Z",
+												"status": "ACTIVE",
+												"keyCreatedAt": "2024-01-15T10:30:00.000Z",
+												"key": "4b6f-1234-5678-9abc",
+												"activationLimit": 5,
+												"productId": "prod_abc123",
+												"teamId": "550e8400-e29b-41d4-a716-446655440000",
+												"customerId": "cust_123456"
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid request (missing or invalid fields)"
+					},
+					"403": {
+						"description": "Invalid or missing API key"
+					},
+					"404": {
+						"description": "Product not found"
+					},
+					"500": {
+						"description": "Internal server error"
+					}
+				},
+				"description": "Create a new license for a product.\nThis endpoint generates a unique license key that can be used for validation.",
+				"summary": "Create License",
+				"tags": [
+					"Licenses"
+				],
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateLicenseRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/deactivate": {
+			"post": {
+				"operationId": "Deactivate",
+				"responses": {
+					"200": {
+						"description": "License activation successfully deactivated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DeactivateResponse"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"deactivated": true,
+											"error": null,
+											"activation": null
+										}
+									}
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Invalid or missing API key"
+					},
+					"404": {
+						"description": "Activation not found"
+					}
+				},
+				"description": "Deactivate a specific license activation using the provided activation ID.\nAfter deactivation, the activation can no longer be used.",
+				"summary": "Deactivate License Activation",
+				"tags": [
+					"Licenses"
+				],
+				"security": [
+					{
+						"bearer": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/DeactivateRequest"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/v1"
+		}
+	]
+}
