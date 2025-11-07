@@ -1,36 +1,19 @@
 import { getDb } from "./db/config.server";
 
-// Reset database before tests (drop and recreate test database)
-// This ensures a clean slate for each test run
+// Ensure database migrations are run before tests
+// Multiple test processes may run this simultaneously, so errors about
+// existing objects are expected and safe to ignore
+console.log("[vitest.setup] Initializing database...");
+
 try {
-  const postgres = await import("postgres");
-  // Connect to dev database to manage test database
-  const client = postgres.default(
-    "postgresql://perpetually:perpetually@localhost:5432/perpetually_dev",
-    { idle_timeout: 1 }
-  );
-
-  // Wait a bit for any existing connections to close
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  // Drop test database if it exists (with FORCE to disconnect active connections)
-  try {
-    await client`DROP DATABASE IF EXISTS perpetually_test WITH (FORCE)`;
-  } catch (error) {
-    console.warn("Could not drop test database:", error);
+  await getDb();
+  console.log("[vitest.setup] Database ready");
+} catch (error: any) {
+  // Check if this is a duplicate/already exists error
+  if (error.code === "23505" || error.code === "42P07" || error.message?.includes("already exists")) {
+    console.log("[vitest.setup] Schema already initialized (expected for concurrent processes)");
+  } else {
+    console.error("[vitest.setup] Unexpected error:", error.message);
+    throw error;
   }
-
-  // Create fresh test database
-  try {
-    await client`CREATE DATABASE perpetually_test`;
-  } catch (error) {
-    console.warn("Could not create test database:", error);
-  }
-
-  await client.end();
-} catch (error) {
-  console.warn("Could not reset test database:", error);
 }
-
-// Initialize database and run migrations before any tests
-await getDb();
