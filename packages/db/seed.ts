@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { eq, getTableName } from "drizzle-orm";
 import invariant from "tiny-invariant";
-import { db, nanoid } from "./db/config.server";
+import { getDb, nanoid } from "./db/config.server";
 import {
   secretKeySchema,
   Team,
@@ -61,7 +61,7 @@ function extractWebhookSecret(output: string): string | null {
   return match ? match[1] : null;
 }
 
-function startStripeWebhookListener(teamId: string): Promise<string> {
+function startStripeWebhookListener(teamId: string, db: any): Promise<string> {
   return new Promise((resolve) => {
     console.log(`Starting Stripe webhook listener for team ${teamId}...`);
     const stripeProcess = spawn("stripe", [
@@ -145,10 +145,35 @@ function startDevServer() {
   return devProcess;
 }
 
+async function getAllCustomerIds(stripe: Stripe): Promise<string[]> {
+  const customers: string[] = [];
+  let hasMore = true;
+  let startingAfter: string | undefined;
+
+  while (hasMore) {
+    const response = await stripe.customers.list({
+      limit: 100,
+      starting_after: startingAfter,
+    });
+
+    customers.push(...response.data.map((customer) => customer.id));
+
+    hasMore = response.has_more;
+    if (response.data.length > 0) {
+      startingAfter = response.data[response.data.length - 1].id;
+    }
+  }
+
+  return customers;
+}
+
 async function seed() {
   const stripeApiKey =
     "rk_test_REDACTED";
   const stripeWebhookSecret = "whsec_REDACTED";
+
+  const stripe = new Stripe(stripeApiKey);
+  const db = await getDb();
 
   console.log("Starting seed process...");
 
@@ -221,7 +246,7 @@ async function seed() {
   });
 
   await createProductsFromStripe(user?.team as Team);
-  await startStripeWebhookListener(user?.team?.id as string);
+  await startStripeWebhookListener(user?.team?.id as string, db);
 
   // Start the development server
   const devProcess = startDevServer();
@@ -247,7 +272,9 @@ async function seed() {
     },
   });
 
-  const customerId = "cus_SS9MDPlWNKIfFj";
+  console.log("Fetching all customer IDs from Stripe...");
+  const customerIds = await getAllCustomerIds(stripe);
+  console.log(`Found ${customerIds.length} customers`);
 
   for (const product of user?.team?.products ?? []) {
     await createLicensePolicy({
@@ -259,7 +286,7 @@ async function seed() {
 
     // Create a payment intent for each product
     if (product.stripeProductId) {
-      for (let i = 0; i < 40; i++) {
+      for (const customerId of customerIds) {
         await createPaymentIntent(product.stripeProductId, customerId);
       }
     } else {
