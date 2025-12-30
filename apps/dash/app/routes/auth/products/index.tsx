@@ -29,7 +29,9 @@ export async function action({ request }: ActionFunctionArgs) {
 
   invariant(team, "no team found in TeamSettings");
 
-  const stripeApi = new Stripe(team.stripeApiKey ?? "");
+  const stripeApi = new Stripe(team.stripeApiKey ?? "", {
+    apiVersion: "2025-10-29.clover",
+  });
 
   const products = await stripeApi.products.search({
     query: "active:'true'",

@@ -34,7 +34,7 @@ import { toLongDate, toShortDate } from "@perpetually/db/utils";
 import { Status } from "~/components/Status";
 import clsx from "clsx";
 import { Text, TextLink } from "~/components/Text";
-import { generateNewLicenseKey } from "@perpetually/db/models";
+import { generateNewLicenseKey, deleteActivation } from "@perpetually/db/models";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -101,10 +101,7 @@ export async function action({ request }: ActionFunctionArgs) {
       const activationName = formData.get("activationName")?.toString();
       invariant(activationId, "no activationId in license index action");
 
-      await db
-        .delete(activationsSchema)
-        .where(eq(activationsSchema.id, activationId))
-        .execute();
+      await deleteActivation(activationId);
 
       return jsonWithSuccess(
         {},

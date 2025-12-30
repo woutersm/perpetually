@@ -20,6 +20,7 @@ import {
   createActivation,
   createLicenseAction,
   getStripeProductId,
+  deleteActivation,
 } from "@perpetually/db/models";
 import type {
   ValidateRequest,
@@ -338,9 +339,18 @@ export class LicenseController {
       };
     }
 
-    await db
-      .delete(activationsSchema)
-      .where(eq(activationsSchema.id, body.activationId));
+    const { deleted, error } = await deleteActivation(body.activationId);
+
+    if (!deleted) {
+      throw {
+        status: 400,
+        message: error,
+        body: {
+          deactivated: false,
+          error,
+        },
+      };
+    }
 
     return {
       deactivated: true,

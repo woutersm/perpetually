@@ -42,7 +42,9 @@ export const action: ActionFunction = async ({ request, params }) => {
     invariant(event.type, "event.type is required");
     invariant(team.stripeApiKey, "team.stripeApiKey is required");
 
-    const stripeApi = new Stripe(team.stripeApiKey);
+    const stripeApi = new Stripe(team.stripeApiKey, {
+      apiVersion: "2025-10-29.clover",
+    });
 
     // Handle subscription
     if (event.type === "invoice.payment_succeeded") {

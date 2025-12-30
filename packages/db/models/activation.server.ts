@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, nanoid } from "../db/config.server";
 import { activationsSchema, licenseSchema } from "../db/schema.server";
 import { getTableName } from "drizzle-orm";
@@ -66,4 +66,47 @@ export async function createActivation({
   )[0];
 
   return { activated: true, error: null, activation };
+}
+
+export async function deleteActivation(activationId: string) {
+  // Get the activation and its license to check activation count
+  const activation = await db.query.activationsSchema.findFirst({
+    where: eq(activationsSchema.id, activationId),
+    with: {
+      license: {
+        with: { activations: true },
+      },
+    },
+  });
+
+  if (!activation) {
+    return {
+      deleted: false,
+      error: apiErrorsEnum.noActivationFound,
+    };
+  }
+
+  const license = activation.license;
+
+  // Check if this is the last activation
+  const isLastActivation = license.activations.length === 1;
+
+  // If deleting the last activation and license has an activation limit,
+  // revert license status from ACTIVE to INACTIVE
+  if (isLastActivation && license.activationLimit) {
+    await db
+      .update(licenseSchema)
+      .set({ status: licenseStatusEnum.inactive })
+      .where(eq(licenseSchema.id, license.id));
+  }
+
+  // Delete the activation
+  await db
+    .delete(activationsSchema)
+    .where(eq(activationsSchema.id, activationId));
+
+  return {
+    deleted: true,
+    error: null,
+  };
 }

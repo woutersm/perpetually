@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { eq, getTableName } from "drizzle-orm";
 import invariant from "tiny-invariant";
+import dotenv from "dotenv";
 import { getDb, nanoid } from "./db/config.server";
 import {
   secretKeySchema,
@@ -25,9 +26,18 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function getStripeConfig() {
+// Load environment variables from root .env.local
+dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
+
+function getStripeConfig(apiKey: string) {
   try {
-    const output = execSync("stripe config --list", { encoding: "utf-8" });
+    const output = execSync("stripe config --list", {
+      encoding: "utf-8",
+      env: {
+        ...process.env,
+        STRIPE_API_KEY: apiKey,
+      },
+    });
     const config: Record<string, string> = {};
 
     output.split("\n").forEach((line) => {
@@ -44,10 +54,16 @@ function getStripeConfig() {
   }
 }
 
-async function stripeLogin() {
+async function stripeLogin(apiKey: string) {
   try {
     console.log("Attempting Stripe CLI login...");
-    const output = execSync("stripe login", { encoding: "utf-8" });
+    const output = execSync("stripe login", {
+      encoding: "utf-8",
+      env: {
+        ...process.env,
+        STRIPE_API_KEY: apiKey,
+      },
+    });
     console.log("Stripe CLI login output:", output);
     return true;
   } catch (error) {
@@ -61,16 +77,29 @@ function extractWebhookSecret(output: string): string | null {
   return match ? match[1] : null;
 }
 
-function startStripeWebhookListener(teamId: string, db: any): Promise<string> {
+function startStripeWebhookListener(
+  teamId: string,
+  db: any,
+  apiKey: string,
+  dashPort: string
+): Promise<{ secret: string; process: any }> {
   return new Promise((resolve) => {
     console.log(`Starting Stripe webhook listener for team ${teamId}...`);
     const stripeProcess = spawn("stripe", [
       "listen",
       "--forward-to",
-      `http://localhost:3000/hooks/${teamId}`,
-    ]);
+      `http://localhost:${dashPort}/hooks/${teamId}`,
+    ], {
+      env: {
+        ...process.env,
+        STRIPE_API_KEY: apiKey,
+      },
+    });
 
-    stripeProcess.stdout.on("data", async (data: Buffer) => {});
+    stripeProcess.stdout.on("data", async (data: Buffer) => {
+      const output = data.toString("utf-8");
+      console.log(`Stripe: ${output}`);
+    });
 
     stripeProcess.stderr.on("data", async (data: Buffer) => {
       const output = data.toString("utf-8");
@@ -86,7 +115,7 @@ function startStripeWebhookListener(teamId: string, db: any): Promise<string> {
           .where(eq(teamSchema.id, teamId))
           .execute();
         console.log("Updated team's webhook secret");
-        resolve(webhookSecret);
+        resolve({ secret: webhookSecret, process: stripeProcess });
       }
     });
 
@@ -96,7 +125,11 @@ function startStripeWebhookListener(teamId: string, db: any): Promise<string> {
   });
 }
 
-async function createPaymentIntent(productId: string, customerId: string) {
+async function createPaymentIntent(
+  productId: string,
+  customerId: string,
+  apiKey: string
+) {
   try {
     const command = [
       "stripe",
@@ -118,8 +151,14 @@ async function createPaymentIntent(productId: string, customerId: string) {
     console.log(`Creating payment intent for product ${productId}...`);
     console.log("Payment intent created");
 
-    // run the command
-    execSync(command, { encoding: "utf-8" });
+    // run the command with API key in environment
+    execSync(command, {
+      encoding: "utf-8",
+      env: {
+        ...process.env,
+        STRIPE_API_KEY: apiKey,
+      },
+    });
 
     return true;
   } catch (error) {
@@ -131,18 +170,39 @@ async function createPaymentIntent(productId: string, customerId: string) {
   }
 }
 
-function startDevServer() {
+function startDevServer(): Promise<{ process: any; port: string }> {
   console.log("Starting development server...");
-  const devProcess = spawn("npm", ["run", "dev"], {
-    cwd: path.resolve(__dirname, "../apps/dash"),
-    stdio: "inherit",
-  });
+  return new Promise((resolve) => {
+    const devProcess = spawn("pnpm", ["run", "dev"], {
+      cwd: path.resolve(__dirname, "../../apps/dash"),
+    });
 
-  devProcess.on("error", (error) => {
-    console.error("Failed to start development server:", error);
-  });
+    let detectedPort: string | null = null;
 
-  return devProcess;
+    devProcess.stdout?.on("data", (data: Buffer) => {
+      const output = data.toString("utf-8");
+      console.log(`Dash: ${output}`);
+
+      // Look for Vite's port output: "➜  Local:   http://localhost:5173/"
+      if (!detectedPort) {
+        const portMatch = output.match(/localhost:(\d+)/);
+        if (portMatch) {
+          detectedPort = portMatch[1];
+          console.log(`Detected dev server running on port ${detectedPort}`);
+          resolve({ process: devProcess, port: detectedPort });
+        }
+      }
+    });
+
+    devProcess.stderr?.on("data", (data: Buffer) => {
+      const output = data.toString("utf-8");
+      console.log(`Dash error: ${output}`);
+    });
+
+    devProcess.on("error", (error) => {
+      console.error("Failed to start development server:", error);
+    });
+  });
 }
 
 async function getAllCustomerIds(stripe: Stripe): Promise<string[]> {
@@ -168,22 +228,28 @@ async function getAllCustomerIds(stripe: Stripe): Promise<string[]> {
 }
 
 async function seed() {
-  const stripeApiKey =
-    "rk_test_REDACTED";
-  const stripeWebhookSecret = "whsec_REDACTED";
+  const stripeApiKey = process.env.SEED_STRIPE_API_KEY;
+  invariant(
+    stripeApiKey,
+    "SEED_STRIPE_API_KEY environment variable is required"
+  );
+  const stripeWebhookSecret =
+    "fake_value_should_be_replaced_by_listener_value_further_downstream_in_the_seed";
 
-  const stripe = new Stripe(stripeApiKey);
+  const stripe = new Stripe(stripeApiKey, {
+    apiVersion: "2025-10-29.clover",
+  });
   const db = await getDb();
 
   console.log("Starting seed process...");
 
-  const config = getStripeConfig();
+  const config = getStripeConfig(stripeApiKey);
   console.log("Current Stripe config:", config);
 
   // Only login if not logged in
   if (!config || !Object.values(config).includes("'letsgo'")) {
     console.log("Project name is not 'letsgo', attempting login...");
-    const stripeLoggedIn = await stripeLogin();
+    const stripeLoggedIn = await stripeLogin(stripeApiKey);
     if (!stripeLoggedIn) {
       console.error("Failed to login to Stripe CLI. Exiting seed process.");
       return;
@@ -246,10 +312,17 @@ async function seed() {
   });
 
   await createProductsFromStripe(user?.team as Team);
-  await startStripeWebhookListener(user?.team?.id as string, db);
 
-  // Start the development server
-  const devProcess = startDevServer();
+  // Start the development server first to detect its port
+  console.log("Starting development server...");
+  const { process: devProcess, port: detectedPort } = await startDevServer();
+  console.log(`Development server started on port ${detectedPort}`);
+
+  // Start the listener with the detected port
+  console.log("Starting Stripe webhook listener...");
+  const { secret: webhookSecret, process: stripeProcess } =
+    await startStripeWebhookListener(team.id, db, stripeApiKey, detectedPort);
+  console.log(`Successfully obtained webhook secret: ${webhookSecret}`);
 
   console.log("Sleeping for 5 seconds...");
   await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -258,6 +331,7 @@ async function seed() {
   process.on("SIGINT", () => {
     console.log("Terminating processes...");
     devProcess.kill();
+    stripeProcess.kill();
     process.exit();
   });
 
@@ -276,6 +350,34 @@ async function seed() {
   const customerIds = await getAllCustomerIds(stripe);
   console.log(`Found ${customerIds.length} customers`);
 
+  // Create a shuffled distribution of payment intent counts
+  // 70% get 1, 20% get 2, 10% get 3
+  function createShuffledIntentDistribution(
+    totalCustomers: number
+  ): number[] {
+    const distribution: number[] = [];
+
+    // Calculate counts based on percentages
+    const count1 = Math.floor(totalCustomers * 0.7); // 70%
+    const count2 = Math.floor(totalCustomers * 0.2); // 20%
+    const count3 = totalCustomers - count1 - count2; // 10% (remainder)
+
+    // Create array with the distribution
+    for (let i = 0; i < count1; i++) distribution.push(1);
+    for (let i = 0; i < count2; i++) distribution.push(2);
+    for (let i = 0; i < count3; i++) distribution.push(3);
+
+    // Fisher-Yates shuffle to randomize
+    for (let i = distribution.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [distribution[i], distribution[j]] = [distribution[j], distribution[i]];
+    }
+
+    return distribution;
+  }
+
+  const intentDistribution = createShuffledIntentDistribution(customerIds.length);
+
   for (const product of user?.team?.products ?? []) {
     await createLicensePolicy({
       productId: product.id,
@@ -284,10 +386,23 @@ async function seed() {
       licenseLength: 365,
     });
 
-    // Create a payment intent for each product
+    // Create payment intents for each product based on shuffled distribution
     if (product.stripeProductId) {
-      for (const customerId of customerIds) {
-        await createPaymentIntent(product.stripeProductId, customerId);
+      for (let i = 0; i < customerIds.length; i++) {
+        const customerId = customerIds[i];
+        const intentCount = intentDistribution[i];
+
+        console.log(
+          `Creating ${intentCount} payment intent(s) for customer ${i + 1}/${customerIds.length}`
+        );
+
+        for (let j = 0; j < intentCount; j++) {
+          await createPaymentIntent(
+            product.stripeProductId,
+            customerId,
+            stripeApiKey
+          );
+        }
       }
     } else {
       console.warn(

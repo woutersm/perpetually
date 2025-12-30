@@ -58,7 +58,9 @@ export async function action({ request }: ActionFunctionArgs) {
   invariant(team.stripeApiKey, "Stripe API key not found");
 
   try {
-    const stripe = new Stripe(team.stripeApiKey);
+    const stripe = new Stripe(team.stripeApiKey, {
+      apiVersion: "2025-10-29.clover",
+    });
 
     const baseUrl = "https://perpetually.dev";
 

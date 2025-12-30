@@ -7,7 +7,9 @@ import invariant from "tiny-invariant";
 
 export async function createProductsFromStripe(team: Team) {
   invariant(team.stripeApiKey, "no stripe api key");
-  const stripeApi = new Stripe(team.stripeApiKey);
+  const stripeApi = new Stripe(team.stripeApiKey, {
+    apiVersion: "2025-10-29.clover",
+  });
 
   const products = await stripeApi.products.search({
     query: "active:'true'",
