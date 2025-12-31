@@ -1,8 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import Stripe from "stripe";
 import db from "@/lib/db/db";
-import { organization, product, customer, license } from "@/lib/db/schema";
+import {
+  organization,
+  product,
+  customer,
+  license,
+  licenseEvent,
+  licensePolicy,
+} from "@/lib/db/schema";
 
 // Generate license key (e.g., XXXX-XXXX-XXXX-XXXX)
 function generateLicenseKey(): string {
@@ -22,82 +29,303 @@ function generateLicenseKey(): string {
   return parts.join("-");
 }
 
+// ==================== Product Sync ====================
+
+async function handleProductCreated({
+  organizationId,
+  stripeProduct,
+}: {
+  organizationId: string;
+  stripeProduct: Stripe.Product;
+}) {
+  // Check if product already exists
+  const [existing] = await db
+    .select()
+    .from(product)
+    .where(eq(product.stripeProductId, stripeProduct.id))
+    .limit(1);
+
+  if (existing) {
+    console.log("Product already exists, skipping:", stripeProduct.name);
+    return existing;
+  }
+
+  const slug = stripeProduct.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  const [newProduct] = await db
+    .insert(product)
+    .values({
+      name: stripeProduct.name,
+      slug: `${slug}-${Date.now()}`,
+      description: stripeProduct.description || undefined,
+      isActive: stripeProduct.active,
+      stripeProductId: stripeProduct.id,
+      syncedAt: new Date(),
+      organizationId,
+    })
+    .returning();
+
+  console.log("Created product from webhook:", newProduct.name);
+  return newProduct;
+}
+
+async function handleProductUpdated({
+  organizationId,
+  stripeProduct,
+}: {
+  organizationId: string;
+  stripeProduct: Stripe.Product;
+}) {
+  const [existing] = await db
+    .select()
+    .from(product)
+    .where(
+      and(
+        eq(product.stripeProductId, stripeProduct.id),
+        eq(product.organizationId, organizationId)
+      )
+    )
+    .limit(1);
+
+  if (!existing) {
+    // Product doesn't exist locally, create it
+    return handleProductCreated({ organizationId, stripeProduct });
+  }
+
+  // Update existing product
+  const [updated] = await db
+    .update(product)
+    .set({
+      name: stripeProduct.name,
+      description: stripeProduct.description || undefined,
+      isActive: stripeProduct.active,
+      syncedAt: new Date(),
+    })
+    .where(eq(product.id, existing.id))
+    .returning();
+
+  console.log("Updated product from webhook:", updated.name);
+  return updated;
+}
+
+async function handleProductDeleted({
+  organizationId,
+  stripeProductId,
+}: {
+  organizationId: string;
+  stripeProductId: string;
+}) {
+  const [existing] = await db
+    .select()
+    .from(product)
+    .where(
+      and(
+        eq(product.stripeProductId, stripeProductId),
+        eq(product.organizationId, organizationId)
+      )
+    )
+    .limit(1);
+
+  if (!existing) {
+    console.log("Product not found for deletion:", stripeProductId);
+    return null;
+  }
+
+  // Soft delete: mark as inactive
+  const [updated] = await db
+    .update(product)
+    .set({
+      isActive: false,
+      syncedAt: new Date(),
+    })
+    .where(eq(product.id, existing.id))
+    .returning();
+
+  console.log("Deactivated product from webhook:", updated.name);
+  return updated;
+}
+
+// ==================== Customer Sync ====================
+
+async function findOrCreateCustomer({
+  organizationId,
+  stripeCustomerId,
+  stripe,
+}: {
+  organizationId: string;
+  stripeCustomerId: string;
+  stripe: Stripe;
+}) {
+  // First, try to find by stripeCustomerId
+  let [localCustomer] = await db
+    .select()
+    .from(customer)
+    .where(
+      and(
+        eq(customer.stripeCustomerId, stripeCustomerId),
+        eq(customer.organizationId, organizationId)
+      )
+    )
+    .limit(1);
+
+  if (localCustomer) {
+    return localCustomer;
+  }
+
+  // Fetch customer details from Stripe
+  const stripeCustomer = (await stripe.customers.retrieve(
+    stripeCustomerId
+  )) as Stripe.Customer;
+
+  if (stripeCustomer.deleted) {
+    console.error("Stripe customer is deleted:", stripeCustomerId);
+    return null;
+  }
+
+  if (!stripeCustomer.email) {
+    console.error("Stripe customer has no email:", stripeCustomerId);
+    return null;
+  }
+
+  // Check if customer exists by email (might exist from before stripeCustomerId was tracked)
+  [localCustomer] = await db
+    .select()
+    .from(customer)
+    .where(
+      and(
+        eq(customer.email, stripeCustomer.email),
+        eq(customer.organizationId, organizationId)
+      )
+    )
+    .limit(1);
+
+  if (localCustomer) {
+    // Update with stripeCustomerId
+    const [updated] = await db
+      .update(customer)
+      .set({
+        stripeCustomerId,
+        name: stripeCustomer.name || localCustomer.name,
+        syncedAt: new Date(),
+      })
+      .where(eq(customer.id, localCustomer.id))
+      .returning();
+
+    console.log("Updated customer with Stripe ID:", updated.email);
+    return updated;
+  }
+
+  // Create new customer
+  const [newCustomer] = await db
+    .insert(customer)
+    .values({
+      name: stripeCustomer.name || stripeCustomer.email,
+      email: stripeCustomer.email,
+      company:
+        typeof stripeCustomer.metadata?.company === "string"
+          ? stripeCustomer.metadata.company
+          : undefined,
+      stripeCustomerId,
+      syncedAt: new Date(),
+      organizationId,
+    })
+    .returning();
+
+  console.log("Created customer from webhook:", newCustomer.email);
+  return newCustomer;
+}
+
+// ==================== License Creation ====================
+
 async function createLicenseFromPayment({
   organizationId,
   stripeProductId,
   stripeCustomerId,
+  stripePaymentIntentId,
+  isTest,
+  metadata,
   stripe,
 }: {
   organizationId: string;
   stripeProductId: string;
   stripeCustomerId: string;
+  stripePaymentIntentId: string;
+  isTest: boolean;
+  metadata?: Stripe.Metadata;
   stripe: Stripe;
 }) {
-  // Get Stripe customer
-  const stripeCustomer = (await stripe.customers.retrieve(
-    stripeCustomerId
-  )) as Stripe.Customer;
-
   // Find or create local product
   let [localProduct] = await db
     .select()
     .from(product)
-    .where(eq(product.stripeProductId, stripeProductId))
+    .where(
+      and(
+        eq(product.stripeProductId, stripeProductId),
+        eq(product.organizationId, organizationId)
+      )
+    )
     .limit(1);
 
   if (!localProduct) {
     // Try to get product info from Stripe
     const stripeProduct = await stripe.products.retrieve(stripeProductId);
-
-    const slug = stripeProduct.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    [localProduct] = await db
-      .insert(product)
-      .values({
-        name: stripeProduct.name,
-        slug: `${slug}-${Date.now()}`,
-        description: stripeProduct.description || undefined,
-        status: "active",
-        stripeProductId,
-        organizationId,
-      })
-      .returning();
-
-    console.log("Created product from webhook:", localProduct.name);
+    localProduct = await handleProductCreated({
+      organizationId,
+      stripeProduct,
+    });
   }
 
   // Find or create local customer
-  let [localCustomer] = await db
-    .select()
-    .from(customer)
-    .where(eq(customer.email, stripeCustomer.email || ""))
-    .limit(1);
-
-  if (!localCustomer && stripeCustomer.email) {
-    [localCustomer] = await db
-      .insert(customer)
-      .values({
-        name: stripeCustomer.name || stripeCustomer.email,
-        email: stripeCustomer.email,
-        organizationId,
-      })
-      .returning();
-
-    console.log("Created customer from webhook:", localCustomer.name);
-  }
+  const localCustomer = await findOrCreateCustomer({
+    organizationId,
+    stripeCustomerId,
+    stripe,
+  });
 
   if (!localCustomer) {
     console.error("Could not create or find customer");
-    return;
+    return null;
   }
+
+  // Read metadata overrides
+  const activationLimitOverride = metadata?.perpetually_activation_limit
+    ? parseInt(metadata.perpetually_activation_limit, 10)
+    : undefined;
+  const licenseDurationDaysOverride = metadata?.perpetually_license_duration_days
+    ? parseInt(metadata.perpetually_license_duration_days, 10)
+    : undefined;
+
+  // Try to get default policy for this product
+  let defaultActivationLimit: number | null = null;
+  let defaultLicenseDays: number | null = null;
+
+  const [defaultPolicy] = await db
+    .select()
+    .from(licensePolicy)
+    .where(eq(licensePolicy.productId, localProduct.id))
+    .limit(1);
+
+  if (defaultPolicy) {
+    defaultActivationLimit = defaultPolicy.activationLimit;
+    defaultLicenseDays = defaultPolicy.licenseLengthDays;
+  }
+
+  // Calculate final values (override > policy > default)
+  const activationLimit =
+    activationLimitOverride ?? defaultActivationLimit ?? null;
+  const licenseDurationDays =
+    licenseDurationDaysOverride ?? defaultLicenseDays ?? 365;
 
   // Create license
   const key = generateLicenseKey();
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year default
+  const expiresAt =
+    licenseDurationDays === null || licenseDurationDays === 0
+      ? null // Perpetual license
+      : new Date(now.getTime() + licenseDurationDays * 24 * 60 * 60 * 1000);
 
   const [newLicense] = await db
     .insert(license)
@@ -106,9 +334,13 @@ async function createLicenseFromPayment({
       keyCreatedAt: now,
       status: "active",
       expiresAt,
+      activationLimit,
+      stripePaymentIntentId,
+      isTest,
       productId: localProduct.id,
       customerId: localCustomer.id,
       organizationId,
+      licensePolicyId: defaultPolicy?.id,
     })
     .returning();
 
@@ -116,10 +348,89 @@ async function createLicenseFromPayment({
     key: newLicense.key,
     product: localProduct.name,
     customer: localCustomer.email,
+    isTest,
+  });
+
+  // Log license.created event
+  await db.insert(licenseEvent).values({
+    type: "license.created",
+    actorType: "system",
+    actorId: null,
+    data: {
+      stripePaymentIntentId,
+      stripeProductId,
+      stripeCustomerId,
+      isTest,
+      expiresAt: expiresAt?.toISOString() ?? null,
+      activationLimit,
+    },
+    licenseId: newLicense.id,
+    organizationId,
   });
 
   return newLicense;
 }
+
+// ==================== Refund Handler ====================
+
+async function handleChargeRefunded({
+  organizationId,
+  charge,
+}: {
+  organizationId: string;
+  charge: Stripe.Charge;
+}) {
+  const paymentIntentId = charge.payment_intent as string | null;
+
+  if (!paymentIntentId) {
+    console.log("Refund has no payment intent, skipping");
+    return;
+  }
+
+  // Find license by payment intent ID
+  const [affectedLicense] = await db
+    .select()
+    .from(license)
+    .where(
+      and(
+        eq(license.stripePaymentIntentId, paymentIntentId),
+        eq(license.organizationId, organizationId)
+      )
+    )
+    .limit(1);
+
+  if (!affectedLicense) {
+    console.log("No license found for refunded payment:", paymentIntentId);
+    return;
+  }
+
+  // Log the refund event (do NOT auto-disable - owner decides)
+  await db.insert(licenseEvent).values({
+    type: "license.status_changed",
+    actorType: "system",
+    actorId: null,
+    data: {
+      event: "refund_detected",
+      stripeChargeId: charge.id,
+      refundAmount: charge.amount_refunded,
+      refundReason: charge.refunds?.data?.[0]?.reason ?? "unknown",
+      message:
+        "Refund detected. License NOT automatically disabled - review and take action if needed.",
+    },
+    licenseId: affectedLicense.id,
+    organizationId,
+  });
+
+  console.log("Refund detected for license:", {
+    licenseKey: affectedLicense.key,
+    chargeId: charge.id,
+    amountRefunded: charge.amount_refunded,
+  });
+
+  // TODO (Phase 7): Send email notification to org owner
+}
+
+// ==================== Webhook Route ====================
 
 export const Route = createFileRoute("/api/hooks/$organizationId")({
   server: {
@@ -202,62 +513,102 @@ export const Route = createFileRoute("/api/hooks/$organizationId")({
             apiVersion: "2025-02-24.acacia",
           });
 
+          // Extract test mode from event (invert livemode)
+          const isTest = !event.livemode;
+
           // Handle different event types
-          if (
-            event.type === "payment_intent.succeeded" &&
-            !event.data.object.invoice
-          ) {
-            // One-time payment
-            const payment = event.data.object;
-
-            if (!payment.customer) {
-              console.log("Payment has no customer, skipping");
-              return new Response(JSON.stringify({ received: true }), {
-                status: 200,
-                headers: { "Content-Type": "application/json" },
-              });
+          switch (event.type) {
+            // ==================== Product Events ====================
+            case "product.created": {
+              const stripeProduct = event.data.object as Stripe.Product;
+              await handleProductCreated({ organizationId, stripeProduct });
+              break;
             }
 
-            const stripeProductId = payment.metadata?.product_id;
-            if (!stripeProductId) {
-              console.log("Payment has no product_id in metadata, skipping");
-              return new Response(JSON.stringify({ received: true }), {
-                status: 200,
-                headers: { "Content-Type": "application/json" },
-              });
+            case "product.updated": {
+              const stripeProduct = event.data.object as Stripe.Product;
+              await handleProductUpdated({ organizationId, stripeProduct });
+              break;
             }
 
-            await createLicenseFromPayment({
-              organizationId,
-              stripeProductId,
-              stripeCustomerId: payment.customer as string,
-              stripe,
-            });
-          } else if (event.type === "invoice.payment_succeeded") {
-            // Subscription payment
-            const invoice = event.data.object;
-
-            if (!invoice.customer) {
-              console.log("Invoice has no customer, skipping");
-              return new Response(JSON.stringify({ received: true }), {
-                status: 200,
-                headers: { "Content-Type": "application/json" },
+            case "product.deleted": {
+              const stripeProduct = event.data.object as Stripe.Product;
+              await handleProductDeleted({
+                organizationId,
+                stripeProductId: stripeProduct.id,
               });
+              break;
             }
 
-            // Get product IDs from line items
-            const productIds = invoice.lines.data
-              .filter((line) => line.price?.product)
-              .map((line) => line.price?.product as string);
+            // ==================== Payment Events ====================
+            case "payment_intent.succeeded": {
+              const payment = event.data.object as Stripe.PaymentIntent;
 
-            for (const stripeProductId of productIds) {
+              // Skip if this is part of an invoice (handled by invoice.payment_succeeded)
+              if (payment.invoice) {
+                console.log("Payment is part of invoice, skipping");
+                break;
+              }
+
+              if (!payment.customer) {
+                console.log("Payment has no customer, skipping");
+                break;
+              }
+
+              const stripeProductId = payment.metadata?.product_id;
+              if (!stripeProductId) {
+                console.log("Payment has no product_id in metadata, skipping");
+                break;
+              }
+
               await createLicenseFromPayment({
                 organizationId,
                 stripeProductId,
-                stripeCustomerId: invoice.customer as string,
+                stripeCustomerId: payment.customer as string,
+                stripePaymentIntentId: payment.id,
+                isTest,
+                metadata: payment.metadata,
                 stripe,
               });
+              break;
             }
+
+            case "invoice.payment_succeeded": {
+              const invoice = event.data.object as Stripe.Invoice;
+
+              if (!invoice.customer) {
+                console.log("Invoice has no customer, skipping");
+                break;
+              }
+
+              // Get product IDs from line items
+              const productIds = invoice.lines.data
+                .filter((line) => line.price?.product)
+                .map((line) => line.price?.product as string);
+
+              for (const stripeProductId of productIds) {
+                await createLicenseFromPayment({
+                  organizationId,
+                  stripeProductId,
+                  stripeCustomerId: invoice.customer as string,
+                  stripePaymentIntentId: invoice.payment_intent as string,
+                  isTest,
+                  metadata: invoice.metadata,
+                  stripe,
+                });
+              }
+              break;
+            }
+
+            // ==================== Refund Events ====================
+            case "charge.refunded": {
+              const charge = event.data.object as Stripe.Charge;
+              await handleChargeRefunded({ organizationId, charge });
+              break;
+            }
+
+            default:
+              console.log("Unhandled event type:", event.type);
           }
 
           console.log("Webhook processed successfully:", event.type);

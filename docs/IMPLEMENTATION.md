@@ -3,7 +3,7 @@
 > Progress tracking for implementing the [Product Blueprint](./PRODUCT_BLUEPRINT.md)
 
 **Started**: December 2024
-**Status**: Phase 2 Complete
+**Status**: Phase 3 Complete
 
 ---
 
@@ -85,50 +85,38 @@ This document tracks the implementation progress of refactoring Perpetually from
 
 ---
 
-## Phase 3: Stripe Sync
+## Phase 3: Stripe Sync ✓
 
-### 3.1 Product Sync from Webhooks
+### 3.1 Product Sync from Webhooks ✓
 
-- [ ] Handle `product.created` webhook → create local product
-- [ ] Handle `product.updated` webhook → update local product
-- [ ] Handle `product.deleted` webhook → set `isActive: false`
-- [ ] Update `importProductsFromStripe` to use new schema
+- [x] Handle `product.created` webhook → create local product
+- [x] Handle `product.updated` webhook → update local product
+- [x] Handle `product.deleted` webhook → set `isActive: false`
+- [x] `importProductsFromStripe` already uses new schema
 
-**Files to modify:**
-- `src/routes/api/hooks/$organizationId.ts`
-- `src/functions/onboarding.ts`
+### 3.2 Customer Sync from Payments ✓
 
-### 3.2 Customer Sync from Payments
+- [x] Find customer by `stripeCustomerId` first, then by email
+- [x] Fetch customer details from Stripe API if creating new
+- [x] Store `stripeCustomerId` on customer
+- [x] Update `syncedAt` timestamp
 
-- [ ] On `payment_intent.succeeded`, find or create customer by `stripeCustomerId`
-- [ ] Fetch customer details from Stripe API if creating new
-- [ ] Update `syncedAt` timestamp
+### 3.3 License Creation from Payments ✓
 
-**Files to modify:**
-- `src/routes/api/hooks/$organizationId.ts`
-
-### 3.3 License Creation from Payments
-
-- [ ] Extract `isTest` from `event.livemode` (invert: `isTest = !livemode`)
-- [ ] Store `stripePaymentIntentId` on license
-- [ ] Read metadata for license config overrides:
+- [x] Extract `isTest` from `event.livemode` (invert: `isTest = !livemode`)
+- [x] Store `stripePaymentIntentId` on license
+- [x] Read metadata for license config overrides:
   - `perpetually_activation_limit`
   - `perpetually_license_duration_days`
-- [ ] Log `license.created` event to audit trail
+- [x] Use license policy defaults if no overrides
+- [x] Log `license.created` event to audit trail
 
-**Files to modify:**
-- `src/routes/api/hooks/$organizationId.ts`
+### 3.4 Refund Notifications ✓
 
-### 3.4 Refund Notifications
-
-- [ ] Handle `charge.refunded` webhook
-- [ ] Find license by `stripePaymentIntentId`
-- [ ] Send notification to org owner (email or in-app)
-- [ ] Do NOT auto-disable (owner decides)
-
-**Files to modify:**
-- `src/routes/api/hooks/$organizationId.ts`
-- Email notification system (new)
+- [x] Handle `charge.refunded` webhook
+- [x] Find license by `stripePaymentIntentId`
+- [x] Log refund event to audit trail (does NOT auto-disable)
+- Note: Email notification deferred to Phase 7
 
 ---
 
@@ -345,6 +333,7 @@ Before deploying, ensure:
 |------|-------|-----------------|-------|
 | Dec 2024 | Phase 1 | Schema changes, license_event table, release table removed | License status simplified to active/disabled |
 | Dec 2024 | Phase 2 | All manual creation removed | Products, customers, licenses now Stripe-only |
+| Dec 2024 | Phase 3 | Stripe sync webhook handlers | Product/customer/license sync from Stripe events |
 
 ---
 
