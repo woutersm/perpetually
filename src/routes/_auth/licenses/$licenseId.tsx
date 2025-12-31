@@ -3,7 +3,7 @@ import { PageLayout } from "@/components/page-layout";
 import {
   getLicense,
   updateLicense,
-  revokeLicense,
+  disableLicense,
   createActivation,
   deleteActivation,
 } from "@/functions/licenses";
@@ -43,7 +43,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Plus, Key, Monitor, Copy, Check, Calendar, User, Package, Trash2, Clock, Edit2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
-type LicenseStatus = "active" | "expired" | "suspended" | "revoked";
+type LicenseStatus = "active" | "disabled";
 
 export const Route = createFileRoute("/_auth/licenses/$licenseId")({
   component: LicenseDetailPage,
@@ -64,7 +64,7 @@ function LicenseDetailPage() {
 
   const submitActivation = useServerFn(createActivation);
   const submitUpdate = useServerFn(updateLicense);
-  const submitRevoke = useServerFn(revokeLicense);
+  const submitDisable = useServerFn(disableLicense);
   const submitDeleteActivation = useServerFn(deleteActivation);
 
   const activationForm = useForm({
@@ -96,7 +96,7 @@ function LicenseDetailPage() {
       await submitUpdate({
         data: {
           licenseId: license.id,
-          status: value.status as "active" | "expired" | "suspended" | "revoked",
+          status: value.status as "active" | "disabled",
           expiresAt: value.expiresAt || undefined,
           activationLimit: value.activationLimit
             ? parseInt(value.activationLimit)
@@ -109,10 +109,15 @@ function LicenseDetailPage() {
     },
   });
 
-  const handleRevoke = async () => {
-    await submitRevoke({ data: { licenseId: license.id } });
+  const handleDisable = async () => {
+    await submitDisable({
+      data: {
+        licenseId: license.id,
+        reason: "customer_request",
+      },
+    });
     setRevokeOpen(false);
-    toast.success("License revoked");
+    toast.success("License disabled");
     router.invalidate();
   };
 
@@ -135,11 +140,7 @@ function LicenseDetailPage() {
     switch (status) {
       case "active":
         return "outline-success";
-      case "expired":
-      case "pending":
-        return "outline-warning";
-      case "revoked":
-      case "suspended":
+      case "disabled":
         return "outline-destructive";
       default:
         return "secondary";
@@ -159,13 +160,13 @@ function LicenseDetailPage() {
             <Edit2 className="h-4 w-4" />
             Edit
           </Button>
-          {license.status !== "revoked" && (
+          {license.status !== "disabled" && (
             <Button
               variant="outline"
               className="text-destructive border-destructive/30 hover:bg-destructive/10"
               onClick={() => setRevokeOpen(true)}
             >
-              Revoke
+              Disable
             </Button>
           )}
         </div>
@@ -490,9 +491,7 @@ function LicenseDetailPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="expired">Expired</SelectItem>
-                        <SelectItem value="suspended">Suspended</SelectItem>
-                        <SelectItem value="revoked">Revoked</SelectItem>
+                        <SelectItem value="disabled">Disabled</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -561,26 +560,26 @@ function LicenseDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Revoke Confirmation */}
+      {/* Disable Confirmation */}
       <AlertDialog open={revokeOpen} onOpenChange={setRevokeOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 mb-4">
               <AlertTriangle className="h-6 w-6 text-destructive" />
             </div>
-            <AlertDialogTitle>Revoke License?</AlertDialogTitle>
+            <AlertDialogTitle>Disable License?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently revoke this license. The customer will no
-              longer be able to use it. This action cannot be undone.
+              This will disable this license. The customer will no longer be
+              able to use it. You can re-enable it later if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleRevoke}
+              onClick={handleDisable}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Revoke License
+              Disable License
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

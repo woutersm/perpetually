@@ -65,7 +65,8 @@ describe("POST /api/v1/validate", () => {
       expect(typeof licenseData.id).toBe("string");
       expect(typeof licenseData.key).toBe("string");
       expect(typeof licenseData.createdAt).toBe("string");
-      expect(typeof licenseData.expiresAt).toBe("string");
+      // expiresAt can be string or null for perpetual licenses
+      expect(licenseData.expiresAt === null || typeof licenseData.expiresAt === "string").toBe(true);
       expect(typeof licenseData.activations).toBe("number");
       expect(typeof licenseData.activationLimit).toBe("number");
     });
@@ -110,7 +111,7 @@ describe("POST /api/v1/validate", () => {
   // ==========================================
 
   describe("Expired license cases", () => {
-    it("should reject expired license (by status)", async () => {
+    it("should reject expired license (by date)", async () => {
       const expiredLicense = await createExpiredLicense(testData);
 
       const res = await apiRequest("POST", "/validate", {
@@ -126,15 +127,15 @@ describe("POST /api/v1/validate", () => {
       expect(res.body.error).toBe(ApiErrors.licenseExpired);
     });
 
-    it("should reject license expired by date and update status", async () => {
+    it("should reject license expired by date", async () => {
       // Create a license that's active but past expiration date
       const [pastExpiredLicense] = await db
         .insert(license)
         .values({
           key: `TEST-${Date.now()}-EXPR`,
           keyCreatedAt: new Date(),
-          status: "active", // Still marked active
-          expiresAt: new Date(Date.now() - 1000), // But expired
+          status: "active",
+          expiresAt: new Date(Date.now() - 1000), // Expired
           activationLimit: 5,
           productId: testData.product.id,
           customerId: testData.customer.id,
@@ -153,13 +154,6 @@ describe("POST /api/v1/validate", () => {
       expect(res.status).toBe(400);
       expect(res.body.valid).toBe(false);
       expect(res.body.error).toBe(ApiErrors.licenseExpired);
-
-      // Verify status was updated to expired
-      const [updatedLicense] = await db
-        .select()
-        .from(license)
-        .where(eq(license.id, pastExpiredLicense.id));
-      expect(updatedLicense.status).toBe("expired");
     });
   });
 
@@ -168,42 +162,14 @@ describe("POST /api/v1/validate", () => {
   // ==========================================
 
   describe("Disabled license cases", () => {
-    it("should reject suspended license", async () => {
-      const suspendedLicense = await createSuspendedLicense(testData);
+    it("should reject disabled license", async () => {
+      const disabledLicense = await createSuspendedLicense(testData);
 
       const res = await apiRequest("POST", "/validate", {
         apiKey: testData.apiKey,
         body: {
-          licenseId: suspendedLicense.id,
-          key: suspendedLicense.key,
-        },
-      });
-
-      expect(res.status).toBe(400);
-      expect(res.body.valid).toBe(false);
-      expect(res.body.error).toBe(ApiErrors.licenseDisabled);
-    });
-
-    it("should reject revoked license", async () => {
-      const [revokedLicense] = await db
-        .insert(license)
-        .values({
-          key: `TEST-${Date.now()}-REVK`,
-          keyCreatedAt: new Date(),
-          status: "revoked",
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-          activationLimit: 5,
-          productId: testData.product.id,
-          customerId: testData.customer.id,
-          organizationId: testData.organization.id,
-        })
-        .returning();
-
-      const res = await apiRequest("POST", "/validate", {
-        apiKey: testData.apiKey,
-        body: {
-          licenseId: revokedLicense.id,
-          key: revokedLicense.key,
+          licenseId: disabledLicense.id,
+          key: disabledLicense.key,
         },
       });
 

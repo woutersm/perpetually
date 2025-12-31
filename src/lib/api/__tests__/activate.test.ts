@@ -216,40 +216,13 @@ describe("POST /api/v1/activate", () => {
   // ==========================================
 
   describe("Disabled license cases", () => {
-    it("should reject activation for suspended license", async () => {
-      const suspendedLicense = await createSuspendedLicense(testData);
+    it("should reject activation for disabled license", async () => {
+      const disabledLicense = await createSuspendedLicense(testData);
 
       const res = await apiRequest("POST", "/activate", {
         apiKey: testData.apiKey,
         body: {
-          licenseId: suspendedLicense.id,
-        },
-      });
-
-      expect(res.status).toBe(400);
-      expect(res.body.activated).toBe(false);
-      expect(res.body.error).toBe(ApiErrors.licenseDisabled);
-    });
-
-    it("should reject activation for revoked license", async () => {
-      const [revokedLicense] = await db
-        .insert(license)
-        .values({
-          key: `TEST-${Date.now()}-REVK`,
-          keyCreatedAt: new Date(),
-          status: "revoked",
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-          activationLimit: 5,
-          productId: testData.product.id,
-          customerId: testData.customer.id,
-          organizationId: testData.organization.id,
-        })
-        .returning();
-
-      const res = await apiRequest("POST", "/activate", {
-        apiKey: testData.apiKey,
-        body: {
-          licenseId: revokedLicense.id,
+          licenseId: disabledLicense.id,
         },
       });
 

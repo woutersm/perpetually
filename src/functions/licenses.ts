@@ -147,7 +147,7 @@ export const updateLicense = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
       licenseId: string;
-      status?: "active" | "expired" | "suspended" | "revoked";
+      status?: "active" | "disabled";
       expiresAt?: string;
       activationLimit?: number | null;
     }) => data
@@ -243,14 +243,25 @@ export const deleteActivation = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-// Revoke a license
-export const revokeLicense = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("revokeLicense")])
-  .inputValidator((data: { licenseId: string }) => data)
+// Disable a license
+export const disableLicense = createServerFn({ method: "POST" })
+  .middleware([authMiddleware, loggingMiddleware("disableLicense")])
+  .inputValidator(
+    (data: {
+      licenseId: string;
+      reason: "refund" | "chargeback" | "fraud" | "customer_request" | "other";
+      notes?: string;
+    }) => data
+  )
   .handler(async ({ data, context: { organizationId } }) => {
     const [updated] = await db
       .update(license)
-      .set({ status: "revoked" })
+      .set({
+        status: "disabled",
+        disabledAt: new Date(),
+        disabledReason: data.reason,
+        disabledNotes: data.notes ?? null,
+      })
       .where(
         and(eq(license.id, data.licenseId), eq(license.organizationId, organizationId))
       )

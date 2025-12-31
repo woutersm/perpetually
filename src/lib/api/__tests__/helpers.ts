@@ -58,7 +58,7 @@ export async function createTestData(): Promise<TestData> {
     .values({
       name: `Test Product ${suffix}`,
       slug: `test-product-${suffix}`,
-      status: "active",
+      isActive: true,
       organizationId: org.id,
     })
     .returning();
@@ -68,7 +68,6 @@ export async function createTestData(): Promise<TestData> {
     .insert(licensePolicy)
     .values({
       name: "Test Policy",
-      type: "perpetual",
       licenseLengthDays: 365,
       activationLimit: 1,
       productId: prod.id,
@@ -115,7 +114,7 @@ export async function createTestData(): Promise<TestData> {
 }
 
 // ============================================
-// Helper to create expired license
+// Helper to create expired license (by date, not status)
 // ============================================
 
 export async function createExpiredLicense(testData: TestData) {
@@ -126,7 +125,7 @@ export async function createExpiredLicense(testData: TestData) {
     .values({
       key: licenseKey,
       keyCreatedAt: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000), // Created 400 days ago
-      status: "expired",
+      status: "active", // Status is still active, but expired by date
       expiresAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Expired 30 days ago
       activationLimit: 5,
       productId: testData.product.id,
@@ -139,10 +138,10 @@ export async function createExpiredLicense(testData: TestData) {
 }
 
 // ============================================
-// Helper to create suspended license
+// Helper to create disabled license
 // ============================================
 
-export async function createSuspendedLicense(testData: TestData) {
+export async function createDisabledLicense(testData: TestData) {
   const licenseKey = generateLicenseKey();
 
   const [lic] = await db
@@ -150,7 +149,9 @@ export async function createSuspendedLicense(testData: TestData) {
     .values({
       key: licenseKey,
       keyCreatedAt: new Date(),
-      status: "suspended",
+      status: "disabled",
+      disabledAt: new Date(),
+      disabledReason: "customer_request",
       expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       activationLimit: 5,
       productId: testData.product.id,
@@ -161,6 +162,9 @@ export async function createSuspendedLicense(testData: TestData) {
 
   return lic;
 }
+
+// Keep backwards-compatible alias
+export const createSuspendedLicense = createDisabledLicense;
 
 // ============================================
 // Helper to create activation

@@ -115,15 +115,9 @@ function ProductsPage() {
               {/* Status badge */}
               <div className="absolute right-5 top-5">
                 <Badge
-                  variant={
-                    product.status === "active"
-                      ? "outline-success"
-                      : product.status === "archived"
-                        ? "secondary"
-                        : "outline-warning"
-                  }
+                  variant={product.isActive ? "outline-success" : "secondary"}
                 >
-                  {product.status}
+                  {product.isActive ? "active" : "inactive"}
                 </Badge>
               </div>
 

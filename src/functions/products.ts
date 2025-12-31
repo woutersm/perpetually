@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { loggingMiddleware } from "@/middleware/logging";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
-import { product, release, licensePolicy, license } from "@/lib/db/schema";
+import { product, licensePolicy, license } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 // Get all products for the current organization
@@ -35,13 +35,6 @@ export const getProduct = createServerFn({ method: "GET" })
       throw new Error("Product not found");
     }
 
-    // Get releases
-    const releases = await db
-      .select()
-      .from(release)
-      .where(eq(release.productId, data.productId))
-      .orderBy(desc(release.createdAt));
-
     // Get license policies
     const policies = await db
       .select()
@@ -57,13 +50,12 @@ export const getProduct = createServerFn({ method: "GET" })
 
     return {
       ...productData,
-      releases,
       licensePolicies: policies,
       licenseCount: licenses.length,
     };
   });
 
-// Create a new product
+// Create a new product (will be removed in Phase 2 - products come from Stripe)
 export const createProduct = createServerFn({ method: "POST" })
   .middleware([authMiddleware, loggingMiddleware("createProduct")])
   .inputValidator(
@@ -105,7 +97,6 @@ export const updateProduct = createServerFn({ method: "POST" })
       name?: string;
       slug?: string;
       description?: string;
-      status?: "pending" | "active" | "archived";
     }) => data
   )
   .handler(async ({ data, context: { organizationId } }) => {
@@ -145,38 +136,6 @@ export const deleteProduct = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-// Create a release for a product
-export const createRelease = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("createRelease")])
-  .inputValidator(
-    (data: { productId: string; tag: string; description?: string }) => data
-  )
-  .handler(async ({ data, context: { organizationId } }) => {
-    // Verify product belongs to org
-    const [productData] = await db
-      .select()
-      .from(product)
-      .where(
-        and(eq(product.id, data.productId), eq(product.organizationId, organizationId))
-      )
-      .limit(1);
-
-    if (!productData) {
-      throw new Error("Product not found");
-    }
-
-    const [newRelease] = await db
-      .insert(release)
-      .values({
-        productId: data.productId,
-        tag: data.tag,
-        description: data.description,
-      })
-      .returning();
-
-    return newRelease;
-  });
-
 // Create a license policy
 export const createLicensePolicy = createServerFn({ method: "POST" })
   .middleware([authMiddleware, loggingMiddleware("createLicensePolicy")])
@@ -184,8 +143,7 @@ export const createLicensePolicy = createServerFn({ method: "POST" })
     (data: {
       productId: string;
       name: string;
-      type: "perpetual" | "subscription" | "trial";
-      licenseLengthDays: number;
+      licenseLengthDays?: number;
       activationLimit?: number;
     }) => data
   )
@@ -208,8 +166,7 @@ export const createLicensePolicy = createServerFn({ method: "POST" })
       .values({
         productId: data.productId,
         name: data.name,
-        type: data.type,
-        licenseLengthDays: data.licenseLengthDays,
+        licenseLengthDays: data.licenseLengthDays ?? null,
         activationLimit: data.activationLimit ?? null,
       })
       .returning();

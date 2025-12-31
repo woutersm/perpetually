@@ -57,8 +57,9 @@ export const importProductsFromStripe = createServerFn({ method: "POST" })
           name: stripeProduct.name,
           slug: `${slug}-${Date.now()}`, // Ensure unique slug
           description: stripeProduct.description || undefined,
-          status: "active",
+          isActive: true,
           stripeProductId: stripeProduct.id,
+          syncedAt: new Date(),
           organizationId,
         })
         .returning();

@@ -12,13 +12,13 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     const products = await db
       .select({
         id: product.id,
-        status: product.status,
+        isActive: product.isActive,
       })
       .from(product)
       .where(eq(product.organizationId, organizationId));
 
     const totalProducts = products.length;
-    const activeProducts = products.filter((p) => p.status === "active").length;
+    const activeProducts = products.filter((p) => p.isActive).length;
 
     // Get license stats
     const licenses = await db

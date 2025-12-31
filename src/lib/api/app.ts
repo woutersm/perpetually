@@ -1,7 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { eq, and } from "drizzle-orm";
-import { isWithinInterval } from "date-fns";
 import db from "@/lib/db/db";
 import {
   secretKey,
@@ -123,8 +122,8 @@ app.openapi(validateRoute, async (c) => {
     );
   }
 
-  // Check if license is disabled/suspended/revoked
-  if (foundLicense.status === "suspended" || foundLicense.status === "revoked") {
+  // Check if license is disabled
+  if (foundLicense.status === "disabled") {
     return c.json(
       {
         valid: false as const,
@@ -134,42 +133,9 @@ app.openapi(validateRoute, async (c) => {
     );
   }
 
-  // Check if license is expired (by status)
-  if (foundLicense.status === "expired") {
-    return c.json(
-      {
-        valid: false as const,
-        error: ApiErrors.licenseExpired,
-      },
-      400
-    );
-  }
-
-  // Check if license is expired (by date)
+  // Check if license is expired (by date) - expiresAt can be null for perpetual licenses
   const now = new Date();
-  if (foundLicense.expiresAt < now) {
-    // Update status to expired
-    await db
-      .update(license)
-      .set({ status: "expired" })
-      .where(eq(license.id, foundLicense.id));
-
-    return c.json(
-      {
-        valid: false as const,
-        error: ApiErrors.licenseExpired,
-      },
-      400
-    );
-  }
-
-  // Check date range
-  const isInRange = isWithinInterval(now, {
-    start: foundLicense.createdAt,
-    end: foundLicense.expiresAt,
-  });
-
-  if (!isInRange) {
+  if (foundLicense.expiresAt && foundLicense.expiresAt < now) {
     return c.json(
       {
         valid: false as const,
@@ -193,7 +159,7 @@ app.openapi(validateRoute, async (c) => {
         id: foundLicense.id,
         key: foundLicense.key,
         createdAt: foundLicense.createdAt.toISOString(),
-        expiresAt: foundLicense.expiresAt.toISOString(),
+        expiresAt: foundLicense.expiresAt?.toISOString() ?? null,
         activations: activations.length,
         activationLimit: foundLicense.activationLimit ?? 0,
       },
@@ -225,7 +191,7 @@ app.openapi(activateRoute, async (c) => {
   }
 
   // Check if license is disabled
-  if (foundLicense.status === "suspended" || foundLicense.status === "revoked") {
+  if (foundLicense.status === "disabled") {
     return c.json(
       {
         activated: false as const,
@@ -369,9 +335,10 @@ app.openapi(createLicenseRoute, async (c) => {
   // Generate license key
   const licenseKey = generateLicenseKey();
 
-  const expiresAt = policy
+  // Calculate expiration - null licenseLengthDays means perpetual (no expiration)
+  const expiresAt = policy?.licenseLengthDays
     ? new Date(Date.now() + policy.licenseLengthDays * 24 * 60 * 60 * 1000)
-    : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // Default 1 year
+    : null;
   const activationLimit = policy?.activationLimit ?? null;
 
   // Create license
@@ -397,7 +364,7 @@ app.openapi(createLicenseRoute, async (c) => {
         id: newLicense.id,
         createdAt: newLicense.createdAt.toISOString(),
         updatedAt: newLicense.updatedAt.toISOString(),
-        expiresAt: newLicense.expiresAt.toISOString(),
+        expiresAt: newLicense.expiresAt?.toISOString() ?? null,
         status: newLicense.status.toUpperCase(),
         keyCreatedAt: newLicense.keyCreatedAt.toISOString(),
         key: newLicense.key,

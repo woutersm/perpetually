@@ -189,10 +189,13 @@ export const product = sqliteTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     description: text("description"),
-    status: text("status", { enum: ["pending", "active", "archived"] })
-      .notNull()
-      .default("pending"),
+
+    // Mirrors Stripe's active state (no local override)
+    isActive: integer("is_active", { mode: "boolean" }).default(true).notNull(),
+
+    // Stripe sync
     stripeProductId: text("stripe_product_id"),
+    syncedAt: integer("synced_at", { mode: "timestamp_ms" }),
 
     organizationId: text("organization_id")
       .notNull()
@@ -204,34 +207,6 @@ export const product = sqliteTable(
       table.slug,
       table.organizationId
     ),
-  })
-);
-
-// ==================== RELEASE ====================
-
-export const release = sqliteTable(
-  "release",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .$onUpdate(() => new Date())
-      .notNull(),
-
-    tag: text("tag").notNull(), // e.g., "v1.0.0"
-    description: text("description"),
-
-    productId: text("product_id")
-      .notNull()
-      .references(() => product.id, { onDelete: "cascade" }),
-  },
-  (table) => ({
-    productIdIdx: index("release_productId_idx").on(table.productId),
   })
 );
 
@@ -252,8 +227,7 @@ export const licensePolicy = sqliteTable(
       .notNull(),
 
     name: text("name").notNull(),
-    type: text("type", { enum: ["perpetual", "subscription", "trial"] }).notNull(),
-    licenseLengthDays: integer("license_length_days").notNull(), // Duration in days
+    licenseLengthDays: integer("license_length_days"), // null = perpetual (never expires)
     activationLimit: integer("activation_limit"), // null = unlimited
 
     productId: text("product_id")
@@ -284,6 +258,10 @@ export const customer = sqliteTable(
     name: text("name").notNull(),
     email: text("email").notNull(),
     company: text("company"),
+
+    // Stripe sync
+    stripeCustomerId: text("stripe_customer_id"),
+    syncedAt: integer("synced_at", { mode: "timestamp_ms" }),
 
     organizationId: text("organization_id")
       .notNull()
@@ -318,14 +296,31 @@ export const license = sqliteTable(
     key: text("key").notNull().unique(),
     keyCreatedAt: integer("key_created_at", { mode: "timestamp_ms" }).notNull(),
 
-    // Status
+    // Status (simple: active or disabled, expired is computed from expiresAt)
     status: text("status", {
-      enum: ["active", "expired", "suspended", "revoked"],
-    }).notNull(),
-    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+      enum: ["active", "disabled"],
+    })
+      .notNull()
+      .default("active"),
+
+    // Expiration (null = never expires, expired = now > expiresAt AND status = active)
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
 
     // Limits (copied from policy at creation, can be overridden)
     activationLimit: integer("activation_limit"), // null = unlimited
+
+    // Disable tracking (only set when status = disabled)
+    disabledAt: integer("disabled_at", { mode: "timestamp_ms" }),
+    disabledReason: text("disabled_reason", {
+      enum: ["refund", "chargeback", "fraud", "customer_request", "other"],
+    }),
+    disabledNotes: text("disabled_notes"),
+
+    // Stripe reference
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+
+    // Test mode flag (mirrors Stripe's livemode)
+    isTest: integer("is_test", { mode: "boolean" }).default(false).notNull(),
 
     // Relations
     productId: text("product_id")
@@ -347,6 +342,7 @@ export const license = sqliteTable(
     productIdIdx: index("license_productId_idx").on(table.productId),
     customerIdIdx: index("license_customerId_idx").on(table.customerId),
     statusIdx: index("license_status_idx").on(table.status),
+    isTestIdx: index("license_isTest_idx").on(table.isTest),
   })
 );
 
@@ -420,6 +416,59 @@ export const secretKey = sqliteTable(
   })
 );
 
+// ==================== LICENSE EVENT (Audit Trail) ====================
+
+export const licenseEvent = sqliteTable(
+  "license_event",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+
+    // Event type
+    type: text("type", {
+      enum: [
+        "license.created",
+        "license.status_changed",
+        "license.extended",
+        "license.key_regenerated",
+        "activation.created",
+        "activation.removed",
+      ],
+    }).notNull(),
+
+    // Actor tracking
+    actorType: text("actor_type", {
+      enum: ["user", "api", "system", "customer"],
+    }).notNull(),
+    actorId: text("actor_id"), // userId, secretKeyId, or null for system
+
+    // Event data (varies by type)
+    data: text("data", { mode: "json" }).$type<Record<string, unknown>>(),
+
+    // Metadata
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+
+    // Relations
+    licenseId: text("license_id")
+      .notNull()
+      .references(() => license.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+  },
+  (table) => ({
+    licenseIdIdx: index("license_event_licenseId_idx").on(table.licenseId),
+    orgIdIdx: index("license_event_orgId_idx").on(table.organizationId),
+    typeIdx: index("license_event_type_idx").on(table.type),
+    createdAtIdx: index("license_event_createdAt_idx").on(table.createdAt),
+  })
+);
+
 // ==================== RELATIONS ====================
 
 export const relations = defineRelations(
@@ -431,12 +480,12 @@ export const relations = defineRelations(
     organization,
     membership,
     product,
-    release,
     licensePolicy,
     customer,
     license,
     activation,
     secretKey,
+    licenseEvent,
   },
   (r) => ({
     // Auth relations
@@ -493,6 +542,10 @@ export const relations = defineRelations(
         from: r.organization.id,
         to: r.secretKey.organizationId,
       }),
+      licenseEvents: r.many.licenseEvent({
+        from: r.organization.id,
+        to: r.licenseEvent.organizationId,
+      }),
     },
     membership: {
       user: r.one.user({
@@ -511,10 +564,6 @@ export const relations = defineRelations(
         from: r.product.organizationId,
         to: r.organization.id,
       }),
-      releases: r.many.release({
-        from: r.product.id,
-        to: r.release.productId,
-      }),
       licensePolicies: r.many.licensePolicy({
         from: r.product.id,
         to: r.licensePolicy.productId,
@@ -522,12 +571,6 @@ export const relations = defineRelations(
       licenses: r.many.license({
         from: r.product.id,
         to: r.license.productId,
-      }),
-    },
-    release: {
-      product: r.one.product({
-        from: r.release.productId,
-        to: r.product.id,
       }),
     },
     licensePolicy: {
@@ -571,6 +614,10 @@ export const relations = defineRelations(
         from: r.license.id,
         to: r.activation.licenseId,
       }),
+      events: r.many.licenseEvent({
+        from: r.license.id,
+        to: r.licenseEvent.licenseId,
+      }),
     },
 
     // Activation relations
@@ -589,6 +636,18 @@ export const relations = defineRelations(
     secretKey: {
       organization: r.one.organization({
         from: r.secretKey.organizationId,
+        to: r.organization.id,
+      }),
+    },
+
+    // License event relations
+    licenseEvent: {
+      license: r.one.license({
+        from: r.licenseEvent.licenseId,
+        to: r.license.id,
+      }),
+      organization: r.one.organization({
+        from: r.licenseEvent.organizationId,
         to: r.organization.id,
       }),
     },

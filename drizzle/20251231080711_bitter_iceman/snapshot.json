@@ -1,9 +1,9 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "1a787a3e-0a1a-4e50-bfd8-0d7c0cae690c",
+  "id": "ef9a3c8f-d800-43d9-9be9-da5ce7192777",
   "prevIds": [
-    "1fb2e143-2768-4eb1-bd8e-14ef7f13f0b9"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
@@ -23,6 +23,10 @@
       "entityType": "tables"
     },
     {
+      "name": "license_event",
+      "entityType": "tables"
+    },
+    {
       "name": "license_policy",
       "entityType": "tables"
     },
@@ -36,10 +40,6 @@
     },
     {
       "name": "product",
-      "entityType": "tables"
-    },
-    {
-      "name": "release",
       "entityType": "tables"
     },
     {
@@ -354,7 +354,17 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "metadata",
+      "name": "stripe_customer_id",
+      "entityType": "columns",
+      "table": "customer"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "synced_at",
       "entityType": "columns",
       "table": "customer"
     },
@@ -422,7 +432,7 @@
       "type": "text",
       "notNull": true,
       "autoincrement": false,
-      "default": null,
+      "default": "'active'",
       "generated": null,
       "name": "status",
       "entityType": "columns",
@@ -430,7 +440,7 @@
     },
     {
       "type": "integer",
-      "notNull": true,
+      "notNull": false,
       "autoincrement": false,
       "default": null,
       "generated": null,
@@ -445,6 +455,56 @@
       "default": null,
       "generated": null,
       "name": "activation_limit",
+      "entityType": "columns",
+      "table": "license"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "disabled_at",
+      "entityType": "columns",
+      "table": "license"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "disabled_reason",
+      "entityType": "columns",
+      "table": "license"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "disabled_notes",
+      "entityType": "columns",
+      "table": "license"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "stripe_payment_intent_id",
+      "entityType": "columns",
+      "table": "license"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "is_test",
       "entityType": "columns",
       "table": "license"
     },
@@ -496,6 +556,106 @@
       "generated": null,
       "name": "id",
       "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "(cast(unixepoch('subsecond') * 1000 as integer))",
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "type",
+      "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "actor_type",
+      "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "actor_id",
+      "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "data",
+      "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "ip_address",
+      "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_agent",
+      "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "license_id",
+      "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "organization_id",
+      "entityType": "columns",
+      "table": "license_event"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
       "table": "license_policy"
     },
     {
@@ -529,18 +689,8 @@
       "table": "license_policy"
     },
     {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "type",
-      "entityType": "columns",
-      "table": "license_policy"
-    },
-    {
       "type": "integer",
-      "notNull": true,
+      "notNull": false,
       "autoincrement": false,
       "default": null,
       "generated": null,
@@ -694,7 +844,57 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "stripe_api_key",
+      "name": "stripe_connect_id",
+      "entityType": "columns",
+      "table": "organization"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "stripe_access_token",
+      "entityType": "columns",
+      "table": "organization"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "stripe_refresh_token",
+      "entityType": "columns",
+      "table": "organization"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "stripe_scope",
+      "entityType": "columns",
+      "table": "organization"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "stripe_token_type",
+      "entityType": "columns",
+      "table": "organization"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "stripe_connected_at",
       "entityType": "columns",
       "table": "organization"
     },
@@ -714,17 +914,7 @@
       "autoincrement": false,
       "default": null,
       "generated": null,
-      "name": "stripe_customer_id",
-      "entityType": "columns",
-      "table": "organization"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "checkout_session_id",
+      "name": "stripe_webhook_endpoint_id",
       "entityType": "columns",
       "table": "organization"
     },
@@ -789,12 +979,12 @@
       "table": "product"
     },
     {
-      "type": "text",
+      "type": "integer",
       "notNull": true,
       "autoincrement": false,
-      "default": "'pending'",
+      "default": "1",
       "generated": null,
-      "name": "status",
+      "name": "is_active",
       "entityType": "columns",
       "table": "product"
     },
@@ -809,6 +999,16 @@
       "table": "product"
     },
     {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "synced_at",
+      "entityType": "columns",
+      "table": "product"
+    },
+    {
       "type": "text",
       "notNull": true,
       "autoincrement": false,
@@ -817,66 +1017,6 @@
       "name": "organization_id",
       "entityType": "columns",
       "table": "product"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "id",
-      "entityType": "columns",
-      "table": "release"
-    },
-    {
-      "type": "integer",
-      "notNull": true,
-      "autoincrement": false,
-      "default": "(cast(unixepoch('subsecond') * 1000 as integer))",
-      "generated": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "table": "release"
-    },
-    {
-      "type": "integer",
-      "notNull": true,
-      "autoincrement": false,
-      "default": "(cast(unixepoch('subsecond') * 1000 as integer))",
-      "generated": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "table": "release"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "tag",
-      "entityType": "columns",
-      "table": "release"
-    },
-    {
-      "type": "text",
-      "notNull": false,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "description",
-      "entityType": "columns",
-      "table": "release"
-    },
-    {
-      "type": "text",
-      "notNull": true,
-      "autoincrement": false,
-      "default": null,
-      "generated": null,
-      "name": "product_id",
-      "entityType": "columns",
-      "table": "release"
     },
     {
       "type": "text",
@@ -1290,6 +1430,36 @@
     },
     {
       "columns": [
+        "license_id"
+      ],
+      "tableTo": "license",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "cascade",
+      "nameExplicit": false,
+      "name": "fk_license_event_license_id_license_id_fk",
+      "entityType": "fks",
+      "table": "license_event"
+    },
+    {
+      "columns": [
+        "organization_id"
+      ],
+      "tableTo": "organization",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "cascade",
+      "nameExplicit": false,
+      "name": "fk_license_event_organization_id_organization_id_fk",
+      "entityType": "fks",
+      "table": "license_event"
+    },
+    {
+      "columns": [
         "product_id"
       ],
       "tableTo": "product",
@@ -1347,21 +1517,6 @@
       "name": "fk_product_organization_id_organization_id_fk",
       "entityType": "fks",
       "table": "product"
-    },
-    {
-      "columns": [
-        "product_id"
-      ],
-      "tableTo": "product",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "cascade",
-      "nameExplicit": false,
-      "name": "fk_release_product_id_product_id_fk",
-      "entityType": "fks",
-      "table": "release"
     },
     {
       "columns": [
@@ -1434,6 +1589,15 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "license_event_pk",
+      "table": "license_event",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "license_policy_pk",
       "table": "license_policy",
       "entityType": "pks"
@@ -1463,15 +1627,6 @@
       "nameExplicit": false,
       "name": "product_pk",
       "table": "product",
-      "entityType": "pks"
-    },
-    {
-      "columns": [
-        "id"
-      ],
-      "nameExplicit": false,
-      "name": "release_pk",
-      "table": "release",
       "entityType": "pks"
     },
     {
@@ -1643,6 +1798,76 @@
     {
       "columns": [
         {
+          "value": "is_test",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "license_isTest_idx",
+      "entityType": "indexes",
+      "table": "license"
+    },
+    {
+      "columns": [
+        {
+          "value": "license_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "license_event_licenseId_idx",
+      "entityType": "indexes",
+      "table": "license_event"
+    },
+    {
+      "columns": [
+        {
+          "value": "organization_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "license_event_orgId_idx",
+      "entityType": "indexes",
+      "table": "license_event"
+    },
+    {
+      "columns": [
+        {
+          "value": "type",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "license_event_type_idx",
+      "entityType": "indexes",
+      "table": "license_event"
+    },
+    {
+      "columns": [
+        {
+          "value": "created_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "license_event_createdAt_idx",
+      "entityType": "indexes",
+      "table": "license_event"
+    },
+    {
+      "columns": [
+        {
           "value": "product_id",
           "isExpression": false
         }
@@ -1731,20 +1956,6 @@
       "name": "product_slug_org_unique",
       "entityType": "indexes",
       "table": "product"
-    },
-    {
-      "columns": [
-        {
-          "value": "product_id",
-          "isExpression": false
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "origin": "manual",
-      "name": "release_productId_idx",
-      "entityType": "indexes",
-      "table": "release"
     },
     {
       "columns": [
