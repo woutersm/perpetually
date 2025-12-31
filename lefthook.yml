@@ -1,7 +1,9 @@
-pre-push:
+pre-commit:
   parallel: true
-  commands:
-    typecheck:
-      run: turbo run typecheck
-    test:
-      run: turbo run test:ci
+  jobs:
+    - name: typecheck
+      run: bun run typecheck
+
+    - name: tests
+      run: bun run test
+

@@ -1,43 +1,24 @@
-FROM node:22-slim AS base
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+FROM oven/bun:1.3.5 AS builder
+WORKDIR /app
 
+COPY package.json bun.lock ./
+RUN bun install
 
-FROM base AS build
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
-COPY . /usr/src/app
-WORKDIR /usr/src/app
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN pnpm run -r build
-RUN pnpm deploy --filter=api --prod /prod/api
-RUN pnpm deploy --filter=land --prod /prod/land
-RUN pnpm run --filter=dash db:generate
-RUN pnpm deploy --filter=dash --prod /prod/dash
+COPY . .
+RUN bun run build
 
-FROM base AS land
-ENV NODE_ENV production
-COPY --from=build /prod/land /prod/land
-WORKDIR /prod/land
-EXPOSE 3000
-CMD [ "npm", "run", "start" ]
+FROM oven/bun:1.3.5
+WORKDIR /app
+COPY --from=builder /app/.output /app/.output
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/package.json /app/package.json
 
-FROM base AS dash
-ENV NODE_ENV production
-ENV PORT="3000"
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=build /prod/dash /prod/dash
-WORKDIR /prod/dash
-EXPOSE 3000
-CMD [ "npm", "run", "start" ]
+COPY --from=builder /app/drizzle.config.ts /app/drizzle.config.ts
+COPY --from=builder /app/drizzle /app/drizzle
+COPY --from=builder /app/scripts /app/scripts
+COPY --from=builder /app/src/lib /app/src/lib
 
-FROM base AS api
-ENV NODE_ENV production
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=build /prod/api /prod/api
-COPY --from=build /usr/src/app/apps/api/dist /prod/api/dist
-COPY --from=build /usr/src/app/apps/api/api.yaml /prod/api/api.yaml
-WORKDIR /prod/api
-EXPOSE 3001
-CMD [ "npm", "run", "start" ]
+COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
 
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -1,5 +1,60 @@
-node_modules
+# Git
 .git
 .gitignore
-*.md
+.gitattributes
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+ci/
+
+# Development
+node_modules
+.env
+.env.local
+.env.*.local
+.cache
 dist
+build
+
+# Build outputs and caches (critical - avoid stale CSS hash issues)
+.output
+.nitro
+.tanstack
+.vinxi
+
+# Testing
+coverage
+.nyc_output
+test
+
+# Documentation
+README.md
+CHANGELOG.md
+*.md
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Misc
+npm-debug.log
+yarn-error.log
+.npm
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose*.yml
+
+# Package managers
+bun.lock.bak
+.bun/

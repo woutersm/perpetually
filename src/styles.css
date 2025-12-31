@@ -1,0 +1,370 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Geist Font - Modern, distinctive, excellent for tech products */
+@font-face {
+  font-family: 'Geist';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/Geist-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/Geist-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-sans/Geist-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-mono/GeistMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/fonts/geist-mono/GeistMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* Vibrant accent - Coral/Orange sprinkles */
+  --color-vibrant: hsl(var(--vibrant));
+  --color-vibrant-foreground: hsl(var(--vibrant-foreground));
+
+  /* Success state */
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  /* Warning state */
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT THEME - Clean, Trustworthy, Warm Undertones
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --radius: 0.625rem;
+
+  /* Core - Warm white with subtle warmth */
+  --background: 30 20% 99%;
+  --foreground: 220 20% 10%;
+
+  /* Cards - Pure white, slight elevation feel */
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 10%;
+
+  /* Popovers - Crisp white */
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 10%;
+
+  /* Primary - Deep slate, trustworthy */
+  --primary: 220 20% 14%;
+  --primary-foreground: 30 20% 99%;
+
+  /* Secondary - Warm gray */
+  --secondary: 220 10% 95%;
+  --secondary-foreground: 220 20% 20%;
+
+  /* Muted - Subtle warm gray */
+  --muted: 220 10% 96%;
+  --muted-foreground: 220 10% 45%;
+
+  /* Accent - Light warm tint */
+  --accent: 25 30% 96%;
+  --accent-foreground: 220 20% 14%;
+
+  /* Vibrant - THE CORAL SPRINKLE ✨ */
+  --vibrant: 24 95% 53%;
+  --vibrant-foreground: 0 0% 100%;
+
+  /* Success - Fresh green */
+  --success: 142 70% 40%;
+  --success-foreground: 0 0% 100%;
+
+  /* Warning - Warm amber */
+  --warning: 38 95% 50%;
+  --warning-foreground: 30 20% 10%;
+
+  /* Destructive - Clear red */
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Borders - Subtle, warm */
+  --border: 220 13% 90%;
+  --input: 220 13% 90%;
+  --ring: 24 95% 53%;
+
+  /* Charts - Warm palette with coral lead */
+  --chart-1: 24 95% 53%;
+  --chart-2: 142 70% 40%;
+  --chart-3: 220 70% 50%;
+  --chart-4: 38 95% 50%;
+  --chart-5: 280 65% 55%;
+
+  /* Sidebar - Slightly cooler for contrast */
+  --sidebar: 220 15% 97%;
+  --sidebar-foreground: 220 20% 10%;
+  --sidebar-primary: 24 95% 53%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 25 30% 94%;
+  --sidebar-accent-foreground: 220 20% 14%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 24 95% 53%;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK THEME - Rich, Sophisticated, Coral Glow
+   ═══════════════════════════════════════════════════════════════ */
+.dark {
+  /* Core - Deep warm black */
+  --background: 220 20% 7%;
+  --foreground: 30 15% 95%;
+
+  /* Cards - Elevated surface */
+  --card: 220 18% 10%;
+  --card-foreground: 30 15% 95%;
+
+  /* Popovers */
+  --popover: 220 18% 10%;
+  --popover-foreground: 30 15% 95%;
+
+  /* Primary - Light for contrast */
+  --primary: 30 15% 95%;
+  --primary-foreground: 220 20% 7%;
+
+  /* Secondary - Warm dark gray */
+  --secondary: 220 15% 15%;
+  --secondary-foreground: 30 15% 90%;
+
+  /* Muted - Subtle elevation */
+  --muted: 220 15% 15%;
+  --muted-foreground: 220 10% 55%;
+
+  /* Accent - Warm tinted surface */
+  --accent: 25 15% 14%;
+  --accent-foreground: 30 15% 95%;
+
+  /* Vibrant - CORAL GLOW ✨ (slightly brighter in dark) */
+  --vibrant: 24 100% 58%;
+  --vibrant-foreground: 220 20% 7%;
+
+  /* Success */
+  --success: 142 70% 45%;
+  --success-foreground: 220 20% 7%;
+
+  /* Warning */
+  --warning: 38 95% 55%;
+  --warning-foreground: 220 20% 7%;
+
+  /* Destructive */
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Borders - Subtle warm */
+  --border: 220 15% 18%;
+  --input: 220 15% 18%;
+  --ring: 24 100% 58%;
+
+  /* Charts - Vibrant in dark */
+  --chart-1: 24 100% 58%;
+  --chart-2: 142 70% 50%;
+  --chart-3: 220 80% 60%;
+  --chart-4: 38 95% 60%;
+  --chart-5: 280 70% 65%;
+
+  /* Sidebar */
+  --sidebar: 220 20% 5%;
+  --sidebar-foreground: 30 15% 95%;
+  --sidebar-primary: 24 100% 58%;
+  --sidebar-primary-foreground: 220 20% 7%;
+  --sidebar-accent: 25 15% 12%;
+  --sidebar-accent-foreground: 30 15% 95%;
+  --sidebar-border: 220 15% 14%;
+  --sidebar-ring: 24 100% 58%;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════════ */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-feature-settings: "rlig" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
+  }
+
+  /* Slightly tighter headings for that premium feel */
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+
+  /* Subtle focus ring with coral accent */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CODE & MONO
+   ═══════════════════════════════════════════════════════════════ */
+code, kbd, pre, samp {
+  font-family: var(--font-mono);
+  font-feature-settings: "liga" 0;
+}
+
+code:not(pre code) {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm font-medium;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════════ */
+@layer utilities {
+  /* Vibrant gradient for special elements */
+  .bg-gradient-vibrant {
+    background: linear-gradient(135deg, hsl(var(--vibrant)) 0%, hsl(30 95% 55%) 100%);
+  }
+
+  /* Subtle glow effect for vibrant elements */
+  .glow-vibrant {
+    box-shadow: 0 0 20px -5px hsl(var(--vibrant) / 0.4);
+  }
+
+  /* Text gradient for headings */
+  .text-gradient-vibrant {
+    background: linear-gradient(135deg, hsl(var(--vibrant)) 0%, hsl(30 90% 50%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtle animation for interactive elements */
+  .hover-lift {
+    @apply transition-transform duration-200;
+  }
+  .hover-lift:hover {
+    @apply -translate-y-0.5;
+  }
+
+  /* Status dot animations */
+  .pulse-success {
+    animation: pulse-success 2s infinite;
+  }
+
+  @keyframes pulse-success {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--success) / 0.4); }
+    50% { box-shadow: 0 0 0 4px hsl(var(--success) / 0); }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SELECTION STYLING
+   ═══════════════════════════════════════════════════════════════ */
+::selection {
+  background: hsl(var(--vibrant) / 0.2);
+  color: hsl(var(--foreground));
+}
+
+.dark ::selection {
+  background: hsl(var(--vibrant) / 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLLBAR STYLING
+   ═══════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+  background-clip: content-box;
+}
