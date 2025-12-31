@@ -7,7 +7,9 @@ import { eq, and, desc, count, gte, sql } from "drizzle-orm";
 
 export const getDashboardStats = createServerFn({ method: "GET" })
   .middleware([authMiddleware, loggingMiddleware("getDashboardStats")])
-  .handler(async ({ context: { organizationId } }) => {
+  .inputValidator((data: { isTestMode?: boolean }) => data)
+  .handler(async ({ data, context: { organizationId } }) => {
+    const isTestMode = data?.isTestMode ?? false;
     // Get total products and active count
     const products = await db
       .select({
@@ -28,7 +30,12 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         createdAt: license.createdAt,
       })
       .from(license)
-      .where(eq(license.organizationId, organizationId));
+      .where(
+        and(
+          eq(license.organizationId, organizationId),
+          eq(license.isTest, isTestMode)
+        )
+      );
 
     const activeLicenses = licenses.filter((l) => l.status === "active").length;
 
@@ -61,11 +68,17 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       .from(customer)
       .where(eq(customer.organizationId, organizationId));
 
-    // Get total activations
+    // Get total activations (filtered by license test mode)
     const [activationCount] = await db
       .select({ count: count() })
       .from(activation)
-      .where(eq(activation.organizationId, organizationId));
+      .innerJoin(license, eq(activation.licenseId, license.id))
+      .where(
+        and(
+          eq(activation.organizationId, organizationId),
+          eq(license.isTest, isTestMode)
+        )
+      );
 
     // Get recent licenses with product and customer info
     const recentLicenses = await db
@@ -87,7 +100,12 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       .from(license)
       .leftJoin(product, eq(license.productId, product.id))
       .leftJoin(customer, eq(license.customerId, customer.id))
-      .where(eq(license.organizationId, organizationId))
+      .where(
+        and(
+          eq(license.organizationId, organizationId),
+          eq(license.isTest, isTestMode)
+        )
+      )
       .orderBy(desc(license.createdAt))
       .limit(5);
 
@@ -102,6 +120,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       .where(
         and(
           eq(license.organizationId, organizationId),
+          eq(license.isTest, isTestMode),
           eq(license.status, "active"),
           gte(license.expiresAt, now),
           sql`${license.expiresAt} <= ${new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)}`

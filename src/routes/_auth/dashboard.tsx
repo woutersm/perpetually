@@ -18,8 +18,8 @@ import { getDashboardStats } from "@/functions/dashboard";
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardPage,
-  loader: async () => {
-    const stats = await getDashboardStats();
+  loader: async ({ context }) => {
+    const stats = await getDashboardStats({ data: { isTestMode: context.isTestMode } });
     return { stats };
   },
 });

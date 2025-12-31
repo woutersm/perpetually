@@ -3,7 +3,7 @@
 > Progress tracking for implementing the [Product Blueprint](./PRODUCT_BLUEPRINT.md)
 
 **Started**: December 2024
-**Status**: Phase 3 Complete
+**Status**: Phase 8 Complete
 
 ---
 
@@ -120,74 +120,74 @@ This document tracks the implementation progress of refactoring Perpetually from
 
 ---
 
-## Phase 4: License State Machine
+## Phase 4: License State Machine ✓
 
-### 4.1 Update License Status Logic
+### 4.1 Update License Status Logic ✓
 
-- [ ] Create `disableLicense` function with required reason
-- [ ] Create `enableLicense` function (clears disabled fields)
-- [ ] Remove `revokeLicense` function (replaced by `disableLicense`)
-- [ ] Update `updateLicense` to handle new status model
+- [x] Create `disableLicense` function with required reason
+- [x] Create `enableLicense` function (clears disabled fields)
+- [x] Remove `revokeLicense` function (replaced by `disableLicense`) - N/A, didn't exist
+- [x] Update `updateLicense` to handle new status model (status removed, use enable/disable)
 
-**Files to modify:**
+**Files modified:**
 - `src/functions/licenses.ts`
 
-### 4.2 Update Validation Logic
+### 4.2 Update Validation Logic ✓
 
-- [ ] Update `POST /api/v1/validate` to use computed expiration
-- [ ] Return appropriate error for `disabled` status with reason
-- [ ] Return appropriate error for expired licenses
+- [x] Update `POST /api/v1/validate` to use computed expiration
+- [x] Return appropriate error for `disabled` status with reason (`disabledReason` field)
+- [x] Return appropriate error for expired licenses
 
-**Files to modify:**
-- `src/lib/api/` (validation endpoint)
+**Files modified:**
+- `src/lib/api/app.ts`
+- `src/lib/api/schemas.ts`
 
-### 4.3 Update Dashboard UI
+### 4.3 Update Dashboard UI ✓
 
-- [ ] Update license detail page with new status display
-- [ ] Add disable/enable actions with reason selection
-- [ ] Show `disabledReason` and `disabledNotes` when disabled
-- [ ] Update license list filtering for new statuses
+- [x] Update license detail page with new status display
+- [x] Add disable/enable actions with reason selection
+- [x] Show `disabledReason` and `disabledNotes` when disabled
+- [x] Update license list filtering for new statuses
 
-**Files to modify:**
-- `src/routes/_auth/licenses/` (UI components)
+**Files modified:**
+- `src/routes/_auth/licenses/$licenseId.tsx`
+- `src/routes/_auth/licenses/index.tsx` (already correct)
 
 ---
 
-## Phase 5: Audit Trail
+## Phase 5: Audit Trail ✓
 
-### 5.1 Create Event Logging Utility
+### 5.1 Create Event Logging Utility ✓
 
-- [ ] Create `logLicenseEvent` helper function
-- [ ] Accept: licenseId, type, actorType, actorId, data, request (for IP/UA)
-- [ ] Insert into `license_event` table
+- [x] Create `logLicenseEvent` helper function
+- [x] Accept: licenseId, type, actorType, actorId, data, request (for IP/UA)
+- [x] Insert into `license_event` table
 
-**Files to create:**
+**Files created:**
 - `src/lib/audit.ts`
 
-### 5.2 Integrate Event Logging
+### 5.2 Integrate Event Logging ✓
 
-- [ ] Log `license.created` in webhook handler
-- [ ] Log `license.status_changed` in enable/disable functions
-- [ ] Log `license.extended` when `expiresAt` changes
-- [ ] Log `license.key_regenerated` in key regeneration function
-- [ ] Log `activation.created` in activation function
-- [ ] Log `activation.removed` in deactivation function
+- [x] Log `license.created` in webhook handler (already done in Phase 3)
+- [x] Log `license.status_changed` in enable/disable functions
+- [x] Log `license.extended` when `expiresAt` changes
+- [ ] Log `license.key_regenerated` in key regeneration function (deferred - no regen function yet)
+- [x] Log `activation.created` in activation function
+- [x] Log `activation.removed` in deactivation function
 
-**Files to modify:**
-- `src/routes/api/hooks/$organizationId.ts`
+**Files modified:**
 - `src/functions/licenses.ts`
-- `src/routes/_auth/portal/` (portal functions)
 
-### 5.3 Display Audit History
+### 5.3 Display Audit History ✓
 
-- [ ] Create `getLicenseEvents` server function
-- [ ] Add "History" tab/section to license detail page
-- [ ] Display events in chronological order
-- [ ] Show actor, type, data, timestamp
+- [x] Create `getLicenseEvents` server function
+- [x] Add "History" section to license detail page
+- [x] Display events in chronological order
+- [x] Show actor, type, data, timestamp
 
-**Files to modify:**
+**Files modified:**
 - `src/functions/licenses.ts`
-- `src/routes/_auth/licenses/$licenseId.tsx` (or similar)
+- `src/routes/_auth/licenses/$licenseId.tsx`
 
 ---
 
@@ -224,71 +224,67 @@ This document tracks the implementation progress of refactoring Perpetually from
 
 ---
 
-## Phase 7: Email Notifications
+## Phase 7: Email Notifications ✓
 
-### 7.1 Set Up Email Infrastructure
+### 7.1 Set Up Email Infrastructure ✓
 
-- [ ] Choose provider (Resend recommended)
-- [ ] Add API key to environment
-- [ ] Create email sending utility
+- [x] Choose provider (Resend)
+- [x] Add API key to environment
+- [x] Create email sending utility
 
-**Files to create:**
-- `src/lib/email.ts`
+**Files created:**
+- `src/lib/email.ts` - Resend client wrapper
+- `src/lib/email/notifications.ts` - Email sending functions
+- `src/lib/email/templates.ts` - HTML email templates
 
-### 7.2 Implement Notification Types
+### 7.2 Implement Notification Types ✓
 
-- [ ] License created notification (to customer)
-- [ ] License expiring soon (7 days, 1 day before)
-- [ ] License expired notification
-- [ ] Refund detected notification (to org owner)
-- [ ] New activation notification (optional, to customer)
+- [x] License created notification (to customer)
+- [x] License expiring soon (7 days, 1 day before)
+- [x] License expired notification
+- [x] Refund detected notification (to org owner)
 
-**Files to create:**
-- `src/lib/email/templates/`
+### 7.3 Add Scheduled Jobs (for expiring soon) ✓
 
-### 7.3 Add Scheduled Jobs (for expiring soon)
+- [x] Set up Trigger.dev for scheduled tasks
+- [x] Query licenses expiring in 7 days (not yet notified)
+- [x] Query licenses expiring in 1 day (not yet notified)
+- [x] Send notifications and mark as notified
+- [x] Add notification tracking fields to license table
 
-- [ ] Set up cron job or scheduled task
-- [ ] Query licenses expiring in 7 days (not yet notified)
-- [ ] Query licenses expiring in 1 day (not yet notified)
-- [ ] Send notifications and mark as notified
-
-**Files to create:**
-- `src/jobs/` or use Trigger.dev
+**Files created:**
+- `trigger.config.ts` - Trigger.dev configuration
+- `src/trigger/license-expiry-notifications.ts` - Daily scheduled task
 
 ---
 
-## Phase 8: Customer Portal Enhancements
+## Phase 8: Customer Portal Enhancements ✓
 
-### 8.1 Activation Management
+### 8.1 Activation Management ✓
 
-- [ ] List all activations for each license
-- [ ] Add "Remove" button for each activation
-- [ ] Confirm before removing
-- [ ] Log `activation.removed` event
+- [x] List all activations for each license
+- [x] Add "Remove" button for each activation
+- [x] Confirm before removing (AlertDialog)
+- [x] Log `activation.removed` event
 
-**Files to modify:**
-- `src/routes/$orgSlug/portal/$customerId.tsx`
-- `src/functions/portal.ts`
+### 8.2 View Audit History ✓
 
-### 8.2 View Audit History
+- [x] Show relevant events to customer (activations, key regeneration)
+- [x] Filter out internal events (status changes by admins)
+- [x] Add expandable history with "Show more/less" toggle
+- [x] Add relative time formatting ("just now", "2 hours ago")
 
-- [ ] Show relevant events to customer (activations, key regeneration)
-- [ ] Filter out internal events (status changes by admins)
+### 8.3 Key Regeneration ✓
 
-**Files to modify:**
-- `src/routes/$orgSlug/portal/$customerId.tsx`
+- [x] Add "Regenerate Key" button
+- [x] Confirm with warning that old key will stop working
+- [x] Generate new key, invalidate old
+- [x] Log `license.key_regenerated` event
 
-### 8.3 Key Regeneration
-
-- [ ] Add "Regenerate Key" button
-- [ ] Confirm with warning that old key will stop working
-- [ ] Generate new key, invalidate old
-- [ ] Log `license.key_regenerated` event
-
-**Files to modify:**
-- `src/functions/portal.ts`
-- `src/routes/$orgSlug/portal/$customerId.tsx`
+**Files modified:**
+- `src/routes/portal/$slug/$customerId.tsx` - Added ActivationsList, EventHistory components
+- `src/functions/portal.ts` - Added removeActivation, updated getPortalCustomer
+- `src/lib/utils.ts` - Added formatRelativeTime utility
 
 ---
 
@@ -334,6 +330,8 @@ Before deploying, ensure:
 | Dec 2024 | Phase 1 | Schema changes, license_event table, release table removed | License status simplified to active/disabled |
 | Dec 2024 | Phase 2 | All manual creation removed | Products, customers, licenses now Stripe-only |
 | Dec 2024 | Phase 3 | Stripe sync webhook handlers | Product/customer/license sync from Stripe events |
+| Dec 2024 | Phase 4 | License state machine with enable/disable | disabledReason in API, UI for reason selection |
+| Dec 2024 | Phase 5 | Audit trail system | logLicenseEvent utility, event logging, History UI |
 
 ---
 

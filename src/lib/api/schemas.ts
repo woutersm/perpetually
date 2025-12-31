@@ -80,6 +80,14 @@ export const ValidateErrorResponseSchema = z
   .object({
     valid: z.literal(false),
     error: z.string().openapi({ example: ApiErrors.keyInvalid }),
+    // Optional additional context for the error
+    disabledReason: z
+      .enum(["refund", "chargeback", "fraud", "customer_request", "other"])
+      .optional()
+      .openapi({
+        example: "refund",
+        description: "When error is 'License is disabled', this contains the reason",
+      }),
   })
   .openapi("ValidateErrorResponse");
 

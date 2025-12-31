@@ -2,8 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageLayout } from "@/components/page-layout";
 import {
   getLicense,
+  getLicenseEvents,
   updateLicense,
   disableLicense,
+  enableLicense,
   createActivation,
   deleteActivation,
 } from "@/functions/licenses";
@@ -40,31 +42,68 @@ import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
-import { Plus, Key, Monitor, Copy, Check, Calendar, User, Package, Trash2, Clock, Edit2, AlertTriangle } from "lucide-react";
+import { Plus, Key, Monitor, Copy, Check, Calendar, User, Package, Trash2, Clock, Edit2, AlertTriangle, Power, Ban, History } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-
-type LicenseStatus = "active" | "disabled";
 
 export const Route = createFileRoute("/_auth/licenses/$licenseId")({
   component: LicenseDetailPage,
   loader: async ({ params }) => {
-    const license = await getLicense({ data: { licenseId: params.licenseId } });
-    return { license };
+    const [license, events] = await Promise.all([
+      getLicense({ data: { licenseId: params.licenseId } }),
+      getLicenseEvents({ data: { licenseId: params.licenseId } }),
+    ]);
+    return { license, events };
   },
 });
 
+type DisabledReason = "refund" | "chargeback" | "fraud" | "customer_request" | "other";
+
+const DISABLED_REASON_LABELS: Record<DisabledReason, string> = {
+  refund: "Refund",
+  chargeback: "Chargeback",
+  fraud: "Fraud",
+  customer_request: "Customer Request",
+  other: "Other",
+};
+
+type EventType =
+  | "license.created"
+  | "license.status_changed"
+  | "license.extended"
+  | "license.key_regenerated"
+  | "activation.created"
+  | "activation.removed";
+
+const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  "license.created": "License Created",
+  "license.status_changed": "Status Changed",
+  "license.extended": "Expiration Extended",
+  "license.key_regenerated": "Key Regenerated",
+  "activation.created": "Activation Added",
+  "activation.removed": "Activation Removed",
+};
+
+const ACTOR_TYPE_LABELS: Record<string, string> = {
+  user: "User",
+  api: "API",
+  system: "System",
+  customer: "Customer",
+};
+
 function LicenseDetailPage() {
-  const { license } = Route.useLoaderData();
+  const { license, events } = Route.useLoaderData();
   const router = useRouter();
   const [activationOpen, setActivationOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [revokeOpen, setRevokeOpen] = useState(false);
+  const [disableOpen, setDisableOpen] = useState(false);
   const [deleteActivationId, setDeleteActivationId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const submitActivation = useServerFn(createActivation);
   const submitUpdate = useServerFn(updateLicense);
   const submitDisable = useServerFn(disableLicense);
+  const submitEnable = useServerFn(enableLicense);
   const submitDeleteActivation = useServerFn(deleteActivation);
 
   const activationForm = useForm({
@@ -86,7 +125,6 @@ function LicenseDetailPage() {
 
   const editForm = useForm({
     defaultValues: {
-      status: license.status,
       expiresAt: license.expiresAt
         ? new Date(license.expiresAt).toISOString().split("T")[0]
         : "",
@@ -96,7 +134,6 @@ function LicenseDetailPage() {
       await submitUpdate({
         data: {
           licenseId: license.id,
-          status: value.status as "active" | "disabled",
           expiresAt: value.expiresAt || undefined,
           activationLimit: value.activationLimit
             ? parseInt(value.activationLimit)
@@ -109,15 +146,31 @@ function LicenseDetailPage() {
     },
   });
 
-  const handleDisable = async () => {
-    await submitDisable({
-      data: {
-        licenseId: license.id,
-        reason: "customer_request",
-      },
+  const disableForm = useForm({
+    defaultValues: {
+      reason: "customer_request" as DisabledReason,
+      notes: "",
+    },
+    onSubmit: async ({ value }) => {
+      await submitDisable({
+        data: {
+          licenseId: license.id,
+          reason: value.reason,
+          notes: value.notes || undefined,
+        },
+      });
+      setDisableOpen(false);
+      disableForm.reset();
+      toast.success("License disabled");
+      router.invalidate();
+    },
+  });
+
+  const handleEnable = async () => {
+    await submitEnable({
+      data: { licenseId: license.id },
     });
-    setRevokeOpen(false);
-    toast.success("License disabled");
+    toast.success("License enabled");
     router.invalidate();
   };
 
@@ -136,10 +189,20 @@ function LicenseDetailPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Compute if license is expired (active but past expiration date)
+  const isExpired =
+    license.status === "active" &&
+    license.expiresAt &&
+    new Date(license.expiresAt) < new Date();
+
+  const displayStatus = isExpired ? "expired" : license.status;
+
   const getStatusVariant = (status: string) => {
     switch (status) {
       case "active":
         return "outline-success";
+      case "expired":
+        return "outline-warning";
       case "disabled":
         return "outline-destructive";
       default:
@@ -160,12 +223,22 @@ function LicenseDetailPage() {
             <Edit2 className="h-4 w-4" />
             Edit
           </Button>
-          {license.status !== "disabled" && (
+          {license.status === "disabled" ? (
+            <Button
+              variant="outline"
+              className="text-success border-success/30 hover:bg-success/10"
+              onClick={handleEnable}
+            >
+              <Power className="h-4 w-4" />
+              Enable
+            </Button>
+          ) : (
             <Button
               variant="outline"
               className="text-destructive border-destructive/30 hover:bg-destructive/10"
-              onClick={() => setRevokeOpen(true)}
+              onClick={() => setDisableOpen(true)}
             >
+              <Ban className="h-4 w-4" />
               Disable
             </Button>
           )}
@@ -195,8 +268,8 @@ function LicenseDetailPage() {
                       <Copy className="h-4 w-4" />
                     )}
                   </Button>
-                  <Badge variant={getStatusVariant(license.status)}>
-                    {license.status}
+                  <Badge variant={getStatusVariant(displayStatus)}>
+                    {displayStatus}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -206,6 +279,58 @@ function LicenseDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Expired Status Alert */}
+        {isExpired && (
+          <div className="rounded-2xl border border-warning/30 bg-warning/5 p-5">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10">
+                <AlertTriangle className="h-5 w-5 text-warning" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-warning mb-1">License Expired</h3>
+                <p className="text-sm text-muted-foreground">
+                  This license expired on{" "}
+                  {new Date(license.expiresAt!).toLocaleDateString()}. The customer
+                  can no longer use it until the expiration date is extended.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Disabled Status Alert */}
+        {license.status === "disabled" && (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10">
+                <Ban className="h-5 w-5 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-destructive mb-1">License Disabled</h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  This license was disabled{" "}
+                  {license.disabledAt
+                    ? `on ${new Date(license.disabledAt).toLocaleDateString()}`
+                    : ""}
+                  {license.disabledReason && (
+                    <>
+                      {" "}for reason:{" "}
+                      <span className="font-medium">
+                        {DISABLED_REASON_LABELS[license.disabledReason as DisabledReason]}
+                      </span>
+                    </>
+                  )}
+                </p>
+                {license.disabledNotes && (
+                  <p className="text-sm text-muted-foreground bg-background/50 rounded-lg p-3 mt-2">
+                    {license.disabledNotes}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Info Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -374,6 +499,106 @@ function LicenseDetailPage() {
             </div>
           )}
         </div>
+
+        {/* History / Audit Trail */}
+        <div className="rounded-2xl border border-border/60 overflow-hidden">
+          <div className="border-b border-border/40 bg-muted/30 px-6 py-5 flex items-center gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
+              <History className="h-5 w-5 text-vibrant" />
+            </div>
+            <div>
+              <h2 className="font-semibold">History</h2>
+              <p className="text-sm text-muted-foreground">
+                Audit trail of all events for this license
+              </p>
+            </div>
+          </div>
+
+          {events.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mx-auto mb-4">
+                <History className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No events yet</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                Events will appear here as actions are taken on this license.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border/40">
+              {events.map((event) => (
+                <div
+                  key={event.id}
+                  className="px-6 py-4 hover:bg-muted/20 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium">
+                          {EVENT_TYPE_LABELS[event.type as EventType] || event.type}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {ACTOR_TYPE_LABELS[event.actorType] || event.actorType}
+                        </Badge>
+                      </div>
+                      {event.data && (
+                        <div className="text-sm text-muted-foreground">
+                          {event.type === "license.status_changed" && (
+                            <>
+                              {(event.data as Record<string, unknown>).previousStatus} →{" "}
+                              {(event.data as Record<string, unknown>).newStatus}
+                              {(event.data as Record<string, unknown>).reason && (
+                                <span className="ml-2">
+                                  (
+                                  {DISABLED_REASON_LABELS[
+                                    (event.data as Record<string, unknown>).reason as DisabledReason
+                                  ] || (event.data as Record<string, unknown>).reason}
+                                  )
+                                </span>
+                              )}
+                            </>
+                          )}
+                          {event.type === "license.extended" && (
+                            <>
+                              Extended to{" "}
+                              {(event.data as Record<string, unknown>).newExpiresAt
+                                ? new Date(
+                                    (event.data as Record<string, unknown>).newExpiresAt as string
+                                  ).toLocaleDateString()
+                                : "Never"}
+                            </>
+                          )}
+                          {event.type === "activation.created" && (
+                            <>
+                              Device:{" "}
+                              {(event.data as Record<string, unknown>).name || "Unnamed"}
+                            </>
+                          )}
+                          {event.type === "activation.removed" && (
+                            <>
+                              Device:{" "}
+                              {(event.data as Record<string, unknown>).name || "Unnamed"}
+                            </>
+                          )}
+                          {event.type === "license.created" && (
+                            <>
+                              Created from Stripe payment
+                              {(event.data as Record<string, unknown>).isTest && " (Test mode)"}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap">
+                      <Clock className="h-4 w-4" />
+                      {new Date(event.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Add Activation Dialog */}
@@ -468,7 +693,7 @@ function LicenseDetailPage() {
             </div>
             <DialogTitle>Edit License</DialogTitle>
             <DialogDescription>
-              Update license status and limits.
+              Update license expiration and activation limits.
             </DialogDescription>
           </DialogHeader>
           <form
@@ -478,26 +703,6 @@ function LicenseDetailPage() {
             }}
           >
             <div className="space-y-4 py-4">
-              <editForm.Field name="status">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select
-                      value={field.state.value}
-                      onValueChange={(value) => field.handleChange(value as LicenseStatus)}
-                    >
-                      <SelectTrigger className="h-11">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="disabled">Disabled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </editForm.Field>
-
               <editForm.Field name="expiresAt">
                 {(field) => (
                   <div className="space-y-2">
@@ -560,30 +765,93 @@ function LicenseDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Disable Confirmation */}
-      <AlertDialog open={revokeOpen} onOpenChange={setRevokeOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
+      {/* Disable License Dialog */}
+      <Dialog open={disableOpen} onOpenChange={setDisableOpen}>
+        <DialogContent>
+          <DialogHeader>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 mb-4">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
+              <Ban className="h-6 w-6 text-destructive" />
             </div>
-            <AlertDialogTitle>Disable License?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <DialogTitle>Disable License</DialogTitle>
+            <DialogDescription>
               This will disable this license. The customer will no longer be
               able to use it. You can re-enable it later if needed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDisable}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Disable License
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              disableForm.handleSubmit();
+            }}
+          >
+            <div className="space-y-4 py-4">
+              <disableForm.Field name="reason">
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label>Reason</Label>
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(value) => field.handleChange(value as DisabledReason)}
+                    >
+                      <SelectTrigger className="h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="refund">Refund</SelectItem>
+                        <SelectItem value="chargeback">Chargeback</SelectItem>
+                        <SelectItem value="fraud">Fraud</SelectItem>
+                        <SelectItem value="customer_request">Customer Request</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </disableForm.Field>
+
+              <disableForm.Field name="notes">
+                {(field) => (
+                  <div className="space-y-2">
+                    <Label htmlFor={field.name}>
+                      Notes <span className="text-muted-foreground">(optional)</span>
+                    </Label>
+                    <Textarea
+                      id={field.name}
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      placeholder="Additional details about why this license is being disabled..."
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                )}
+              </disableForm.Field>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDisableOpen(false)}
+              >
+                Cancel
+              </Button>
+              <disableForm.Subscribe
+                selector={(state) => [state.canSubmit, state.isSubmitting]}
+              >
+                {([canSubmit, isSubmitting]) => (
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                    disabled={!canSubmit}
+                  >
+                    {isSubmitting ? "Disabling..." : "Disable License"}
+                  </Button>
+                )}
+              </disableForm.Subscribe>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Activation Confirmation */}
       <AlertDialog

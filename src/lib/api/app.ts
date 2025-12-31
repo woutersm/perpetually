@@ -121,6 +121,7 @@ app.openapi(validateRoute, async (c) => {
       {
         valid: false as const,
         error: ApiErrors.licenseDisabled,
+        disabledReason: foundLicense.disabledReason ?? undefined,
       },
       400
     );

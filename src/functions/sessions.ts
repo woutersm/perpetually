@@ -50,3 +50,17 @@ export const getSessionFn = createServerFn({ method: "GET" })
 
 // Type for the session with organization context
 export type SessionWithOrg = NonNullable<Awaited<ReturnType<typeof getSessionFn>>>;
+
+// Get test mode from cookie
+const TEST_MODE_COOKIE = "perpetually_test_mode";
+
+export const getTestModeFn = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const headers = getRequestHeaders();
+    const cookieHeader = headers.get("cookie") || "";
+    const match = cookieHeader.match(
+      new RegExp(`(^|; )${TEST_MODE_COOKIE}=([^;]+)`)
+    );
+    return match?.[2] === "true";
+  }
+);

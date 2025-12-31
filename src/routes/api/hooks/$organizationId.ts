@@ -9,7 +9,14 @@ import {
   license,
   licenseEvent,
   licensePolicy,
+  membership,
+  user,
 } from "@/lib/db/schema";
+import {
+  sendLicenseCreatedEmail,
+  sendRefundDetectedEmail,
+  isEmailConfigured,
+} from "@/lib/email/notifications";
 
 // Generate license key (e.g., XXXX-XXXX-XXXX-XXXX)
 function generateLicenseKey(): string {
@@ -242,6 +249,7 @@ async function findOrCreateCustomer({
 
 async function createLicenseFromPayment({
   organizationId,
+  orgName,
   stripeProductId,
   stripeCustomerId,
   stripePaymentIntentId,
@@ -250,6 +258,7 @@ async function createLicenseFromPayment({
   stripe,
 }: {
   organizationId: string;
+  orgName: string;
   stripeProductId: string;
   stripeCustomerId: string;
   stripePaymentIntentId: string;
@@ -368,6 +377,25 @@ async function createLicenseFromPayment({
     organizationId,
   });
 
+  // Send license created email to customer
+  if (isEmailConfigured()) {
+    try {
+      await sendLicenseCreatedEmail({
+        customerEmail: localCustomer.email,
+        customerName: localCustomer.name ?? localCustomer.email,
+        licenseKey: newLicense.key,
+        productName: localProduct.name,
+        expiresAt,
+        activationLimit,
+        orgName,
+      });
+      console.log("License created email sent to:", localCustomer.email);
+    } catch (emailError) {
+      // Don't fail the webhook if email fails
+      console.error("Failed to send license created email:", emailError);
+    }
+  }
+
   return newLicense;
 }
 
@@ -375,9 +403,11 @@ async function createLicenseFromPayment({
 
 async function handleChargeRefunded({
   organizationId,
+  orgName,
   charge,
 }: {
   organizationId: string;
+  orgName: string;
   charge: Stripe.Charge;
 }) {
   const paymentIntentId = charge.payment_intent as string | null;
@@ -427,7 +457,58 @@ async function handleChargeRefunded({
     amountRefunded: charge.amount_refunded,
   });
 
-  // TODO (Phase 7): Send email notification to org owner
+  // Send email notification to org owner
+  if (isEmailConfigured()) {
+    try {
+      // Get org owner email
+      const [ownerMembership] = await db
+        .select({
+          email: user.email,
+          name: user.name,
+        })
+        .from(membership)
+        .innerJoin(user, eq(membership.userId, user.id))
+        .where(
+          and(
+            eq(membership.organizationId, organizationId),
+            eq(membership.role, "owner")
+          )
+        )
+        .limit(1);
+
+      // Get license details with product and customer
+      const [licenseDetails] = await db
+        .select({
+          productName: product.name,
+          customerEmail: customer.email,
+          customerName: customer.name,
+        })
+        .from(license)
+        .innerJoin(product, eq(license.productId, product.id))
+        .innerJoin(customer, eq(license.customerId, customer.id))
+        .where(eq(license.id, affectedLicense.id))
+        .limit(1);
+
+      if (ownerMembership && licenseDetails) {
+        const refundAmountFormatted = (charge.amount_refunded / 100).toFixed(2);
+
+        await sendRefundDetectedEmail({
+          ownerEmail: ownerMembership.email,
+          orgName,
+          licenseId: affectedLicense.id,
+          licenseKey: affectedLicense.key,
+          productName: licenseDetails.productName,
+          customerEmail: licenseDetails.customerEmail,
+          customerName: licenseDetails.customerName ?? licenseDetails.customerEmail,
+          refundAmount: `$${refundAmountFormatted}`,
+        });
+        console.log("Refund notification email sent to:", ownerMembership.email);
+      }
+    } catch (emailError) {
+      // Don't fail the webhook if email fails
+      console.error("Failed to send refund notification email:", emailError);
+    }
+  }
 }
 
 // ==================== Webhook Route ====================
@@ -563,6 +644,7 @@ export const Route = createFileRoute("/api/hooks/$organizationId")({
 
               await createLicenseFromPayment({
                 organizationId,
+                orgName: org.name,
                 stripeProductId,
                 stripeCustomerId: payment.customer as string,
                 stripePaymentIntentId: payment.id,
@@ -589,11 +671,12 @@ export const Route = createFileRoute("/api/hooks/$organizationId")({
               for (const stripeProductId of productIds) {
                 await createLicenseFromPayment({
                   organizationId,
+                  orgName: org.name,
                   stripeProductId,
                   stripeCustomerId: invoice.customer as string,
                   stripePaymentIntentId: invoice.payment_intent as string,
                   isTest,
-                  metadata: invoice.metadata,
+                  metadata: invoice.metadata ?? undefined,
                   stripe,
                 });
               }
@@ -603,7 +686,7 @@ export const Route = createFileRoute("/api/hooks/$organizationId")({
             // ==================== Refund Events ====================
             case "charge.refunded": {
               const charge = event.data.object as Stripe.Charge;
-              await handleChargeRefunded({ organizationId, charge });
+              await handleChargeRefunded({ organizationId, orgName: org.name, charge });
               break;
             }
 

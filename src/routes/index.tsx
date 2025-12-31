@@ -99,7 +99,7 @@ function Hero() {
           {/* Pill badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-vibrant/30 bg-vibrant/5 text-sm mb-8 group cursor-default">
             <Sparkles className="h-3.5 w-3.5 text-vibrant" />
-            <span className="text-vibrant font-medium">Now with Stripe Connect</span>
+            <span className="text-vibrant font-medium">Self-hosted & Open Source</span>
             <ChevronRight className="h-3.5 w-3.5 text-vibrant/60 group-hover:translate-x-0.5 transition-transform" />
           </div>
 
@@ -112,8 +112,8 @@ function Hero() {
 
           {/* Subheadline */}
           <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Generate, validate, and manage software licenses with a modern API.
-            Built for developers who ship products, not paperwork.
+            Generate, validate, and manage software licenses with a simple REST API.
+            Sell software with Stripe, manage licenses from one dashboard.
           </p>
 
           {/* CTA buttons */}
@@ -143,7 +143,7 @@ function Hero() {
 
           {/* Trust line */}
           <p className="mt-6 text-sm text-muted-foreground/80">
-            Free tier available &middot; No credit card required &middot; Setup in 5 minutes
+            Free & open source &middot; Self-hosted &middot; Deploy in minutes
           </p>
         </div>
 
@@ -229,12 +229,12 @@ function LogoCloud() {
     <section className="py-12 border-y border-border/40 bg-muted/20">
       <div className="max-w-7xl mx-auto px-6">
         <p className="text-center text-sm text-muted-foreground mb-8">
-          Trusted by developers at companies shipping real products
+          Built with modern technologies you already know
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-50 grayscale">
-          {["Vercel", "Supabase", "Linear", "Raycast", "Resend", "Clerk"].map((company) => (
-            <div key={company} className="text-lg font-semibold tracking-tight">
-              {company}
+        <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-60">
+          {["React", "TypeScript", "Stripe", "SQLite", "Drizzle", "TanStack"].map((tech) => (
+            <div key={tech} className="text-lg font-semibold tracking-tight">
+              {tech}
             </div>
           ))}
         </div>
@@ -264,17 +264,23 @@ function BentoFeatures() {
             <div className="absolute top-0 right-0 w-64 h-64 bg-vibrant/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-vibrant text-white shadow-lg shadow-vibrant/25">
-                <Zap className="h-6 w-6" />
+                <Shield className="h-6 w-6" />
               </div>
-              <h3 className="mt-6 text-xl font-semibold">Instant License Generation</h3>
+              <h3 className="mt-6 text-xl font-semibold">Stripe-Powered Sales</h3>
               <p className="mt-3 text-muted-foreground leading-relaxed max-w-lg">
-                Generate secure, cryptographically signed license keys instantly. Support for perpetual,
-                subscription, and trial licenses with customizable policies.
+                Connect your Stripe account once. When customers purchase your products,
+                licenses are created automatically. Handle refunds, manage subscriptions—all synced.
               </p>
-              <div className="mt-6 font-mono text-sm bg-muted/50 rounded-xl p-4 border border-border/40">
-                <span className="text-muted-foreground">// Your new license key</span>
-                <br />
-                <span className="text-vibrant">PERP</span>-X8K2-M9N1-Q4W7
+              <div className="mt-6 flex gap-3 flex-wrap">
+                <span className="px-3 py-1.5 text-xs font-medium rounded-full bg-success/10 text-success border border-success/20">
+                  Auto-sync products
+                </span>
+                <span className="px-3 py-1.5 text-xs font-medium rounded-full bg-success/10 text-success border border-success/20">
+                  Webhook handling
+                </span>
+                <span className="px-3 py-1.5 text-xs font-medium rounded-full bg-success/10 text-success border border-success/20">
+                  Refund detection
+                </span>
               </div>
             </div>
           </div>
@@ -282,11 +288,11 @@ function BentoFeatures() {
           {/* Regular feature card */}
           <div className="group relative rounded-3xl border border-border/60 bg-card p-8 transition-all hover:border-vibrant/40 hover:shadow-xl hover:shadow-vibrant/5">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vibrant/10 text-vibrant">
-              <Shield className="h-6 w-6" />
+              <Zap className="h-6 w-6" />
             </div>
-            <h3 className="mt-6 text-lg font-semibold">Stripe Integration</h3>
+            <h3 className="mt-6 text-lg font-semibold">Simple REST API</h3>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              Connect your Stripe account and licenses are automatically created when customers purchase.
+              Validate, activate, and deactivate licenses with a clean API. OpenAPI docs included.
             </p>
           </div>
 
@@ -297,7 +303,7 @@ function BentoFeatures() {
             </div>
             <h3 className="mt-6 text-lg font-semibold">Customer Portal</h3>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              Give customers a branded portal to manage their licenses, view keys, and handle activations.
+              Customers can view licenses, regenerate keys, manage activations, and see their activity history.
             </p>
           </div>
 
@@ -307,7 +313,7 @@ function BentoFeatures() {
             </div>
             <h3 className="mt-6 text-lg font-semibold">Activation Limits</h3>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              Control how many devices can use a license. Track machine IDs and revoke access remotely.
+              Control how many devices can use a license. Customers can remove old activations themselves.
             </p>
           </div>
 
@@ -315,9 +321,9 @@ function BentoFeatures() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vibrant/10 text-vibrant">
               <Clock className="h-6 w-6" />
             </div>
-            <h3 className="mt-6 text-lg font-semibold">Flexible Expiration</h3>
+            <h3 className="mt-6 text-lg font-semibold">Expiration & Notifications</h3>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              Set custom expiration dates. Perpetual, time-limited, or subscription-based—your choice.
+              Set expiration dates. Automatic email notifications 7 days, 1 day before, and on expiry.
             </p>
           </div>
 
@@ -329,18 +335,18 @@ function BentoFeatures() {
                   <BarChart3 className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">Real-time Analytics</h3>
+                  <h3 className="text-lg font-semibold">Dashboard & Audit Trail</h3>
                   <p className="mt-2 text-sm text-muted-foreground max-w-xl">
-                    Track activations, monitor license usage, and get insights into your software business with
-                    beautiful dashboards and exportable reports.
+                    See your products, customers, and licenses at a glance. Every license event is logged—
+                    activations, key regenerations, status changes. Full visibility into your business.
                   </p>
                 </div>
               </div>
               <div className="flex gap-8">
                 {[
-                  { value: "99.9%", label: "Uptime" },
-                  { value: "<50ms", label: "API Latency" },
-                  { value: "10M+", label: "Keys Validated" },
+                  { value: "SQLite", label: "Database" },
+                  { value: "REST", label: "API" },
+                  { value: "100%", label: "Self-hosted" },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
                     <p className="text-2xl font-bold text-vibrant">{stat.value}</p>

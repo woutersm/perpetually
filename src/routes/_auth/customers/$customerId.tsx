@@ -9,8 +9,10 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_auth/customers/$customerId")({
   component: CustomerDetailPage,
-  loader: async ({ params }) => {
-    const customer = await getCustomer({ data: { customerId: params.customerId } });
+  loader: async ({ params, context }) => {
+    const customer = await getCustomer({
+      data: { customerId: params.customerId, isTestMode: context.isTestMode },
+    });
     return { customer };
   },
 });

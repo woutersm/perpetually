@@ -9,6 +9,8 @@ import {
   customer,
   license,
   licensePolicy,
+  licenseEvent,
+  activation,
 } from "../src/lib/db/schema";
 
 const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || "testpassword123";
@@ -157,44 +159,247 @@ async function seed() {
       })
       .returning();
 
-    // Create sample licenses
-    console.log("Creating sample licenses...");
+    // Create sample licenses with history
+    console.log("Creating sample licenses with history...");
     const now = new Date();
     const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+    const sixMonthsFromNow = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
 
-    await db.insert(license).values([
-      {
+    // License 1: Active license with full history (created, activations, extended)
+    const [license1] = await db
+      .insert(license)
+      .values({
         key: generateLicenseKey(),
-        keyCreatedAt: now,
+        keyCreatedAt: thirtyDaysAgo,
         status: "active",
         expiresAt: oneYearFromNow,
         activationLimit: 3,
         productId: product1.id,
         customerId: customer1.id,
         organizationId: org.id,
+      })
+      .returning();
+
+    // Create activations for license 1
+    const [activation1] = await db
+      .insert(activation)
+      .values({
+        name: "John's MacBook Pro",
+        machineId: "MAC-2023-PRO-001",
+        licenseId: license1.id,
+        organizationId: org.id,
+        lastSeenAt: oneDayAgo,
+      })
+      .returning();
+
+    const [activation2] = await db
+      .insert(activation)
+      .values({
+        name: "John's Desktop",
+        machineId: "WIN-DESKTOP-002",
+        licenseId: license1.id,
+        organizationId: org.id,
+        lastSeenAt: threeDaysAgo,
+      })
+      .returning();
+
+    // Events for license 1
+    await db.insert(licenseEvent).values([
+      {
+        type: "license.created",
+        actorType: "system",
+        actorId: null,
+        data: {
+          stripePaymentIntentId: "pi_demo_123456",
+          isTest: false,
+          expiresAt: sixMonthsFromNow.toISOString(),
+          activationLimit: 3,
+        },
+        licenseId: license1.id,
+        organizationId: org.id,
+        createdAt: thirtyDaysAgo,
       },
       {
+        type: "activation.created",
+        actorType: "customer",
+        actorId: customer1.id,
+        data: {
+          activationId: activation1.id,
+          name: "John's MacBook Pro",
+          machineId: "MAC-2023-PRO-001",
+        },
+        licenseId: license1.id,
+        organizationId: org.id,
+        createdAt: new Date(thirtyDaysAgo.getTime() + 2 * 60 * 60 * 1000), // 2 hours after creation
+      },
+      {
+        type: "activation.created",
+        actorType: "customer",
+        actorId: customer1.id,
+        data: {
+          activationId: activation2.id,
+          name: "John's Desktop",
+          machineId: "WIN-DESKTOP-002",
+        },
+        licenseId: license1.id,
+        organizationId: org.id,
+        createdAt: sevenDaysAgo,
+      },
+      {
+        type: "license.extended",
+        actorType: "user",
+        actorId: createdUser.id,
+        data: {
+          previousExpiresAt: sixMonthsFromNow.toISOString(),
+          newExpiresAt: oneYearFromNow.toISOString(),
+        },
+        licenseId: license1.id,
+        organizationId: org.id,
+        createdAt: threeDaysAgo,
+      },
+    ]);
+
+    // License 2: Enterprise license (unlimited activations)
+    const [license2] = await db
+      .insert(license)
+      .values({
         key: generateLicenseKey(),
         keyCreatedAt: thirtyDaysAgo,
         status: "active",
-        expiresAt: oneYearFromNow,
-        activationLimit: null,
+        expiresAt: null, // Perpetual
+        activationLimit: null, // Unlimited
         productId: product2.id,
         customerId: customer2.id,
         organizationId: org.id,
+      })
+      .returning();
+
+    await db.insert(licenseEvent).values({
+      type: "license.created",
+      actorType: "system",
+      actorId: null,
+      data: {
+        stripePaymentIntentId: "pi_demo_789012",
+        isTest: false,
+        expiresAt: null,
+        activationLimit: null,
       },
-      {
+      licenseId: license2.id,
+      organizationId: org.id,
+      createdAt: thirtyDaysAgo,
+    });
+
+    // License 3: Disabled license (was refunded)
+    const [license3] = await db
+      .insert(license)
+      .values({
         key: generateLicenseKey(),
         keyCreatedAt: thirtyDaysAgo,
-        status: "expired",
-        expiresAt: thirtyDaysAgo, // Already expired
+        status: "disabled",
+        disabledAt: sevenDaysAgo,
+        disabledReason: "refund",
+        disabledNotes: "Customer requested refund due to compatibility issues",
+        expiresAt: oneYearFromNow,
         activationLimit: 1,
         productId: product1.id,
         customerId: customer1.id,
         organizationId: org.id,
+      })
+      .returning();
+
+    // Create and then "remove" an activation for license 3
+    const removedActivationId = crypto.randomUUID();
+
+    await db.insert(licenseEvent).values([
+      {
+        type: "license.created",
+        actorType: "system",
+        actorId: null,
+        data: {
+          stripePaymentIntentId: "pi_demo_345678",
+          isTest: false,
+          expiresAt: oneYearFromNow.toISOString(),
+          activationLimit: 1,
+        },
+        licenseId: license3.id,
+        organizationId: org.id,
+        createdAt: thirtyDaysAgo,
+      },
+      {
+        type: "activation.created",
+        actorType: "customer",
+        actorId: customer1.id,
+        data: {
+          activationId: removedActivationId,
+          name: "John's Old Laptop",
+          machineId: "MAC-OLD-001",
+        },
+        licenseId: license3.id,
+        organizationId: org.id,
+        createdAt: new Date(thirtyDaysAgo.getTime() + 1 * 60 * 60 * 1000),
+      },
+      {
+        type: "activation.removed",
+        actorType: "user",
+        actorId: createdUser.id,
+        data: {
+          activationId: removedActivationId,
+          name: "John's Old Laptop",
+          machineId: "MAC-OLD-001",
+        },
+        licenseId: license3.id,
+        organizationId: org.id,
+        createdAt: new Date(sevenDaysAgo.getTime() - 1 * 60 * 60 * 1000),
+      },
+      {
+        type: "license.status_changed",
+        actorType: "user",
+        actorId: createdUser.id,
+        data: {
+          previousStatus: "active",
+          newStatus: "disabled",
+          reason: "refund",
+          notes: "Customer requested refund due to compatibility issues",
+        },
+        licenseId: license3.id,
+        organizationId: org.id,
+        createdAt: sevenDaysAgo,
       },
     ]);
+
+    // License 4: Expired license
+    const [license4] = await db
+      .insert(license)
+      .values({
+        key: generateLicenseKey(),
+        keyCreatedAt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000), // 60 days ago
+        status: "active",
+        expiresAt: thirtyDaysAgo, // Already expired
+        activationLimit: 1,
+        productId: product1.id,
+        customerId: customer2.id,
+        organizationId: org.id,
+      })
+      .returning();
+
+    await db.insert(licenseEvent).values({
+      type: "license.created",
+      actorType: "system",
+      actorId: null,
+      data: {
+        stripePaymentIntentId: "pi_demo_expired",
+        isTest: false,
+        expiresAt: thirtyDaysAgo.toISOString(),
+        activationLimit: 1,
+      },
+      licenseId: license4.id,
+      organizationId: org.id,
+      createdAt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
+    });
 
     console.log("\n✅ Seed completed successfully!\n");
     console.log("Test credentials:");

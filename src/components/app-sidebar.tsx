@@ -10,10 +10,13 @@ import {
   LayoutDashboard,
   ChevronRight,
   Sparkles,
+  FlaskConical,
 } from "lucide-react";
 
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { LogoutButton } from "@/components/logout-button";
+import { Switch } from "@/components/ui/switch";
+import { useTestMode } from "@/lib/test-mode-context";
 import {
   Sidebar,
   SidebarContent,
@@ -78,6 +81,8 @@ const settingsItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
+  const { isTestMode, toggleTestMode } = useTestMode();
+
   const isActive = (url: string) => {
     if (url === "/settings") {
       return location.pathname === "/settings";
@@ -90,7 +95,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* Logo */}
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 px-2 py-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-vibrant shadow-lg shadow-vibrant/25">
+          <div className={`flex h-9 w-9 items-center justify-center rounded-xl shadow-lg transition-all ${
+            isTestMode
+              ? "bg-gradient-to-br from-warning to-warning/80 shadow-warning/25"
+              : "bg-gradient-vibrant shadow-vibrant/25"
+          }`}>
             <span className="text-sm font-bold text-white">P</span>
           </div>
           <div className="flex flex-col">
@@ -99,6 +108,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         </div>
       </SidebarHeader>
+
+      {/* Test Mode Toggle */}
+      <div className="px-3 py-3 border-b border-sidebar-border">
+        <button
+          onClick={toggleTestMode}
+          className={`w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition-all ${
+            isTestMode
+              ? "bg-warning/10 border border-warning/30"
+              : "bg-muted/50 border border-transparent hover:bg-muted"
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${
+              isTestMode ? "bg-warning/20" : "bg-muted"
+            }`}>
+              <FlaskConical className={`h-3.5 w-3.5 ${isTestMode ? "text-warning" : "text-muted-foreground"}`} />
+            </div>
+            <div className="text-left">
+              <span className={`text-xs font-medium ${isTestMode ? "text-warning" : "text-foreground"}`}>
+                {isTestMode ? "Test Mode" : "Live Mode"}
+              </span>
+            </div>
+          </div>
+          <Switch
+            checked={isTestMode}
+            onCheckedChange={toggleTestMode}
+            className="data-[state=checked]:bg-warning"
+          />
+        </button>
+      </div>
 
       <SidebarContent className="overflow-hidden">
         {/* Overview */}

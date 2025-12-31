@@ -1,7 +1,20 @@
 import { useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Copy, KeyRound, RefreshCw, Key, Shield, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  KeyRound,
+  RefreshCw,
+  Key,
+  Shield,
+  Check,
+  Monitor,
+  Trash2,
+  History,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -22,10 +35,68 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Status } from "@/components/status";
-import { getPortalCustomer, regenerateLicenseKey } from "@/functions/portal";
-import { toShortDate } from "@/lib/utils";
+import {
+  getPortalCustomer,
+  regenerateLicenseKey,
+  removeActivation,
+} from "@/functions/portal";
+import { toShortDate, formatRelativeTime } from "@/lib/utils";
+
+// Type for portal data
+type PortalData = {
+  customer: {
+    id: string;
+    name: string;
+    email: string;
+    company: string | null;
+  };
+  licenses: Array<{
+    id: string;
+    key: string;
+    status: "active" | "disabled";
+    expiresAt: Date | null;
+    activationLimit: number | null;
+    createdAt: Date;
+    activationCount: number;
+    product: {
+      id: string;
+      name: string;
+      description: string | null;
+    } | null;
+    activations: Array<{
+      id: string;
+      name: string | null;
+      machineId: string | null;
+      ipAddress: string | null;
+      createdAt: Date;
+      lastSeenAt: Date | null;
+    }>;
+  }>;
+  events: Array<{
+    id: string;
+    type: string;
+    createdAt: Date;
+    data: Record<string, unknown> | null;
+    licenseId: string;
+  }>;
+  organization: {
+    name: string;
+    slug: string;
+  };
+};
 
 export const Route = createFileRoute("/portal/$slug/$customerId")({
   component: CustomerPortal,
@@ -196,8 +267,204 @@ function GenerateNewKeyDialog({
   );
 }
 
+// Activation list with remove functionality
+function ActivationsList({
+  activations,
+  licenseId,
+  slug,
+  customerId,
+}: {
+  activations: Array<{
+    id: string;
+    name: string | null;
+    machineId: string | null;
+    ipAddress: string | null;
+    createdAt: Date;
+    lastSeenAt: Date | null;
+  }>;
+  licenseId: string;
+  slug: string;
+  customerId: string;
+}) {
+  const router = useRouter();
+  const remove = useServerFn(removeActivation);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  const handleRemove = async (activationId: string) => {
+    setRemovingId(activationId);
+    try {
+      await remove({ data: { slug, customerId, licenseId, activationId } });
+      toast.success("Activation removed");
+      router.invalidate();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to remove activation"
+      );
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  if (activations.length === 0) {
+    return (
+      <div className="text-center py-6 text-muted-foreground text-sm">
+        No activations yet
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {activations.map((activation) => (
+        <div
+          key={activation.id}
+          className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/40"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+              <Monitor className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">
+                {activation.name || activation.machineId?.substring(0, 12) || "Unknown device"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Activated {formatRelativeTime(activation.createdAt)}
+                {activation.lastSeenAt && (
+                  <> · Last seen {formatRelativeTime(activation.lastSeenAt)}</>
+                )}
+              </p>
+            </div>
+          </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                disabled={removingId === activation.id}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove Activation</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will deactivate this device. The device will need to
+                  re-activate using your license key to continue using the software.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleRemove(activation.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Remove
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Event type to human-readable label
+function getEventLabel(type: string): string {
+  switch (type) {
+    case "license.created":
+      return "License created";
+    case "license.key_regenerated":
+      return "License key regenerated";
+    case "activation.created":
+      return "Device activated";
+    case "activation.removed":
+      return "Device removed";
+    default:
+      return type;
+  }
+}
+
+// Event history section
+function EventHistory({
+  events,
+}: {
+  events: Array<{
+    id: string;
+    type: string;
+    createdAt: Date;
+    data: Record<string, unknown> | null;
+    licenseId: string;
+  }>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (events.length === 0) {
+    return null;
+  }
+
+  const displayEvents = expanded ? events : events.slice(0, 5);
+
+  return (
+    <Card className="rounded-3xl border-border/60 mt-8">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
+            <History className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Activity History</CardTitle>
+            <CardDescription>Recent activity on your licenses</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {displayEvents.map((event) => (
+            <div
+              key={event.id}
+              className="flex items-center justify-between py-2 border-b border-border/40 last:border-0"
+            >
+              <div>
+                <p className="text-sm font-medium">{getEventLabel(event.type)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatRelativeTime(event.createdAt)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        {events.length > 5 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full mt-4"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? (
+              <>
+                <ChevronUp className="h-4 w-4 mr-2" />
+                Show less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 mr-2" />
+                Show {events.length - 5} more
+              </>
+            )}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function CustomerPortal() {
-  const { customer, licenses, organization } = Route.useLoaderData();
+  const data = Route.useLoaderData() as PortalData;
+  const { customer, licenses, events, organization } = data;
   const { slug, customerId } = Route.useParams();
 
   return (
@@ -305,24 +572,40 @@ function CustomerPortal() {
                         </div>
                       </CardHeader>
                       <CardContent className="pt-0 pb-4">
-                        <div className="flex items-center gap-8 text-sm">
+                        <div className="flex items-center gap-8 text-sm mb-6">
                           <div>
                             <span className="text-muted-foreground block text-xs mb-1">Valid until</span>
                             <p className="font-semibold">
                               {toShortDate(license.expiresAt?.toISOString() ?? null) || "Never"}
                             </p>
                           </div>
-                          {license.activationLimit && (
-                            <div>
-                              <span className="text-muted-foreground block text-xs mb-1">Activations</span>
-                              <p className="font-semibold">
-                                {license.activationLimit} devices
-                              </p>
-                            </div>
-                          )}
+                          <div>
+                            <span className="text-muted-foreground block text-xs mb-1">Activations</span>
+                            <p className="font-semibold">
+                              {license.activationCount}
+                              {license.activationLimit && ` / ${license.activationLimit}`}
+                              {" devices"}
+                            </p>
+                          </div>
                         </div>
+
+                        {/* Activations Section */}
+                        {license.activations.length > 0 && (
+                          <div className="border-t border-border/40 pt-4">
+                            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                              <Monitor className="h-4 w-4 text-muted-foreground" />
+                              Active Devices
+                            </h4>
+                            <ActivationsList
+                              activations={license.activations}
+                              licenseId={license.id}
+                              slug={slug}
+                              customerId={customerId}
+                            />
+                          </div>
+                        )}
                       </CardContent>
-                      <CardFooter className="flex justify-end gap-2 pt-0 pb-6 px-6">
+                      <CardFooter className="flex justify-end gap-2 pt-0 pb-6 px-6 border-t border-border/40">
                         <ShowKeyDialog licenseKey={license.key} />
                         <GenerateNewKeyDialog
                           licenseId={license.id}
@@ -336,6 +619,9 @@ function CustomerPortal() {
                 ))}
               </ul>
             )}
+
+            {/* Activity History */}
+            <EventHistory events={events} />
           </div>
         </main>
       </div>

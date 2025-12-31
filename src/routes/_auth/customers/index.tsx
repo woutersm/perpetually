@@ -12,8 +12,8 @@ import {
 
 export const Route = createFileRoute("/_auth/customers/")({
   component: CustomersPage,
-  loader: async () => {
-    const customers = await getCustomers();
+  loader: async ({ context }) => {
+    const customers = await getCustomers({ data: { isTestMode: context.isTestMode } });
     return { customers };
   },
 });

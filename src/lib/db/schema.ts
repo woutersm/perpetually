@@ -322,6 +322,17 @@ export const license = sqliteTable(
     // Test mode flag (mirrors Stripe's livemode)
     isTest: integer("is_test", { mode: "boolean" }).default(false).notNull(),
 
+    // Expiration notification tracking
+    expiryNotified7DaysAt: integer("expiry_notified_7days_at", {
+      mode: "timestamp_ms",
+    }),
+    expiryNotified1DayAt: integer("expiry_notified_1day_at", {
+      mode: "timestamp_ms",
+    }),
+    expiryNotifiedExpiredAt: integer("expiry_notified_expired_at", {
+      mode: "timestamp_ms",
+    }),
+
     // Relations
     productId: text("product_id")
       .notNull()

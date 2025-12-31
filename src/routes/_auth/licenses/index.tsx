@@ -17,8 +17,8 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_auth/licenses/")({
   component: LicensesPage,
-  loader: async () => {
-    const licenses = await getLicenses();
+  loader: async ({ context }) => {
+    const licenses = await getLicenses({ data: { isTestMode: context.isTestMode } });
     return { licenses };
   },
 });
