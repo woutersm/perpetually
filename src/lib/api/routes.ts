@@ -9,9 +9,6 @@ import {
   DeactivateRequestSchema,
   DeactivateSuccessResponseSchema,
   DeactivateErrorResponseSchema,
-  CreateLicenseRequestSchema,
-  CreateLicenseSuccessResponseSchema,
-  CreateLicenseErrorResponseSchema,
   ErrorResponseSchema,
 } from "./schemas";
 
@@ -212,79 +209,8 @@ export const deactivateRoute = createRoute({
   },
 });
 
-// ============================================
-// Create License Route
-// ============================================
-
-export const createLicenseRoute = createRoute({
-  method: "post",
-  path: "/licenses",
-  tags: ["Licenses"],
-  summary: "Create a new license",
-  description:
-    "Creates a new license for a product. Generates a unique license key that can be used for validation and activation.",
-  security: [{ Bearer: [] }],
-  request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: CreateLicenseRequestSchema,
-        },
-      },
-      required: true,
-    },
-  },
-  responses: {
-    200: {
-      description: "License created successfully",
-      content: {
-        "application/json": {
-          schema: CreateLicenseSuccessResponseSchema,
-        },
-      },
-    },
-    400: {
-      description: "Validation error - missing or invalid fields",
-      content: {
-        "application/json": {
-          schema: ErrorResponseSchema,
-        },
-      },
-    },
-    401: {
-      description: "Authentication required - missing Authorization header",
-      content: {
-        "application/json": {
-          schema: ErrorResponseSchema,
-        },
-      },
-    },
-    403: {
-      description: "Invalid API key",
-      content: {
-        "application/json": {
-          schema: ErrorResponseSchema,
-        },
-      },
-    },
-    404: {
-      description: "Product not found",
-      content: {
-        "application/json": {
-          schema: CreateLicenseErrorResponseSchema,
-        },
-      },
-    },
-    500: {
-      description: "Internal server error",
-      content: {
-        "application/json": {
-          schema: ErrorResponseSchema,
-        },
-      },
-    },
-  },
-});
+// Note: POST /licenses was removed in Phase 2
+// Licenses are now created automatically via Stripe webhooks
 
 // ============================================
 // Route Type Exports
@@ -293,4 +219,3 @@ export const createLicenseRoute = createRoute({
 export type ValidateRoute = typeof validateRoute;
 export type ActivateRoute = typeof activateRoute;
 export type DeactivateRoute = typeof deactivateRoute;
-export type CreateLicenseRoute = typeof createLicenseRoute;

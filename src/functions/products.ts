@@ -55,56 +55,25 @@ export const getProduct = createServerFn({ method: "GET" })
     };
   });
 
-// Create a new product (will be removed in Phase 2 - products come from Stripe)
-export const createProduct = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("createProduct")])
-  .inputValidator(
-    (data: { name: string; slug: string; description?: string }) => data
-  )
-  .handler(async ({ data, context: { organizationId } }) => {
-    // Check if slug is already taken in this org
-    const existing = await db
-      .select()
-      .from(product)
-      .where(
-        and(eq(product.slug, data.slug), eq(product.organizationId, organizationId))
-      )
-      .limit(1);
+// Note: Products are synced from Stripe, not created manually
+// createProduct was removed in Phase 2
 
-    if (existing.length > 0) {
-      throw new Error("Product slug already exists");
-    }
-
-    const [newProduct] = await db
-      .insert(product)
-      .values({
-        name: data.name,
-        slug: data.slug,
-        description: data.description,
-        organizationId,
-      })
-      .returning();
-
-    return newProduct;
-  });
-
-// Update a product
+// Update a product (local settings like description only)
+// Note: name and slug come from Stripe, only description is editable locally
 export const updateProduct = createServerFn({ method: "POST" })
   .middleware([authMiddleware, loggingMiddleware("updateProduct")])
   .inputValidator(
     (data: {
       productId: string;
-      name?: string;
-      slug?: string;
       description?: string;
     }) => data
   )
   .handler(async ({ data, context: { organizationId } }) => {
-    const { productId, ...updates } = data;
+    const { productId, description } = data;
 
     const [updated] = await db
       .update(product)
-      .set(updates)
+      .set({ description })
       .where(
         and(eq(product.id, productId), eq(product.organizationId, organizationId))
       )
@@ -117,24 +86,8 @@ export const updateProduct = createServerFn({ method: "POST" })
     return updated;
   });
 
-// Delete a product
-export const deleteProduct = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("deleteProduct")])
-  .inputValidator((data: { productId: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
-    const [deleted] = await db
-      .delete(product)
-      .where(
-        and(eq(product.id, data.productId), eq(product.organizationId, organizationId))
-      )
-      .returning();
-
-    if (!deleted) {
-      throw new Error("Product not found");
-    }
-
-    return { success: true };
-  });
+// Note: Products cannot be deleted - they are synced from Stripe
+// deleteProduct was removed in Phase 2
 
 // Create a license policy
 export const createLicensePolicy = createServerFn({ method: "POST" })

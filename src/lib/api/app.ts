@@ -2,15 +2,8 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { eq, and } from "drizzle-orm";
 import db from "@/lib/db/db";
-import {
-  secretKey,
-  license,
-  activation,
-  product,
-  customer,
-  licensePolicy,
-} from "@/lib/db/schema";
-import { validateRoute, activateRoute, deactivateRoute, createLicenseRoute } from "./routes";
+import { secretKey, license, activation } from "@/lib/db/schema";
+import { validateRoute, activateRoute, deactivateRoute } from "./routes";
 import { ApiErrors, OpenApiErrors } from "./schemas";
 
 // ============================================
@@ -285,119 +278,8 @@ app.openapi(deactivateRoute, async (c) => {
   );
 });
 
-// Create License
-app.openapi(createLicenseRoute, async (c) => {
-  const body = c.req.valid("json");
-  const organizationId = c.get("organizationId");
-
-  // Find product by ID and organization
-  const [foundProduct] = await db
-    .select()
-    .from(product)
-    .where(and(eq(product.id, body.productId), eq(product.organizationId, organizationId)))
-    .limit(1);
-
-  if (!foundProduct) {
-    return c.json(
-      {
-        created: false as const,
-        error: ApiErrors.noProductFound,
-      },
-      404
-    );
-  }
-
-  // Find or create customer
-  let [foundCustomer] = await db
-    .select()
-    .from(customer)
-    .where(and(eq(customer.email, body.email), eq(customer.organizationId, organizationId)))
-    .limit(1);
-
-  if (!foundCustomer) {
-    [foundCustomer] = await db
-      .insert(customer)
-      .values({
-        name: body.name,
-        email: body.email,
-        organizationId: organizationId,
-      })
-      .returning();
-  }
-
-  // Get license policy defaults (if any)
-  const [policy] = await db
-    .select()
-    .from(licensePolicy)
-    .where(eq(licensePolicy.productId, foundProduct.id))
-    .limit(1);
-
-  // Generate license key
-  const licenseKey = generateLicenseKey();
-
-  // Calculate expiration - null licenseLengthDays means perpetual (no expiration)
-  const expiresAt = policy?.licenseLengthDays
-    ? new Date(Date.now() + policy.licenseLengthDays * 24 * 60 * 60 * 1000)
-    : null;
-  const activationLimit = policy?.activationLimit ?? null;
-
-  // Create license
-  const [newLicense] = await db
-    .insert(license)
-    .values({
-      key: licenseKey,
-      keyCreatedAt: new Date(),
-      status: "active",
-      expiresAt: expiresAt,
-      activationLimit: activationLimit,
-      productId: foundProduct.id,
-      customerId: foundCustomer.id,
-      organizationId: organizationId,
-    })
-    .returning();
-
-  return c.json(
-    {
-      created: true as const,
-      error: null,
-      license: {
-        id: newLicense.id,
-        createdAt: newLicense.createdAt.toISOString(),
-        updatedAt: newLicense.updatedAt.toISOString(),
-        expiresAt: newLicense.expiresAt?.toISOString() ?? null,
-        status: newLicense.status.toUpperCase(),
-        keyCreatedAt: newLicense.keyCreatedAt.toISOString(),
-        key: newLicense.key,
-        activationLimit: newLicense.activationLimit,
-        productId: newLicense.productId,
-        teamId: newLicense.organizationId,
-        customerId: newLicense.customerId,
-      },
-    },
-    200
-  );
-});
-
-// ============================================
-// Utilities
-// ============================================
-
-function generateLicenseKey(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const segments = 4;
-  const segmentLength = 4;
-
-  const parts: string[] = [];
-  for (let i = 0; i < segments; i++) {
-    let segment = "";
-    for (let j = 0; j < segmentLength; j++) {
-      segment += chars[Math.floor(Math.random() * chars.length)];
-    }
-    parts.push(segment);
-  }
-
-  return parts.join("-");
-}
+// Note: POST /licenses was removed in Phase 2
+// Licenses are created automatically via Stripe webhooks
 
 // ============================================
 // OpenAPI Documentation

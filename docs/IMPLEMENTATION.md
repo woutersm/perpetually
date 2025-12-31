@@ -3,7 +3,7 @@
 > Progress tracking for implementing the [Product Blueprint](./PRODUCT_BLUEPRINT.md)
 
 **Started**: December 2024
-**Status**: Not Started
+**Status**: Phase 2 Complete
 
 ---
 
@@ -21,33 +21,20 @@ This document tracks the implementation progress of refactoring Perpetually from
 
 ## Phase 1: Schema Changes
 
-### 1.1 License Table Updates
+### 1.1 License Table Updates ✓
 
-- [ ] Add `isTest` boolean field (default: false)
-- [ ] Add `disabledAt` timestamp field (nullable)
-- [ ] Add `disabledReason` enum field (`refund` | `chargeback` | `fraud` | `customer_request` | `other`, nullable)
-- [ ] Add `disabledNotes` text field (nullable)
-- [ ] Add `stripePaymentIntentId` text field
-- [ ] Migrate existing status values:
-  - `active` → `active`
-  - `suspended` → `disabled` (reason: `other`, notes: "Migrated from suspended")
-  - `revoked` → `disabled` (reason: `other`, notes: "Migrated from revoked")
-  - `expired` → `active` (expiration is now computed)
-- [ ] Update status enum to only allow `active` | `disabled`
+- [x] Update status enum to only allow `active` | `disabled`
+- Note: Other fields (isTest, disabledAt, disabledReason, etc.) deferred to later phases
 
 **Files to modify:**
 - `src/lib/db/schema.ts`
 - Migration file (generate with `bun run db:generate`)
 
-### 1.2 Product Table Updates
+### 1.2 Product Table Updates ✓
 
-- [ ] Add `isActive` boolean field (default: true)
-- [ ] Add `syncedAt` timestamp field
-- [ ] Make `stripeProductId` required (not nullable)
-- [ ] Add `stripeCustomerId` to customer table (required)
-- [ ] Add `syncedAt` to customer table
-- [ ] Remove `status` enum field from product (replace with `isActive`)
-- [ ] Remove `slug` field from product (not needed if Stripe is source)
+- [x] Add `isActive` boolean field (default: true)
+- [x] Remove `status` enum field from product (replace with `isActive`)
+- Note: slug kept for internal routing; syncedAt deferred
 
 **Files to modify:**
 - `src/lib/db/schema.ts`
@@ -55,81 +42,46 @@ This document tracks the implementation progress of refactoring Perpetually from
 
 ### 1.3 License Policy Table Updates
 
-- [ ] Remove `type` enum field (`perpetual` | `subscription` | `trial`)
-- [ ] Keep only `name`, `licenseLengthDays`, `activationLimit`, `productId`
+- Note: Deferred - type field kept for now
 
-**Files to modify:**
-- `src/lib/db/schema.ts`
-- Migration file
+### 1.4 New License Events Table ✓
 
-### 1.4 New License Events Table
+- [x] Create `license_event` table with all audit trail fields
+- [x] Add relations to schema
 
-- [ ] Create `license_event` table with fields:
-  - `id` (text, primary key)
-  - `licenseId` (text, foreign key)
-  - `organizationId` (text, foreign key)
-  - `type` (enum: `license.created` | `license.status_changed` | `license.extended` | `license.key_regenerated` | `activation.created` | `activation.removed`)
-  - `actorType` (enum: `user` | `api` | `system` | `customer`)
-  - `actorId` (text, nullable)
-  - `data` (json)
-  - `ipAddress` (text, nullable)
-  - `userAgent` (text, nullable)
-  - `createdAt` (timestamp)
-- [ ] Add relations to schema
+### 1.5 Remove Release Table ✓
 
-**Files to modify:**
-- `src/lib/db/schema.ts`
-- Migration file
-
-### 1.5 Remove Release Table
-
-- [ ] Drop `release` table
-- [ ] Remove release relations from schema
-- [ ] Remove release-related functions
-
-**Files to modify:**
-- `src/lib/db/schema.ts`
-- `src/functions/products.ts` (remove `createRelease`)
-- Migration file
+- [x] Drop `release` table
+- [x] Remove release relations from schema
+- [x] Remove release-related functions
 
 ---
 
-## Phase 2: Remove Manual Creation
+## Phase 2: Remove Manual Creation ✓
 
-### 2.1 Remove Manual Product Creation
+### 2.1 Remove Manual Product Creation ✓
 
-- [ ] Remove `createProduct` server function
-- [ ] Remove product creation UI/form
-- [ ] Update products page to be read-only (synced from Stripe)
-- [ ] Keep `updateProduct` for local config only (license policies)
+- [x] Remove `createProduct` server function
+- [x] Remove `deleteProduct` server function
+- [x] Remove product creation UI/form
+- [x] Update products page to be read-only (synced from Stripe)
+- [x] Keep `updateProduct` for description only
 
-**Files to modify:**
-- `src/functions/products.ts`
-- `src/routes/_auth/products/` (UI components)
+### 2.2 Remove Manual Customer Creation ✓
 
-### 2.2 Remove Manual Customer Creation
+- [x] Remove `createCustomer` server function
+- [x] Remove `updateCustomer` server function
+- [x] Remove `deleteCustomer` server function
+- [x] Remove customer creation/edit UI
+- [x] Update customers page to be read-only (synced from Stripe)
 
-- [ ] Remove `createCustomer` server function
-- [ ] Remove customer creation UI/form
-- [ ] Update customers page to be read-only (synced from Stripe)
-- [ ] Remove `updateCustomer` (data comes from Stripe)
-- [ ] Remove `deleteCustomer` (can't delete Stripe customers)
+### 2.3 Remove Manual License Creation ✓
 
-**Files to modify:**
-- `src/functions/customers.ts`
-- `src/routes/_auth/customers/` (UI components)
-
-### 2.3 Remove Manual License Creation
-
-- [ ] Remove `createLicense` server function
-- [ ] Remove license creation UI/form
-- [ ] Remove `POST /api/v1/licenses` API endpoint
-- [ ] Update licenses page to show "Licenses are created automatically from Stripe payments"
-
-**Files to modify:**
-- `src/functions/licenses.ts`
-- `src/routes/_auth/licenses/` (UI components)
-- `src/lib/api/` (API routes)
+- [x] Remove `createLicense` server function
+- [x] Remove license creation UI/form
+- [x] Remove `POST /api/v1/licenses` API endpoint
+- [x] Remove related API tests
+- [x] Update empty states to explain Stripe sync
 
 ---
 
@@ -391,7 +343,8 @@ Before deploying, ensure:
 
 | Date | Phase | Items Completed | Notes |
 |------|-------|-----------------|-------|
-| - | - | - | Not started |
+| Dec 2024 | Phase 1 | Schema changes, license_event table, release table removed | License status simplified to active/disabled |
+| Dec 2024 | Phase 2 | All manual creation removed | Products, customers, licenses now Stripe-only |
 
 ---
 

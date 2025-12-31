@@ -154,57 +154,8 @@ export const DeactivateErrorResponseSchema = z
   })
   .openapi("DeactivateErrorResponse");
 
-// ============================================
-// Create License Endpoint
-// ============================================
-
-export const CreateLicenseRequestSchema = z
-  .object({
-    productId: z.string().openapi({
-      example: "prod_abc123",
-      description: "The product ID to create a license for",
-    }),
-    name: z.string().openapi({
-      example: "John Doe",
-      description: "Customer name",
-    }),
-    email: z.string().email().openapi({
-      example: "john@example.com",
-      description: "Customer email address",
-    }),
-  })
-  .openapi("CreateLicenseRequest");
-
-export const CreatedLicenseSchema = z
-  .object({
-    id: z.string().openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
-    createdAt: z.string().openapi({ example: "2024-01-15T10:30:00.000Z" }),
-    updatedAt: z.string().openapi({ example: "2024-01-15T10:30:00.000Z" }),
-    expiresAt: z.string().openapi({ example: "2025-01-15T10:30:00.000Z" }),
-    status: z.string().openapi({ example: "ACTIVE" }),
-    keyCreatedAt: z.string().openapi({ example: "2024-01-15T10:30:00.000Z" }),
-    key: z.string().openapi({ example: "4b6f-1234-5678-9abc" }),
-    activationLimit: z.number().int().nullable().openapi({ example: 5 }),
-    productId: z.string().openapi({ example: "prod_abc123" }),
-    teamId: z.string().openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
-    customerId: z.string().openapi({ example: "cust_123456" }),
-  })
-  .openapi("CreatedLicense");
-
-export const CreateLicenseSuccessResponseSchema = z
-  .object({
-    created: z.literal(true),
-    error: z.null(),
-    license: CreatedLicenseSchema,
-  })
-  .openapi("CreateLicenseSuccessResponse");
-
-export const CreateLicenseErrorResponseSchema = z
-  .object({
-    created: z.literal(false),
-    error: z.string().openapi({ example: ApiErrors.noProductFound }),
-  })
-  .openapi("CreateLicenseErrorResponse");
+// Note: POST /licenses was removed in Phase 2
+// Licenses are created automatically via Stripe webhooks
 
 // ============================================
 // Type Exports (inferred from Zod schemas)
@@ -224,10 +175,5 @@ export type DeactivateRequest = z.infer<typeof DeactivateRequestSchema>;
 export type DeactivateSuccessResponse = z.infer<typeof DeactivateSuccessResponseSchema>;
 export type DeactivateErrorResponse = z.infer<typeof DeactivateErrorResponseSchema>;
 export type DeactivateResponse = DeactivateSuccessResponse | DeactivateErrorResponse;
-
-export type CreateLicenseRequest = z.infer<typeof CreateLicenseRequestSchema>;
-export type CreateLicenseSuccessResponse = z.infer<typeof CreateLicenseSuccessResponseSchema>;
-export type CreateLicenseErrorResponse = z.infer<typeof CreateLicenseErrorResponseSchema>;
-export type CreateLicenseResponse = CreateLicenseSuccessResponse | CreateLicenseErrorResponse;
 
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;

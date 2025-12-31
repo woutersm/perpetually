@@ -1,34 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageLayout } from "@/components/page-layout";
-import { getCustomer, updateCustomer, deleteCustomer } from "@/functions/customers";
+import { getCustomer } from "@/functions/customers";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useForm } from "@tanstack/react-form";
-import type { AnyFieldApi } from "@tanstack/react-form";
-import { useServerFn } from "@tanstack/react-start";
-import { useRouter, useNavigate } from "@tanstack/react-router";
-import { Key, Building2, Mail, Edit2, Trash2, Calendar, Plus, ChevronRight, Copy, Check, AlertTriangle, ExternalLink } from "lucide-react";
+import { Key, Building2, Mail, Calendar, ChevronRight, Copy, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_auth/customers/$customerId")({
@@ -38,18 +14,6 @@ export const Route = createFileRoute("/_auth/customers/$customerId")({
     return { customer };
   },
 });
-
-function FieldInfo({ field }: { field: AnyFieldApi }) {
-  return (
-    <>
-      {field.state.meta.isTouched && !field.state.meta.isValid && (
-        <p className="text-sm text-destructive mt-1">
-          {field.state.meta.errors.join(", ")}
-        </p>
-      )}
-    </>
-  );
-}
 
 function getInitials(name: string) {
   return name
@@ -90,54 +54,27 @@ function CopyButton({ text }: { text: string }) {
 function CustomerDetailPage() {
   const { customer } = Route.useLoaderData();
   const { organization } = Route.useRouteContext();
-  const router = useRouter();
-  const navigate = useNavigate();
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const submitUpdate = useServerFn(updateCustomer);
-  const submitDelete = useServerFn(deleteCustomer);
-
-  const editForm = useForm({
-    defaultValues: {
-      name: customer.name,
-      email: customer.email,
-      company: customer.company ?? "",
-    },
-    onSubmit: async ({ value }) => {
-      await submitUpdate({
-        data: {
-          customerId: customer.id,
-          name: value.name,
-          email: value.email,
-          company: value.company || undefined,
-        },
-      });
-      setEditOpen(false);
-      toast.success("Customer updated");
-      router.invalidate();
-    },
-  });
-
-  const handleDelete = async () => {
-    await submitDelete({ data: { customerId: customer.id } });
-    toast.success("Customer deleted");
-    navigate({ to: "/customers" });
-  };
-
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string, expiresAt: Date | null) => {
+    // Check if expired by date
+    if (expiresAt && new Date(expiresAt) < new Date()) {
+      return "outline-warning";
+    }
     switch (status) {
       case "active":
         return "outline-success";
-      case "expired":
-      case "pending":
-        return "outline-warning";
-      case "revoked":
-      case "suspended":
+      case "disabled":
         return "outline-destructive";
       default:
         return "secondary";
     }
+  };
+
+  const getStatusLabel = (status: string, expiresAt: Date | null) => {
+    if (status === "active" && expiresAt && new Date(expiresAt) < new Date()) {
+      return "expired";
+    }
+    return status;
   };
 
   return (
@@ -149,29 +86,14 @@ function CustomerDetailPage() {
         { label: customer.name },
       ]}
       actions={
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => window.open(`/portal/${organization?.slug}/${customer.id}`, '_blank')}
-            disabled={!organization?.slug}
-          >
-            <ExternalLink className="h-4 w-4" />
-            View Portal
-          </Button>
-          <Button variant="outline" onClick={() => setEditOpen(true)}>
-            <Edit2 className="h-4 w-4" />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            className="text-destructive border-destructive/30 hover:bg-destructive/10"
-            onClick={() => setDeleteOpen(true)}
-            disabled={customer.licenses.length > 0}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => window.open(`/portal/${organization?.slug}/${customer.id}`, '_blank')}
+          disabled={!organization?.slug}
+        >
+          <ExternalLink className="h-4 w-4" />
+          View Portal
+        </Button>
       }
     >
       <div className="space-y-6 max-w-5xl">
@@ -237,24 +159,16 @@ function CustomerDetailPage() {
 
         {/* Licenses */}
         <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Key className="h-5 w-5 text-vibrant" />
-              </div>
-              <div>
-                <h2 className="font-semibold">Licenses</h2>
-                <p className="text-sm text-muted-foreground">
-                  All licenses assigned to this customer
-                </p>
-              </div>
+          <div className="border-b border-border/40 bg-muted/30 px-6 py-5 flex items-center gap-4">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
+              <Key className="h-5 w-5 text-vibrant" />
             </div>
-            <Button variant="vibrant" size="sm" asChild className="shadow-lg shadow-vibrant/25">
-              <Link to="/licenses">
-                <Plus className="h-4 w-4" />
-                Issue License
-              </Link>
-            </Button>
+            <div>
+              <h2 className="font-semibold">Licenses</h2>
+              <p className="text-sm text-muted-foreground">
+                Licenses assigned to this customer from Stripe purchases
+              </p>
+            </div>
           </div>
 
           {customer.licenses.length === 0 ? (
@@ -263,15 +177,9 @@ function CustomerDetailPage() {
                 <Key className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-2">No licenses yet</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                Issue a license to this customer to get started.
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                Licenses will appear here when this customer makes a purchase through Stripe.
               </p>
-              <Button variant="vibrant" asChild className="shadow-lg shadow-vibrant/25">
-                <Link to="/licenses">
-                  <Plus className="h-4 w-4" />
-                  Issue License
-                </Link>
-              </Button>
             </div>
           ) : (
             <div className="divide-y divide-border/40">
@@ -294,8 +202,8 @@ function CustomerDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
-                    <Badge variant={getStatusVariant(license.status)}>
-                      {license.status}
+                    <Badge variant={getStatusVariant(license.status, license.expiresAt)}>
+                      {getStatusLabel(license.status, license.expiresAt)}
                     </Badge>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[100px]">
                       <Calendar className="h-4 w-4" />
@@ -311,142 +219,6 @@ function CustomerDetailPage() {
           )}
         </div>
       </div>
-
-      {/* Edit Customer Dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vibrant/10 mb-4">
-              <Edit2 className="h-6 w-6 text-vibrant" />
-            </div>
-            <DialogTitle>Edit Customer</DialogTitle>
-            <DialogDescription>
-              Update customer information.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              editForm.handleSubmit();
-            }}
-          >
-            <div className="space-y-4 py-4">
-              <editForm.Field
-                name="name"
-                validators={{
-                  onChange: ({ value }) =>
-                    !value ? "Name is required" : undefined,
-                }}
-              >
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>Name</Label>
-                    <Input
-                      id={field.name}
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      className="h-11"
-                      ignorePasswordManagers
-                    />
-                    <FieldInfo field={field} />
-                  </div>
-                )}
-              </editForm.Field>
-
-              <editForm.Field
-                name="email"
-                validators={{
-                  onChange: ({ value }) =>
-                    !value
-                      ? "Email is required"
-                      : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-                        ? "Invalid email address"
-                        : undefined,
-                }}
-              >
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>Email</Label>
-                    <Input
-                      id={field.name}
-                      type="email"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      className="h-11"
-                      ignorePasswordManagers
-                    />
-                    <FieldInfo field={field} />
-                  </div>
-                )}
-              </editForm.Field>
-
-              <editForm.Field name="company">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>
-                      Company <span className="text-muted-foreground">(optional)</span>
-                    </Label>
-                    <Input
-                      id={field.name}
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      className="h-11"
-                      ignorePasswordManagers
-                    />
-                  </div>
-                )}
-              </editForm.Field>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditOpen(false)}
-              >
-                Cancel
-              </Button>
-              <editForm.Subscribe
-                selector={(state) => [state.canSubmit, state.isSubmitting]}
-              >
-                {([canSubmit, isSubmitting]) => (
-                  <Button type="submit" variant="vibrant" disabled={!canSubmit} className="shadow-lg shadow-vibrant/25">
-                    {isSubmitting ? "Saving..." : "Save Changes"}
-                  </Button>
-                )}
-              </editForm.Subscribe>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 mb-4">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
-            </div>
-            <AlertDialogTitle>Delete Customer?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete this customer and all associated data.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete Customer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </PageLayout>
   );
 }

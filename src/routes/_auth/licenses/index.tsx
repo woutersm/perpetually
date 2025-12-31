@@ -1,34 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageLayout, EmptyState } from "@/components/page-layout";
-import { getLicenses, createLicense } from "@/functions/licenses";
-import { getProducts } from "@/functions/products";
-import { getCustomers } from "@/functions/customers";
-import { Button } from "@/components/ui/button";
+import { getLicenses } from "@/functions/licenses";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useState } from "react";
-import { useForm } from "@tanstack/react-form";
-import type { AnyFieldApi } from "@tanstack/react-form";
-import { useServerFn } from "@tanstack/react-start";
-import { useRouter } from "@tanstack/react-router";
 import {
-  Plus,
   Key,
   Copy,
   Check,
@@ -36,32 +11,17 @@ import {
   User,
   Package,
   ChevronRight,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_auth/licenses/")({
   component: LicensesPage,
   loader: async () => {
-    const [licenses, products, customers] = await Promise.all([
-      getLicenses(),
-      getProducts(),
-      getCustomers(),
-    ]);
-    return { licenses, products, customers };
+    const licenses = await getLicenses();
+    return { licenses };
   },
 });
-
-function FieldInfo({ field }: { field: AnyFieldApi }) {
-  return (
-    <>
-      {field.state.meta.isTouched && !field.state.meta.isValid && (
-        <p className="text-sm text-destructive mt-1">
-          {field.state.meta.errors.join(", ")}
-        </p>
-      )}
-    </>
-  );
-}
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -91,110 +51,47 @@ function CopyButton({ text }: { text: string }) {
 }
 
 function LicensesPage() {
-  const { licenses, products, customers } = Route.useLoaderData();
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const submit = useServerFn(createLicense);
+  const { licenses } = Route.useLoaderData();
 
-  const canCreate = products.length > 0 && customers.length > 0;
-
-  const form = useForm({
-    defaultValues: {
-      productId: "",
-      customerId: "",
-      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0],
-      activationLimit: "",
-    },
-    onSubmit: async ({ value }) => {
-      const result = await submit({
-        data: {
-          productId: value.productId,
-          customerId: value.customerId,
-          expiresAt: value.expiresAt,
-          activationLimit: value.activationLimit
-            ? parseInt(value.activationLimit)
-            : undefined,
-        },
-      });
-
-      if (result) {
-        setOpen(false);
-        form.reset();
-        router.invalidate();
-      }
-    },
-  });
-
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string, expiresAt: Date | null) => {
+    // Check if expired by date
+    if (expiresAt && new Date(expiresAt) < new Date()) {
+      return "outline-warning";
+    }
     switch (status) {
       case "active":
         return "outline-success";
-      case "expired":
-      case "pending":
-        return "outline-warning";
-      case "revoked":
-      case "suspended":
+      case "disabled":
         return "outline-destructive";
       default:
         return "secondary";
     }
   };
 
+  const getStatusLabel = (status: string, expiresAt: Date | null) => {
+    // Check if expired by date
+    if (status === "active" && expiresAt && new Date(expiresAt) < new Date()) {
+      return "expired";
+    }
+    return status;
+  };
+
   return (
     <PageLayout
       title="Licenses"
-      description="Manage license keys issued to your customers."
+      description="License keys issued to your customers via Stripe payments."
       breadcrumbs={[{ label: "Licenses" }]}
-      actions={
-        <Button
-          variant="vibrant"
-          onClick={() => setOpen(true)}
-          disabled={!canCreate}
-          className="shadow-lg shadow-vibrant/25"
-        >
-          <Plus className="h-4 w-4" />
-          New License
-        </Button>
-      }
     >
-      {!canCreate ? (
-        <EmptyState
-          icon={<Key className="h-8 w-8" />}
-          title="Setup required"
-          description={
-            products.length === 0 && customers.length === 0
-              ? "Create a product and customer before issuing licenses."
-              : products.length === 0
-                ? "Create a product before issuing licenses."
-                : "Create a customer before issuing licenses."
-          }
-          action={
-            <div className="flex gap-3">
-              {products.length === 0 && (
-                <Button variant="outline" asChild>
-                  <Link to="/products">Create Product</Link>
-                </Button>
-              )}
-              {customers.length === 0 && (
-                <Button variant="outline" asChild>
-                  <Link to="/customers">Add Customer</Link>
-                </Button>
-              )}
-            </div>
-          }
-        />
-      ) : licenses.length === 0 ? (
+      {licenses.length === 0 ? (
         <EmptyState
           icon={<Key className="h-8 w-8" />}
           title="No licenses yet"
-          description="Issue your first license key to a customer."
+          description="Licenses are automatically created when customers purchase your products through Stripe. Once a payment is completed, a license key will be generated and appear here."
           action={
-            <Button variant="vibrant" onClick={() => setOpen(true)} className="shadow-lg shadow-vibrant/25">
-              <Plus className="h-4 w-4" />
-              Create License
-            </Button>
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-muted/50 text-sm text-muted-foreground">
+              <CreditCard className="h-4 w-4" />
+              Waiting for Stripe payments...
+            </div>
           }
         />
       ) : (
@@ -247,8 +144,8 @@ function LicensesPage() {
 
                 {/* Status */}
                 <div className="col-span-2">
-                  <Badge variant={getStatusVariant(license.status)}>
-                    {license.status}
+                  <Badge variant={getStatusVariant(license.status, license.expiresAt)}>
+                    {getStatusLabel(license.status, license.expiresAt)}
                   </Badge>
                 </div>
 
@@ -271,160 +168,6 @@ function LicensesPage() {
           </div>
         </div>
       )}
-
-      {/* Create License Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vibrant/10 mb-4">
-              <Key className="h-6 w-6 text-vibrant" />
-            </div>
-            <DialogTitle>Create License</DialogTitle>
-            <DialogDescription>
-              Issue a new license key to a customer.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
-            }}
-          >
-            <div className="space-y-4 py-4">
-              <form.Field
-                name="productId"
-                validators={{
-                  onChange: ({ value }) =>
-                    !value ? "Product is required" : undefined,
-                }}
-              >
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label>Product</Label>
-                    <Select
-                      value={field.state.value}
-                      onValueChange={field.handleChange}
-                    >
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select a product" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FieldInfo field={field} />
-                  </div>
-                )}
-              </form.Field>
-
-              <form.Field
-                name="customerId"
-                validators={{
-                  onChange: ({ value }) =>
-                    !value ? "Customer is required" : undefined,
-                }}
-              >
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label>Customer</Label>
-                    <Select
-                      value={field.state.value}
-                      onValueChange={field.handleChange}
-                    >
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select a customer" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {customers.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            <div className="flex flex-col">
-                              <span>{customer.name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {customer.email}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FieldInfo field={field} />
-                  </div>
-                )}
-              </form.Field>
-
-              <form.Field
-                name="expiresAt"
-                validators={{
-                  onChange: ({ value }) =>
-                    !value ? "Expiration date is required" : undefined,
-                }}
-              >
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>Expiration Date</Label>
-                    <Input
-                      id={field.name}
-                      type="date"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      className="h-11"
-                    />
-                    <FieldInfo field={field} />
-                  </div>
-                )}
-              </form.Field>
-
-              <form.Field name="activationLimit">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>
-                      Activation Limit{" "}
-                      <span className="text-muted-foreground">(optional)</span>
-                    </Label>
-                    <Input
-                      id={field.name}
-                      type="number"
-                      min="1"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      placeholder="Unlimited"
-                      className="h-11"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Maximum number of devices this license can activate on
-                    </p>
-                  </div>
-                )}
-              </form.Field>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-              <form.Subscribe
-                selector={(state) => [state.canSubmit, state.isSubmitting]}
-              >
-                {([canSubmit, isSubmitting]) => (
-                  <Button type="submit" variant="vibrant" disabled={!canSubmit} className="shadow-lg shadow-vibrant/25">
-                    {isSubmitting ? "Creating..." : "Create License"}
-                  </Button>
-                )}
-              </form.Subscribe>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </PageLayout>
   );
 }

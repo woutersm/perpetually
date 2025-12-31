@@ -1,29 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageLayout, EmptyState } from "@/components/page-layout";
-import { getCustomers, createCustomer } from "@/functions/customers";
-import { Button } from "@/components/ui/button";
+import { getCustomers } from "@/functions/customers";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { useForm } from "@tanstack/react-form";
-import type { AnyFieldApi } from "@tanstack/react-form";
-import { useServerFn } from "@tanstack/react-start";
-import { useRouter } from "@tanstack/react-router";
-import {
-  Plus,
   Users,
   Mail,
   Building2,
   Calendar,
   ChevronRight,
+  CreditCard,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_auth/customers/")({
@@ -33,18 +17,6 @@ export const Route = createFileRoute("/_auth/customers/")({
     return { customers };
   },
 });
-
-function FieldInfo({ field }: { field: AnyFieldApi }) {
-  return (
-    <>
-      {field.state.meta.isTouched && !field.state.meta.isValid && (
-        <p className="text-sm text-destructive mt-1">
-          {field.state.meta.errors.join(", ")}
-        </p>
-      )}
-    </>
-  );
-}
 
 function getInitials(name: string) {
   return name
@@ -57,55 +29,23 @@ function getInitials(name: string) {
 
 function CustomersPage() {
   const { customers } = Route.useLoaderData();
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const submit = useServerFn(createCustomer);
-
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      email: "",
-      company: "",
-    },
-    onSubmit: async ({ value }) => {
-      const result = await submit({
-        data: {
-          name: value.name,
-          email: value.email,
-          company: value.company || undefined,
-        },
-      });
-
-      if (result) {
-        setOpen(false);
-        form.reset();
-        router.invalidate();
-      }
-    },
-  });
 
   return (
     <PageLayout
       title="Customers"
-      description="Manage customers and their license assignments."
+      description="Your customers synced from Stripe."
       breadcrumbs={[{ label: "Customers" }]}
-      actions={
-        <Button variant="vibrant" onClick={() => setOpen(true)} className="shadow-lg shadow-vibrant/25">
-          <Plus className="h-4 w-4" />
-          Add Customer
-        </Button>
-      }
     >
       {customers.length === 0 ? (
         <EmptyState
           icon={<Users className="h-8 w-8" />}
           title="No customers yet"
-          description="Add your first customer to start issuing licenses."
+          description="Customers are automatically created when they make a purchase through Stripe. Once someone buys a license, they'll appear here."
           action={
-            <Button variant="vibrant" onClick={() => setOpen(true)} className="shadow-lg shadow-vibrant/25">
-              <Plus className="h-4 w-4" />
-              Add Customer
-            </Button>
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-muted/50 text-sm text-muted-foreground">
+              <CreditCard className="h-4 w-4" />
+              Waiting for Stripe purchases...
+            </div>
           }
         />
       ) : (
@@ -178,121 +118,6 @@ function CustomersPage() {
           </div>
         </div>
       )}
-
-      {/* Add Customer Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vibrant/10 mb-4">
-              <Users className="h-6 w-6 text-vibrant" />
-            </div>
-            <DialogTitle>Add Customer</DialogTitle>
-            <DialogDescription>
-              Register a new customer to issue licenses to.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
-            }}
-          >
-            <div className="space-y-4 py-4">
-              <form.Field
-                name="name"
-                validators={{
-                  onChange: ({ value }) =>
-                    !value ? "Name is required" : undefined,
-                }}
-              >
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>Name</Label>
-                    <Input
-                      id={field.name}
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      placeholder="John Doe"
-                      className="h-11"
-                      ignorePasswordManagers
-                    />
-                    <FieldInfo field={field} />
-                  </div>
-                )}
-              </form.Field>
-
-              <form.Field
-                name="email"
-                validators={{
-                  onChange: ({ value }) =>
-                    !value
-                      ? "Email is required"
-                      : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-                        ? "Invalid email address"
-                        : undefined,
-                }}
-              >
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>Email</Label>
-                    <Input
-                      id={field.name}
-                      type="email"
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      placeholder="john@example.com"
-                      className="h-11"
-                      ignorePasswordManagers
-                    />
-                    <FieldInfo field={field} />
-                  </div>
-                )}
-              </form.Field>
-
-              <form.Field name="company">
-                {(field) => (
-                  <div className="space-y-2">
-                    <Label htmlFor={field.name}>
-                      Company{" "}
-                      <span className="text-muted-foreground">(optional)</span>
-                    </Label>
-                    <Input
-                      id={field.name}
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onBlur={field.handleBlur}
-                      placeholder="Acme Inc."
-                      className="h-11"
-                      ignorePasswordManagers
-                    />
-                  </div>
-                )}
-              </form.Field>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-              <form.Subscribe
-                selector={(state) => [state.canSubmit, state.isSubmitting]}
-              >
-                {([canSubmit, isSubmitting]) => (
-                  <Button type="submit" variant="vibrant" disabled={!canSubmit} className="shadow-lg shadow-vibrant/25">
-                    {isSubmitting ? "Adding..." : "Add Customer"}
-                  </Button>
-                )}
-              </form.Subscribe>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </PageLayout>
   );
 }

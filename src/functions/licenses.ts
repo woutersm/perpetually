@@ -109,37 +109,8 @@ export const getLicense = createServerFn({ method: "GET" })
     };
   });
 
-// Create a new license
-export const createLicense = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("createLicense")])
-  .inputValidator(
-    (data: {
-      productId: string;
-      customerId: string;
-      expiresAt: string;
-      activationLimit?: number;
-    }) => data
-  )
-  .handler(async ({ data, context: { organizationId } }) => {
-    const key = generateLicenseKey();
-    const now = new Date();
-
-    const [newLicense] = await db
-      .insert(license)
-      .values({
-        key,
-        keyCreatedAt: now,
-        status: "active",
-        expiresAt: new Date(data.expiresAt),
-        activationLimit: data.activationLimit ?? null,
-        productId: data.productId,
-        customerId: data.customerId,
-        organizationId,
-      })
-      .returning();
-
-    return newLicense;
-  });
+// Note: Licenses are created automatically from Stripe payments
+// createLicense was removed in Phase 2
 
 // Update a license
 export const updateLicense = createServerFn({ method: "POST" })
