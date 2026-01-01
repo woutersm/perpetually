@@ -9,11 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthSettingsIndexRouteImport } from './routes/_auth/settings/index'
 import { Route as AuthProductsIndexRouteImport } from './routes/_auth/products/index'
@@ -25,8 +28,11 @@ import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
 import { Route as ApiStripeConnectRouteImport } from './routes/api/stripe/connect'
 import { Route as ApiStripeCallbackRouteImport } from './routes/api/stripe/callback'
 import { Route as ApiHooksOrganizationIdRouteImport } from './routes/api/hooks/$organizationId'
+import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AuthSettingsTeamRouteImport } from './routes/_auth/settings/team'
+import { Route as AuthSettingsBrandingRouteImport } from './routes/_auth/settings/branding'
+import { Route as AuthSettingsBillingRouteImport } from './routes/_auth/settings/billing'
 import { Route as AuthSettingsApiRouteImport } from './routes/_auth/settings/api'
 import { Route as AuthProductsProductIdRouteImport } from './routes/_auth/products/$productId'
 import { Route as AuthOnboardingImportRouteImport } from './routes/_auth/onboarding/import'
@@ -34,6 +40,11 @@ import { Route as AuthOnboarding1RouteImport } from './routes/_auth/onboarding/1
 import { Route as AuthLicensesLicenseIdRouteImport } from './routes/_auth/licenses/$licenseId'
 import { Route as AuthCustomersCustomerIdRouteImport } from './routes/_auth/customers/$customerId'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -49,6 +60,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -56,6 +72,11 @@ const AuthRouteRoute = AuthRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
@@ -113,6 +134,11 @@ const ApiHooksOrganizationIdRoute = ApiHooksOrganizationIdRouteImport.update({
   path: '/api/hooks/$organizationId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBillingWebhookRoute = ApiBillingWebhookRouteImport.update({
+  id: '/api/billing/webhook',
+  path: '/api/billing/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -121,6 +147,16 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 const AuthSettingsTeamRoute = AuthSettingsTeamRouteImport.update({
   id: '/settings/team',
   path: '/settings/team',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSettingsBrandingRoute = AuthSettingsBrandingRouteImport.update({
+  id: '/settings/branding',
+  path: '/settings/branding',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSettingsBillingRoute = AuthSettingsBillingRouteImport.update({
+  id: '/settings/billing',
+  path: '/settings/billing',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthSettingsApiRoute = AuthSettingsApiRouteImport.update({
@@ -156,18 +192,24 @@ const AuthCustomersCustomerIdRoute = AuthCustomersCustomerIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/customers/$customerId': typeof AuthCustomersCustomerIdRoute
   '/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
   '/onboarding/1': typeof AuthOnboarding1Route
   '/onboarding/import': typeof AuthOnboardingImportRoute
   '/products/$productId': typeof AuthProductsProductIdRoute
   '/settings/api': typeof AuthSettingsApiRoute
+  '/settings/billing': typeof AuthSettingsBillingRoute
+  '/settings/branding': typeof AuthSettingsBrandingRoute
   '/settings/team': typeof AuthSettingsTeamRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/hooks/$organizationId': typeof ApiHooksOrganizationIdRoute
   '/api/stripe/callback': typeof ApiStripeCallbackRoute
   '/api/stripe/connect': typeof ApiStripeConnectRoute
@@ -181,18 +223,24 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/customers/$customerId': typeof AuthCustomersCustomerIdRoute
   '/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
   '/onboarding/1': typeof AuthOnboarding1Route
   '/onboarding/import': typeof AuthOnboardingImportRoute
   '/products/$productId': typeof AuthProductsProductIdRoute
   '/settings/api': typeof AuthSettingsApiRoute
+  '/settings/billing': typeof AuthSettingsBillingRoute
+  '/settings/branding': typeof AuthSettingsBrandingRoute
   '/settings/team': typeof AuthSettingsTeamRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/hooks/$organizationId': typeof ApiHooksOrganizationIdRoute
   '/api/stripe/callback': typeof ApiStripeCallbackRoute
   '/api/stripe/connect': typeof ApiStripeConnectRoute
@@ -208,18 +256,24 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/_auth/customers/$customerId': typeof AuthCustomersCustomerIdRoute
   '/_auth/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
   '/_auth/onboarding/1': typeof AuthOnboarding1Route
   '/_auth/onboarding/import': typeof AuthOnboardingImportRoute
   '/_auth/products/$productId': typeof AuthProductsProductIdRoute
   '/_auth/settings/api': typeof AuthSettingsApiRoute
+  '/_auth/settings/billing': typeof AuthSettingsBillingRoute
+  '/_auth/settings/branding': typeof AuthSettingsBrandingRoute
   '/_auth/settings/team': typeof AuthSettingsTeamRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/hooks/$organizationId': typeof ApiHooksOrganizationIdRoute
   '/api/stripe/callback': typeof ApiStripeCallbackRoute
   '/api/stripe/connect': typeof ApiStripeConnectRoute
@@ -235,18 +289,24 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
     | '/login'
     | '/logout'
     | '/register'
+    | '/reset-password'
     | '/dashboard'
+    | '/invite/$token'
     | '/customers/$customerId'
     | '/licenses/$licenseId'
     | '/onboarding/1'
     | '/onboarding/import'
     | '/products/$productId'
     | '/settings/api'
+    | '/settings/billing'
+    | '/settings/branding'
     | '/settings/team'
     | '/api/auth/$'
+    | '/api/billing/webhook'
     | '/api/hooks/$organizationId'
     | '/api/stripe/callback'
     | '/api/stripe/connect'
@@ -260,18 +320,24 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forgot-password'
     | '/login'
     | '/logout'
     | '/register'
+    | '/reset-password'
     | '/dashboard'
+    | '/invite/$token'
     | '/customers/$customerId'
     | '/licenses/$licenseId'
     | '/onboarding/1'
     | '/onboarding/import'
     | '/products/$productId'
     | '/settings/api'
+    | '/settings/billing'
+    | '/settings/branding'
     | '/settings/team'
     | '/api/auth/$'
+    | '/api/billing/webhook'
     | '/api/hooks/$organizationId'
     | '/api/stripe/callback'
     | '/api/stripe/connect'
@@ -286,18 +352,24 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_auth'
+    | '/forgot-password'
     | '/login'
     | '/logout'
     | '/register'
+    | '/reset-password'
     | '/_auth/dashboard'
+    | '/invite/$token'
     | '/_auth/customers/$customerId'
     | '/_auth/licenses/$licenseId'
     | '/_auth/onboarding/1'
     | '/_auth/onboarding/import'
     | '/_auth/products/$productId'
     | '/_auth/settings/api'
+    | '/_auth/settings/billing'
+    | '/_auth/settings/branding'
     | '/_auth/settings/team'
     | '/api/auth/$'
+    | '/api/billing/webhook'
     | '/api/hooks/$organizationId'
     | '/api/stripe/callback'
     | '/api/stripe/connect'
@@ -313,10 +385,14 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiBillingWebhookRoute: typeof ApiBillingWebhookRoute
   ApiHooksOrganizationIdRoute: typeof ApiHooksOrganizationIdRoute
   ApiStripeCallbackRoute: typeof ApiStripeCallbackRoute
   ApiStripeConnectRoute: typeof ApiStripeConnectRoute
@@ -326,6 +402,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -347,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -359,6 +449,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth/dashboard': {
@@ -438,6 +535,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHooksOrganizationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/billing/webhook': {
+      id: '/api/billing/webhook'
+      path: '/api/billing/webhook'
+      fullPath: '/api/billing/webhook'
+      preLoaderRoute: typeof ApiBillingWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -450,6 +554,20 @@ declare module '@tanstack/react-router' {
       path: '/settings/team'
       fullPath: '/settings/team'
       preLoaderRoute: typeof AuthSettingsTeamRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/settings/branding': {
+      id: '/_auth/settings/branding'
+      path: '/settings/branding'
+      fullPath: '/settings/branding'
+      preLoaderRoute: typeof AuthSettingsBrandingRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/settings/billing': {
+      id: '/_auth/settings/billing'
+      path: '/settings/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof AuthSettingsBillingRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/_auth/settings/api': {
@@ -505,6 +623,8 @@ interface AuthRouteRouteChildren {
   AuthOnboardingImportRoute: typeof AuthOnboardingImportRoute
   AuthProductsProductIdRoute: typeof AuthProductsProductIdRoute
   AuthSettingsApiRoute: typeof AuthSettingsApiRoute
+  AuthSettingsBillingRoute: typeof AuthSettingsBillingRoute
+  AuthSettingsBrandingRoute: typeof AuthSettingsBrandingRoute
   AuthSettingsTeamRoute: typeof AuthSettingsTeamRoute
   AuthCustomersIndexRoute: typeof AuthCustomersIndexRoute
   AuthLicensesIndexRoute: typeof AuthLicensesIndexRoute
@@ -521,6 +641,8 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthOnboardingImportRoute: AuthOnboardingImportRoute,
   AuthProductsProductIdRoute: AuthProductsProductIdRoute,
   AuthSettingsApiRoute: AuthSettingsApiRoute,
+  AuthSettingsBillingRoute: AuthSettingsBillingRoute,
+  AuthSettingsBrandingRoute: AuthSettingsBrandingRoute,
   AuthSettingsTeamRoute: AuthSettingsTeamRoute,
   AuthCustomersIndexRoute: AuthCustomersIndexRoute,
   AuthLicensesIndexRoute: AuthLicensesIndexRoute,
@@ -536,10 +658,14 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  InviteTokenRoute: InviteTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiBillingWebhookRoute: ApiBillingWebhookRoute,
   ApiHooksOrganizationIdRoute: ApiHooksOrganizationIdRoute,
   ApiStripeCallbackRoute: ApiStripeCallbackRoute,
   ApiStripeConnectRoute: ApiStripeConnectRoute,

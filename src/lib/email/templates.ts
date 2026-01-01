@@ -1,19 +1,47 @@
 // Email templates for Perpetually notifications
 // All templates return HTML strings
 
+export type BrandingParams = {
+  logo?: string | null;
+  accentColor?: string | null;
+  supportEmail?: string | null;
+  hidePoweredBy?: boolean;
+};
+
 type BaseTemplateParams = {
   orgName: string;
   orgLogo?: string;
+  branding?: BrandingParams | null;
 };
 
 function baseLayout(content: string, params: BaseTemplateParams): string {
+  const accentColor = params.branding?.accentColor || "#6366f1";
+  const showPoweredBy = !params.branding?.hidePoweredBy;
+  const supportEmail = params.branding?.supportEmail;
+  const logo = params.branding?.logo || params.orgLogo;
+
+  // Generate header content
+  const headerContent = logo
+    ? `<img src="${logo}" alt="${params.orgName}" style="max-height: 40px; max-width: 200px;">`
+    : `<span style="font-size: 20px; font-weight: 600; color: #171717;">${params.orgName}</span>`;
+
+  // Generate footer content
+  let footerContent = "";
+  if (supportEmail) {
+    footerContent += `<a href="mailto:${supportEmail}" style="color: #737373; text-decoration: none;">Contact Support</a>`;
+  }
+  if (showPoweredBy) {
+    if (supportEmail) footerContent += ` · `;
+    footerContent += `Powered by <a href="https://perpetually.dev" style="color: ${accentColor}; text-decoration: none;">Perpetually</a>`;
+  }
+
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Perpetually</title>
+  <title>${params.orgName}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5;">
@@ -23,7 +51,7 @@ function baseLayout(content: string, params: BaseTemplateParams): string {
           <!-- Header -->
           <tr>
             <td style="padding: 32px 40px; border-bottom: 1px solid #e5e5e5;">
-              <span style="font-size: 20px; font-weight: 600; color: #171717;">${params.orgName}</span>
+              ${headerContent}
             </td>
           </tr>
           <!-- Content -->
@@ -33,13 +61,15 @@ function baseLayout(content: string, params: BaseTemplateParams): string {
             </td>
           </tr>
           <!-- Footer -->
+          ${footerContent ? `
           <tr>
             <td style="padding: 24px 40px; background-color: #fafafa; border-top: 1px solid #e5e5e5;">
               <p style="margin: 0; font-size: 12px; color: #737373; text-align: center;">
-                Powered by <a href="https://perpetually.dev" style="color: #6366f1; text-decoration: none;">Perpetually</a>
+                ${footerContent}
               </p>
             </td>
           </tr>
+          ` : ""}
         </table>
       </td>
     </tr>
@@ -60,6 +90,7 @@ export type LicenseCreatedParams = BaseTemplateParams & {
 };
 
 export function licenseCreatedTemplate(params: LicenseCreatedParams): string {
+  const accentColor = params.branding?.accentColor || "#6366f1";
   const expirationText = params.expiresAt
     ? `Expires: ${params.expiresAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`
     : "Never expires";
@@ -113,7 +144,7 @@ export function licenseCreatedTemplate(params: LicenseCreatedParams): string {
 
     ${params.portalUrl ? `
     <p style="margin: 0 0 24px 0; text-align: center;">
-      <a href="${params.portalUrl}" style="display: inline-block; padding: 12px 32px; background-color: #6366f1; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
+      <a href="${params.portalUrl}" style="display: inline-block; padding: 12px 32px; background-color: ${accentColor}; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
         Manage Your License
       </a>
     </p>
@@ -138,6 +169,7 @@ export type LicenseExpiringSoonParams = BaseTemplateParams & {
 };
 
 export function licenseExpiringSoonTemplate(params: LicenseExpiringSoonParams): string {
+  const accentColor = params.branding?.accentColor || "#6366f1";
   const dayText = params.daysRemaining === 1 ? "1 day" : `${params.daysRemaining} days`;
 
   const content = `
@@ -168,7 +200,7 @@ export function licenseExpiringSoonTemplate(params: LicenseExpiringSoonParams): 
 
     ${params.portalUrl ? `
     <p style="margin: 0 0 24px 0; text-align: center;">
-      <a href="${params.portalUrl}" style="display: inline-block; padding: 12px 32px; background-color: #6366f1; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
+      <a href="${params.portalUrl}" style="display: inline-block; padding: 12px 32px; background-color: ${accentColor}; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
         Renew Your License
       </a>
     </p>
@@ -192,6 +224,7 @@ export type LicenseExpiredParams = BaseTemplateParams & {
 };
 
 export function licenseExpiredTemplate(params: LicenseExpiredParams): string {
+  const accentColor = params.branding?.accentColor || "#6366f1";
   const content = `
     <h1 style="margin: 0 0 24px 0; font-size: 24px; font-weight: 600; color: #171717;">
       License Expired
@@ -220,7 +253,7 @@ export function licenseExpiredTemplate(params: LicenseExpiredParams): string {
 
     ${params.portalUrl ? `
     <p style="margin: 0 0 24px 0; text-align: center;">
-      <a href="${params.portalUrl}" style="display: inline-block; padding: 12px 32px; background-color: #6366f1; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
+      <a href="${params.portalUrl}" style="display: inline-block; padding: 12px 32px; background-color: ${accentColor}; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
         Renew Your License
       </a>
     </p>
@@ -246,6 +279,7 @@ export type RefundDetectedParams = BaseTemplateParams & {
 };
 
 export function refundDetectedTemplate(params: RefundDetectedParams): string {
+  const accentColor = params.branding?.accentColor || "#6366f1";
   const content = `
     <h1 style="margin: 0 0 24px 0; font-size: 24px; font-weight: 600; color: #171717;">
       Refund Detected
@@ -297,7 +331,7 @@ export function refundDetectedTemplate(params: RefundDetectedParams): string {
 
     ${params.dashboardUrl ? `
     <p style="margin: 0 0 24px 0; text-align: center;">
-      <a href="${params.dashboardUrl}" style="display: inline-block; padding: 12px 32px; background-color: #6366f1; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
+      <a href="${params.dashboardUrl}" style="display: inline-block; padding: 12px 32px; background-color: ${accentColor}; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
         Review License
       </a>
     </p>
@@ -323,6 +357,7 @@ export type NewActivationParams = BaseTemplateParams & {
 };
 
 export function newActivationTemplate(params: NewActivationParams): string {
+  const accentColor = params.branding?.accentColor || "#6366f1";
   const limitText = params.activationLimit
     ? `${params.activationCount} of ${params.activationLimit}`
     : `${params.activationCount} (unlimited)`;
@@ -358,7 +393,7 @@ export function newActivationTemplate(params: NewActivationParams): string {
 
     ${params.portalUrl ? `
     <p style="margin: 0 0 24px 0; text-align: center;">
-      <a href="${params.portalUrl}" style="display: inline-block; padding: 12px 32px; background-color: #6366f1; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
+      <a href="${params.portalUrl}" style="display: inline-block; padding: 12px 32px; background-color: ${accentColor}; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500; border-radius: 8px;">
         Manage Activations
       </a>
     </p>

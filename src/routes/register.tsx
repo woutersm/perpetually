@@ -6,7 +6,7 @@ import { createOrganization } from "@/functions/organizations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Building, Check, Sparkles, User } from "lucide-react";
+import { ArrowRight, Building, Check, Sparkles, User, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/register")({
   component: RouteComponent,
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/register")({
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<"account" | "organization">("account");
+  const [step, setStep] = useState<"account" | "verify" | "organization">("account");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -71,11 +71,17 @@ function RouteComponent() {
       });
 
       if (error) {
+        // If email verification is required, show verify step
+        if (error.message?.includes("verify") || error.code === "EMAIL_NOT_VERIFIED") {
+          setStep("verify");
+          return;
+        }
         setError(error.message || "Sign up failed");
         return;
       }
 
-      setStep("organization");
+      // Account created - show verify email step
+      setStep("verify");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -175,32 +181,41 @@ function RouteComponent() {
         <div className="flex-1 flex items-center justify-center px-6 py-12">
           <div className="w-full max-w-sm space-y-8">
             {/* Step indicator */}
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-2">
               <div className={`flex items-center gap-2 ${step === "account" ? "text-vibrant" : "text-muted-foreground"}`}>
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all ${step === "account" ? "bg-vibrant text-white" : step === "organization" ? "bg-vibrant/20 text-vibrant" : "bg-muted"}`}>
-                  {step === "organization" ? <Check className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all ${step === "account" ? "bg-vibrant text-white" : "bg-vibrant/20 text-vibrant"}`}>
+                  {step !== "account" ? <Check className="h-4 w-4" /> : <User className="h-4 w-4" />}
                 </div>
                 <span className="text-sm font-medium hidden sm:inline">Account</span>
               </div>
-              <div className={`w-12 h-0.5 rounded-full transition-colors ${step === "organization" ? "bg-vibrant" : "bg-border"}`} />
+              <div className={`w-8 h-0.5 rounded-full transition-colors ${step !== "account" ? "bg-vibrant" : "bg-border"}`} />
+              <div className={`flex items-center gap-2 ${step === "verify" ? "text-vibrant" : "text-muted-foreground"}`}>
+                <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all ${step === "verify" ? "bg-vibrant text-white" : step === "organization" ? "bg-vibrant/20 text-vibrant" : "bg-muted"}`}>
+                  {step === "organization" ? <Check className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+                </div>
+                <span className="text-sm font-medium hidden sm:inline">Verify</span>
+              </div>
+              <div className={`w-8 h-0.5 rounded-full transition-colors ${step === "organization" ? "bg-vibrant" : "bg-border"}`} />
               <div className={`flex items-center gap-2 ${step === "organization" ? "text-vibrant" : "text-muted-foreground"}`}>
                 <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all ${step === "organization" ? "bg-vibrant text-white" : "bg-muted"}`}>
                   <Building className="h-4 w-4" />
                 </div>
-                <span className="text-sm font-medium hidden sm:inline">Organization</span>
+                <span className="text-sm font-medium hidden sm:inline">Setup</span>
               </div>
             </div>
 
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight">
-                {step === "account" ? "Create your account" : "Set up your organization"}
-              </h1>
-              <p className="text-muted-foreground">
-                {step === "account"
-                  ? "Start managing your software licenses"
-                  : "You'll use this to manage your licenses"}
-              </p>
-            </div>
+            {step !== "verify" && (
+              <div className="text-center space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight">
+                  {step === "account" ? "Create your account" : "Set up your organization"}
+                </h1>
+                <p className="text-muted-foreground">
+                  {step === "account"
+                    ? "Start managing your software licenses"
+                    : "You'll use this to manage your licenses"}
+                </p>
+              </div>
+            )}
 
             {error && (
               <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4">
@@ -208,7 +223,51 @@ function RouteComponent() {
               </div>
             )}
 
-            {step === "account" ? (
+            {step === "verify" ? (
+              <div className="text-center space-y-6">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-vibrant/10 mx-auto">
+                  <Mail className="h-8 w-8 text-vibrant" />
+                </div>
+                <div className="space-y-2">
+                  <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
+                  <p className="text-muted-foreground">
+                    We sent a verification link to{" "}
+                    <span className="font-medium text-foreground">{formData.email}</span>
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Click the link in your email to verify your account, then come back here to continue.
+                </p>
+                <div className="space-y-3">
+                  <Button
+                    variant="vibrant"
+                    className="w-full shadow-lg shadow-vibrant/25"
+                    onClick={() => navigate({ to: "/login" })}
+                  >
+                    Continue to login
+                  </Button>
+                  <button
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        await authClient.sendVerificationEmail({
+                          email: formData.email,
+                          callbackURL: "/dashboard",
+                        });
+                        setError(null);
+                      } catch {
+                        // Silently fail - don't expose if email exists
+                      }
+                      setLoading(false);
+                    }}
+                    disabled={loading}
+                    className="text-sm font-medium text-vibrant hover:text-vibrant/80 transition-colors disabled:opacity-50"
+                  >
+                    {loading ? "Sending..." : "Resend verification email"}
+                  </button>
+                </div>
+              </div>
+            ) : step === "account" ? (
               <form className="space-y-6" onSubmit={handleAccountSubmit}>
                 <div className="space-y-4">
                   <div className="space-y-2">

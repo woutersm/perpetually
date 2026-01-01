@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Sparkles,
   FlaskConical,
+  CreditCard,
+  Palette,
 } from "lucide-react";
 
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -68,9 +70,19 @@ const settingsItems = [
     icon: Settings,
   },
   {
+    title: "Billing",
+    url: "/settings/billing",
+    icon: CreditCard,
+  },
+  {
     title: "Team",
     url: "/settings/team",
     icon: UsersRound,
+  },
+  {
+    title: "Branding",
+    url: "/settings/branding",
+    icon: Palette,
   },
   {
     title: "API Keys",
@@ -236,10 +248,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             Unlock unlimited licenses, products, and more.
           </p>
           <Link
-            to="/settings"
+            to="/settings/billing"
             className="inline-flex items-center text-xs font-medium text-vibrant hover:text-vibrant/80 transition-colors"
           >
-            Learn more
+            View plans
             <ChevronRight className="h-3 w-3 ml-1" />
           </Link>
         </div>

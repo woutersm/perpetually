@@ -126,7 +126,7 @@ export const organization = sqliteTable("organization", {
     .default(false)
     .notNull(),
 
-  // Stripe Connect OAuth
+  // Stripe Connect OAuth (for org's own Stripe account to sell licenses)
   stripeConnectId: text("stripe_connect_id"), // acct_xxx
   stripeAccessToken: text("stripe_access_token"),
   stripeRefreshToken: text("stripe_refresh_token"),
@@ -135,6 +135,39 @@ export const organization = sqliteTable("organization", {
   stripeConnectedAt: integer("stripe_connected_at", { mode: "timestamp_ms" }),
   stripeWebhookSecret: text("stripe_webhook_secret"),
   stripeWebhookEndpointId: text("stripe_webhook_endpoint_id"),
+
+  // ==================== SUBSCRIPTION (Perpetually billing) ====================
+  // This is for billing the org for using Perpetually, separate from their Stripe Connect
+
+  subscriptionTier: text("subscription_tier", {
+    enum: ["starter", "pro", "business"],
+  })
+    .notNull()
+    .default("starter"),
+
+  subscriptionStatus: text("subscription_status", {
+    enum: ["trialing", "active", "past_due", "canceled"],
+  }), // null = starter (free, no subscription needed)
+
+  // Stripe customer for Perpetually billing
+  billingStripeCustomerId: text("billing_stripe_customer_id"), // cus_xxx
+  billingStripeSubscriptionId: text("billing_stripe_subscription_id"), // sub_xxx
+  billingCurrentPeriodEnd: integer("billing_current_period_end", {
+    mode: "timestamp_ms",
+  }),
+  billingTrialEndsAt: integer("billing_trial_ends_at", { mode: "timestamp_ms" }),
+
+  // ==================== BRANDING (Business tier only) ====================
+
+  brandingEnabled: integer("branding_enabled", { mode: "boolean" })
+    .default(false)
+    .notNull(),
+  brandLogo: text("brand_logo"), // URL to logo image
+  brandAccentColor: text("brand_accent_color"), // Hex color, e.g., "#FF6B35"
+  brandSupportEmail: text("brand_support_email"),
+  brandHidePoweredBy: integer("brand_hide_powered_by", { mode: "boolean" })
+    .default(false)
+    .notNull(),
 });
 
 // ==================== MEMBERSHIP (User <-> Organization) ====================
@@ -167,6 +200,39 @@ export const membership = sqliteTable(
       table.userId,
       table.organizationId
     ),
+  })
+);
+
+// ==================== INVITATION ====================
+
+export const invitation = sqliteTable(
+  "invitation",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+
+    email: text("email").notNull(),
+    role: text("role", { enum: ["member"] })
+      .notNull()
+      .default("member"),
+    token: text("token").notNull().unique(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    invitedBy: text("invited_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => ({
+    orgIdIdx: index("invitation_orgId_idx").on(table.organizationId),
+    emailIdx: index("invitation_email_idx").on(table.email),
+    tokenIdx: index("invitation_token_idx").on(table.token),
   })
 );
 
@@ -490,6 +556,7 @@ export const relations = defineRelations(
     verification,
     organization,
     membership,
+    invitation,
     product,
     licensePolicy,
     customer,
@@ -533,6 +600,10 @@ export const relations = defineRelations(
         from: r.organization.id,
         to: r.membership.organizationId,
       }),
+      invitations: r.many.invitation({
+        from: r.organization.id,
+        to: r.invitation.organizationId,
+      }),
       products: r.many.product({
         from: r.organization.id,
         to: r.product.organizationId,
@@ -556,6 +627,17 @@ export const relations = defineRelations(
       licenseEvents: r.many.licenseEvent({
         from: r.organization.id,
         to: r.licenseEvent.organizationId,
+      }),
+    },
+    // Invitation relations
+    invitation: {
+      organization: r.one.organization({
+        from: r.invitation.organizationId,
+        to: r.organization.id,
+      }),
+      invitedByUser: r.one.user({
+        from: r.invitation.invitedBy,
+        to: r.user.id,
       }),
     },
     membership: {

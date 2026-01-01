@@ -109,7 +109,15 @@ function RouteComponent() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <Link
+                      to="/forgot-password"
+                      className="text-xs font-medium text-vibrant hover:text-vibrant/80 transition-colors"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
                   <Input
                     id="password"
                     name="password"

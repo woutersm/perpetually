@@ -12,16 +12,24 @@ import {
 } from "@/lib/audit";
 
 // Generate license key (e.g., XXXX-XXXX-XXXX-XXXX)
+// Uses crypto.getRandomValues() for cryptographically secure randomness
 function generateLicenseKey(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const segments = 4;
   const segmentLength = 4;
+  const totalChars = segments * segmentLength;
+
+  // Generate all random bytes at once
+  const randomBytes = new Uint8Array(totalChars);
+  crypto.getRandomValues(randomBytes);
 
   const parts: string[] = [];
+  let byteIndex = 0;
+
   for (let i = 0; i < segments; i++) {
     let segment = "";
     for (let j = 0; j < segmentLength; j++) {
-      segment += chars[Math.floor(Math.random() * chars.length)];
+      segment += chars[randomBytes[byteIndex++] % chars.length];
     }
     parts.push(segment);
   }

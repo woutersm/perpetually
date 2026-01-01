@@ -17,6 +17,7 @@ import {
   sendRefundDetectedEmail,
   isEmailConfigured,
 } from "@/lib/email/notifications";
+import { checkLicenseLimit, checkProductLimit } from "@/lib/limits";
 
 // Generate license key (e.g., XXXX-XXXX-XXXX-XXXX)
 function generateLicenseKey(): string {
@@ -55,6 +56,19 @@ async function handleProductCreated({
   if (existing) {
     console.log("Product already exists, skipping:", stripeProduct.name);
     return existing;
+  }
+
+  // Check product limit before creating
+  const limitCheck = await checkProductLimit(organizationId);
+  if (!limitCheck.allowed) {
+    console.warn("Product limit reached for organization:", organizationId, {
+      current: limitCheck.current,
+      limit: limitCheck.limit,
+      tier: limitCheck.tier,
+    });
+    // Note: We still allow product sync from Stripe since it's already created there.
+    // The org will see upgrade prompts in the dashboard.
+    console.warn("Creating product despite limit - already exists in Stripe.");
   }
 
   const slug = stripeProduct.name
@@ -266,6 +280,20 @@ async function createLicenseFromPayment({
   metadata?: Stripe.Metadata;
   stripe: Stripe;
 }) {
+  // Check license limit before creating
+  const limitCheck = await checkLicenseLimit(organizationId);
+  if (!limitCheck.allowed) {
+    console.error("License limit reached for organization:", organizationId, {
+      current: limitCheck.current,
+      limit: limitCheck.limit,
+      tier: limitCheck.tier,
+    });
+    // Note: We still allow the license to be created since customer paid.
+    // This is a business decision - log warning but don't block.
+    // The org will see upgrade prompts in the dashboard.
+    console.warn("Creating license despite limit - customer has paid.");
+  }
+
   // Find or create local product
   let [localProduct] = await db
     .select()

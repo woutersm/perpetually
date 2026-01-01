@@ -73,12 +73,20 @@ export const Route = createFileRoute("/api/stripe/callback")({
             {
               url: webhookUrl,
               enabled_events: [
+                // Payment events
                 "checkout.session.completed",
                 "payment_intent.succeeded",
                 "invoice.payment_succeeded",
+                // Subscription events
                 "customer.subscription.created",
                 "customer.subscription.updated",
                 "customer.subscription.deleted",
+                // Product sync events
+                "product.created",
+                "product.updated",
+                "product.deleted",
+                // Refund events
+                "charge.refunded",
               ],
             }
           );

@@ -69,6 +69,12 @@ async function seed() {
       throw new Error("Failed to create user");
     }
 
+    // Verify test user's email
+    await db
+      .update(user)
+      .set({ emailVerified: true })
+      .where(eq(user.id, createdUser.id));
+
     // Create test organization
     console.log("Creating test organization...");
     const [org] = await db

@@ -31,7 +31,7 @@ function LandingPage() {
       <BentoFeatures />
       <CodePreview />
       <Stats />
-      <Testimonial />
+      <WhyPerpetually />
       <Pricing />
       <FinalCTA />
       <Footer />
@@ -99,7 +99,7 @@ function Hero() {
           {/* Pill badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-vibrant/30 bg-vibrant/5 text-sm mb-8 group cursor-default">
             <Sparkles className="h-3.5 w-3.5 text-vibrant" />
-            <span className="text-vibrant font-medium">Self-hosted & Open Source</span>
+            <span className="text-vibrant font-medium">Stripe-powered licensing</span>
             <ChevronRight className="h-3.5 w-3.5 text-vibrant/60 group-hover:translate-x-0.5 transition-transform" />
           </div>
 
@@ -143,7 +143,7 @@ function Hero() {
 
           {/* Trust line */}
           <p className="mt-6 text-sm text-muted-foreground/80">
-            Free & open source &middot; Self-hosted &middot; Deploy in minutes
+            Free to start &middot; No credit card required &middot; Setup in 5 minutes
           </p>
         </div>
 
@@ -229,12 +229,12 @@ function LogoCloud() {
     <section className="py-12 border-y border-border/40 bg-muted/20">
       <div className="max-w-7xl mx-auto px-6">
         <p className="text-center text-sm text-muted-foreground mb-8">
-          Built with modern technologies you already know
+          Built for developers selling desktop apps, CLIs, plugins, and more
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6 opacity-60">
-          {["React", "TypeScript", "Stripe", "SQLite", "Drizzle", "TanStack"].map((tech) => (
-            <div key={tech} className="text-lg font-semibold tracking-tight">
-              {tech}
+          {["Desktop Apps", "CLI Tools", "Plugins", "SDKs", "APIs", "SaaS Add-ons"].map((type) => (
+            <div key={type} className="text-lg font-semibold tracking-tight">
+              {type}
             </div>
           ))}
         </div>
@@ -344,9 +344,9 @@ function BentoFeatures() {
               </div>
               <div className="flex gap-8">
                 {[
-                  { value: "SQLite", label: "Database" },
+                  { value: "99.9%", label: "Uptime" },
+                  { value: "<50ms", label: "API Latency" },
                   { value: "REST", label: "API" },
-                  { value: "100%", label: "Self-hosted" },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
                     <p className="text-2xl font-bold text-vibrant">{stat.value}</p>
@@ -366,23 +366,23 @@ function CodePreview() {
   const [copied, setCopied] = useState(false);
 
   const code = `// Validate a license in your app
-const response = await fetch('https://api.perpetually.dev/v1/validate', {
+const response = await fetch('https://your-server.com/api/v1/validate', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer pk_live_...',
+    'Authorization': 'Bearer sk_live_your_api_key',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    key: 'PERP-X8K2-M9N1-Q4W7',
-    machine_id: getMachineId()
+    licenseId: 'license-uuid-here',
+    key: 'ABCD-1234-EFGH-5678'
   })
 });
 
-const { valid, license } = await response.json();
+const { valid, license, error } = await response.json();
 
 if (valid) {
-  // License is active, unlock features
-  enableProFeatures();
+  console.log('License valid until:', license.expiresAt);
+  console.log('Activations:', license.activations, '/', license.activationLimit);
 }`;
 
   const handleCopy = () => {
@@ -399,19 +399,19 @@ if (valid) {
           <div>
             <p className="text-sm font-medium text-vibrant mb-3">Developer Experience</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Built for developers,<br />by developers
+              Simple API,<br />no complexity
             </h2>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              A simple REST API that works with any stack. TypeScript SDK included.
-              Validate licenses in milliseconds with a single API call.
+              A clean REST API that works with any stack.
+              Validate licenses with a single POST request.
             </p>
 
             <ul className="mt-8 space-y-4">
               {[
-                "RESTful API with comprehensive documentation",
-                "TypeScript/JavaScript SDK with full type safety",
-                "Webhooks for real-time license events",
-                "SDKs for Python, Go, Ruby, and more",
+                "RESTful API with OpenAPI documentation",
+                "Swagger UI included at /api/v1/ui",
+                "Validate, activate, and deactivate endpoints",
+                "API keys managed in your dashboard",
               ].map((feature) => (
                 <li key={feature} className="flex items-start gap-3">
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-vibrant/10 shrink-0 mt-0.5">
@@ -424,10 +424,10 @@ if (valid) {
 
             <div className="mt-8">
               <Button variant="vibrant" asChild>
-                <a href="#">
-                  Read the docs
+                <Link to="/login">
+                  View API docs
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
+                </Link>
               </Button>
             </div>
           </div>
@@ -458,7 +458,7 @@ if (valid) {
                   <span className="text-[#ff7b72]">await</span>{" "}
                   <span className="text-[#d2a8ff]">fetch</span>
                   <span className="text-[#c9d1d9]">(</span>
-                  <span className="text-[#a5d6ff]">'https://api.perpetually.dev/v1/validate'</span>
+                  <span className="text-[#a5d6ff]">'https://your-server.com/api/v1/validate'</span>
                   <span className="text-[#c9d1d9]">, {"{"}</span>{"\n"}
                   {"  "}<span className="text-[#c9d1d9]">method:</span>{" "}
                   <span className="text-[#a5d6ff]">'POST'</span>
@@ -466,7 +466,7 @@ if (valid) {
                   {"  "}<span className="text-[#c9d1d9]">headers: {"{"}</span>{"\n"}
                   {"    "}<span className="text-[#a5d6ff]">'Authorization'</span>
                   <span className="text-[#c9d1d9]">:</span>{" "}
-                  <span className="text-[#a5d6ff]">'Bearer pk_live_...'</span>
+                  <span className="text-[#a5d6ff]">'Bearer sk_live_...'</span>
                   <span className="text-[#c9d1d9]">,</span>{"\n"}
                   {"    "}<span className="text-[#a5d6ff]">'Content-Type'</span>
                   <span className="text-[#c9d1d9]">:</span>{" "}
@@ -477,12 +477,11 @@ if (valid) {
                   <span className="text-[#c9d1d9]">.</span>
                   <span className="text-[#d2a8ff]">stringify</span>
                   <span className="text-[#c9d1d9]">({"{"}</span>{"\n"}
-                  {"    "}<span className="text-[#c9d1d9]">key:</span>{" "}
-                  <span className="text-[#a5d6ff]">'PERP-X8K2-M9N1-Q4W7'</span>
+                  {"    "}<span className="text-[#c9d1d9]">licenseId:</span>{" "}
+                  <span className="text-[#a5d6ff]">'license-uuid'</span>
                   <span className="text-[#c9d1d9]">,</span>{"\n"}
-                  {"    "}<span className="text-[#c9d1d9]">machine_id:</span>{" "}
-                  <span className="text-[#d2a8ff]">getMachineId</span>
-                  <span className="text-[#c9d1d9]">()</span>{"\n"}
+                  {"    "}<span className="text-[#c9d1d9]">key:</span>{" "}
+                  <span className="text-[#a5d6ff]">'ABCD-1234-EFGH-5678'</span>{"\n"}
                   {"  "}<span className="text-[#c9d1d9]">{"}"})</span>{"\n"}
                   <span className="text-[#c9d1d9]">{"}"})</span>
                   <span className="text-[#c9d1d9]">;</span>{"\n\n"}
@@ -496,8 +495,9 @@ if (valid) {
                   <span className="text-[#ff7b72]">if</span>{" "}
                   <span className="text-[#c9d1d9]">(valid) {"{"}</span>{"\n"}
                   {"  "}<span className="text-[#8b949e]">{"// License is active, unlock features"}</span>{"\n"}
-                  {"  "}<span className="text-[#d2a8ff]">enableProFeatures</span>
-                  <span className="text-[#c9d1d9]">();</span>{"\n"}
+                  {"  "}<span className="text-[#c9d1d9]">console.</span>
+                  <span className="text-[#d2a8ff]">log</span>
+                  <span className="text-[#c9d1d9]">(license.expiresAt);</span>{"\n"}
                   <span className="text-[#c9d1d9]">{"}"}</span>
                 </code>
               </pre>
@@ -515,10 +515,10 @@ function Stats() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
-            { value: "10M+", label: "License validations", sublabel: "per month" },
-            { value: "99.99%", label: "Uptime SLA", sublabel: "guaranteed" },
-            { value: "<50ms", label: "API response", sublabel: "p99 latency" },
-            { value: "5,000+", label: "Developers", sublabel: "trust us" },
+            { value: "99.9%", label: "Uptime", sublabel: "always available" },
+            { value: "<50ms", label: "API Response", sublabel: "p99 latency" },
+            { value: "Stripe", label: "Native", sublabel: "auto-sync" },
+            { value: "5 min", label: "Setup", sublabel: "to first license" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="text-4xl md:text-5xl font-bold tracking-tight text-gradient-vibrant">
@@ -534,31 +534,30 @@ function Stats() {
   );
 }
 
-function Testimonial() {
+function WhyPerpetually() {
   return (
     <section className="py-24 bg-muted/20 border-y border-border/40">
       <div className="max-w-4xl mx-auto px-6 text-center">
-        <div className="flex justify-center mb-6">
-          {[...Array(5)].map((_, i) => (
-            <svg key={i} className="w-5 h-5 text-vibrant" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6">
+          Why developers choose Perpetually
+        </h2>
+
+        <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+          Stop building license key systems from scratch. Perpetually handles the complexity
+          so you can focus on shipping your product and growing your business.
+        </p>
+
+        <div className="mt-10 grid md:grid-cols-3 gap-6 text-left">
+          {[
+            { title: "Stripe Native", desc: "Products sync automatically. Licenses created on purchase. Refunds handled." },
+            { title: "Customer Portal", desc: "Your customers can manage their licenses, view keys, and handle activations." },
+            { title: "Full Visibility", desc: "Dashboard shows everything. Audit trail logs every action. No black boxes." },
+          ].map((item) => (
+            <div key={item.title} className="p-4 rounded-2xl bg-background border border-border/40">
+              <h3 className="font-semibold mb-2">{item.title}</h3>
+              <p className="text-sm text-muted-foreground">{item.desc}</p>
+            </div>
           ))}
-        </div>
-
-        <blockquote className="text-2xl md:text-3xl font-medium leading-relaxed">
-          "Perpetually saved us weeks of development time. We went from zero to selling
-          licenses in an afternoon. The Stripe integration is <span className="text-gradient-vibrant">flawless</span>."
-        </blockquote>
-
-        <div className="mt-8 flex items-center justify-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-gradient-vibrant flex items-center justify-center text-white font-semibold">
-            JD
-          </div>
-          <div className="text-left">
-            <p className="font-medium">Jamie Davidson</p>
-            <p className="text-sm text-muted-foreground">Founder, DevTools Inc.</p>
-          </div>
         </div>
       </div>
     </section>
@@ -582,14 +581,14 @@ function Pricing() {
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {/* Free tier */}
           <div className="rounded-3xl border border-border/60 bg-card p-8">
-            <h3 className="font-semibold">Hobby</h3>
-            <p className="text-sm text-muted-foreground mt-1">For side projects</p>
+            <h3 className="font-semibold">Starter</h3>
+            <p className="text-sm text-muted-foreground mt-1">For getting started</p>
             <p className="mt-6">
               <span className="text-4xl font-bold">$0</span>
               <span className="text-muted-foreground">/month</span>
             </p>
             <ul className="mt-8 space-y-4">
-              {["100 licenses", "1 product", "Basic analytics", "Community support"].map((feature) => (
+              {["100 licenses", "3 products", "Customer portal", "Email notifications", "Community support"].map((feature) => (
                 <li key={feature} className="flex items-center gap-3 text-sm">
                   <Check className="h-4 w-4 text-vibrant" />
                   {feature}
@@ -597,7 +596,7 @@ function Pricing() {
               ))}
             </ul>
             <Button variant="outline" className="w-full mt-8" asChild>
-              <Link to="/register">Get started</Link>
+              <Link to="/register">Get started free</Link>
             </Button>
           </div>
 
@@ -609,11 +608,11 @@ function Pricing() {
             <h3 className="font-semibold">Pro</h3>
             <p className="text-sm text-muted-foreground mt-1">For growing businesses</p>
             <p className="mt-6">
-              <span className="text-4xl font-bold">$49</span>
+              <span className="text-4xl font-bold">$29</span>
               <span className="text-muted-foreground">/month</span>
             </p>
             <ul className="mt-8 space-y-4">
-              {["Unlimited licenses", "Unlimited products", "Advanced analytics", "Priority support", "Custom branding", "Webhooks"].map((feature) => (
+              {["Unlimited licenses", "Unlimited products", "Customer portal", "Email notifications", "Priority support", "API access"].map((feature) => (
                 <li key={feature} className="flex items-center gap-3 text-sm">
                   <Check className="h-4 w-4 text-vibrant" />
                   {feature}
@@ -625,15 +624,16 @@ function Pricing() {
             </Button>
           </div>
 
-          {/* Enterprise tier */}
+          {/* Business tier */}
           <div className="rounded-3xl border border-border/60 bg-card p-8">
-            <h3 className="font-semibold">Enterprise</h3>
-            <p className="text-sm text-muted-foreground mt-1">For large teams</p>
+            <h3 className="font-semibold">Business</h3>
+            <p className="text-sm text-muted-foreground mt-1">For larger teams</p>
             <p className="mt-6">
-              <span className="text-4xl font-bold">Custom</span>
+              <span className="text-4xl font-bold">$99</span>
+              <span className="text-muted-foreground">/month</span>
             </p>
             <ul className="mt-8 space-y-4">
-              {["Everything in Pro", "SSO & SAML", "Dedicated support", "SLA guarantee", "Custom integrations", "On-premise option"].map((feature) => (
+              {["Everything in Pro", "Multiple team members", "Custom branding", "Advanced analytics", "Dedicated support", "SLA guarantee"].map((feature) => (
                 <li key={feature} className="flex items-center gap-3 text-sm">
                   <Check className="h-4 w-4 text-vibrant" />
                   {feature}
@@ -641,7 +641,7 @@ function Pricing() {
               ))}
             </ul>
             <Button variant="outline" className="w-full mt-8" asChild>
-              <a href="#">Contact sales</a>
+              <Link to="/register">Contact us</Link>
             </Button>
           </div>
         </div>
@@ -661,11 +661,11 @@ function FinalCTA() {
 
           <div className="relative max-w-2xl">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-              Ready to ship licenses?
+              Ready to start selling?
             </h2>
             <p className="mt-4 text-white/80 text-lg">
-              Join thousands of developers who trust Perpetually to power their software licensing.
-              Get started in minutes.
+              Connect your Stripe account, sync your products, and start issuing licenses
+              in minutes. No complex setup, no code required.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -675,7 +675,7 @@ function FinalCTA() {
                 asChild
               >
                 <Link to="/register">
-                  Start building free
+                  Start free
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -685,7 +685,9 @@ function FinalCTA() {
                 className="border-white/30 text-white hover:bg-white/10 h-12 px-8"
                 asChild
               >
-                <a href="#">Talk to sales</a>
+                <a href="#features">
+                  See how it works
+                </a>
               </Button>
             </div>
           </div>
@@ -708,10 +710,9 @@ function Footer() {
           </div>
 
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Documentation</a>
-            <a href="#" className="hover:text-foreground transition-colors">Pricing</a>
-            <a href="#" className="hover:text-foreground transition-colors">Blog</a>
-            <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
+            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
+            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+            <Link to="/login" className="hover:text-foreground transition-colors">Sign in</Link>
           </nav>
 
           <p className="text-sm text-muted-foreground">

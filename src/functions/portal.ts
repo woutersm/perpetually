@@ -148,6 +148,15 @@ export const getPortalCustomer = createServerFn({ method: "GET" })
       organization: {
         name: org.name,
         slug: org.slug,
+        // Branding - only include if enabled
+        branding: org.brandingEnabled
+          ? {
+              logo: org.brandLogo,
+              accentColor: org.brandAccentColor,
+              supportEmail: org.brandSupportEmail,
+              hidePoweredBy: org.brandHidePoweredBy,
+            }
+          : null,
       },
     };
   });

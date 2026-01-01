@@ -55,6 +55,14 @@ import {
 } from "@/functions/portal";
 import { toShortDate, formatRelativeTime } from "@/lib/utils";
 
+// Branding type
+type Branding = {
+  logo: string | null;
+  accentColor: string | null;
+  supportEmail: string | null;
+  hidePoweredBy: boolean;
+} | null;
+
 // Type for portal data
 type PortalData = {
   customer: {
@@ -95,6 +103,7 @@ type PortalData = {
   organization: {
     name: string;
     slug: string;
+    branding: Branding;
   };
 };
 
@@ -108,7 +117,7 @@ export const Route = createFileRoute("/portal/$slug/$customerId")({
   },
   errorComponent: ({ error }) => (
     <div className="min-h-screen flex flex-col bg-background">
-      <PortalHeader orgName="Perpetually" />
+      <PortalHeader orgName="Perpetually" branding={null} />
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <Card className="w-full max-w-md rounded-3xl border-border/60">
           <CardHeader className="text-center">
@@ -134,17 +143,39 @@ export const Route = createFileRoute("/portal/$slug/$customerId")({
   ),
 });
 
-function PortalHeader({ orgName }: { orgName: string }) {
+function PortalHeader({ orgName, branding }: { orgName: string; branding: Branding }) {
+  const accentColor = branding?.accentColor || "#FF6B35";
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-vibrant shadow-lg shadow-vibrant/25">
-            <span className="text-sm font-bold text-white">P</span>
-          </div>
-          <span className="text-lg font-semibold tracking-tight">Perpetually</span>
-          <span className="text-muted-foreground/50 mx-1">/</span>
-          <span className="text-muted-foreground font-medium">{orgName}</span>
+          {branding?.logo ? (
+            <img
+              src={branding.logo}
+              alt={orgName}
+              className="h-9 object-contain"
+              onError={(e) => {
+                // Fallback to default logo on error
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          ) : (
+            <>
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-xl shadow-lg"
+                style={{
+                  background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
+                  boxShadow: `0 10px 15px -3px ${accentColor}40`
+                }}
+              >
+                <span className="text-sm font-bold text-white">
+                  {orgName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-lg font-semibold tracking-tight">{orgName}</span>
+            </>
+          )}
         </div>
       </div>
     </header>
@@ -466,21 +497,39 @@ function CustomerPortal() {
   const data = Route.useLoaderData() as PortalData;
   const { customer, licenses, events, organization } = data;
   const { slug, customerId } = Route.useParams();
+  const branding = organization.branding;
+  const accentColor = branding?.accentColor || "#FF6B35";
+
+  // CSS custom properties for accent color
+  const accentStyles = {
+    "--accent-color": accentColor,
+    "--accent-color-light": `${accentColor}20`,
+    "--accent-color-shadow": `${accentColor}40`,
+  } as React.CSSProperties;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <PortalHeader orgName={organization.name} />
+    <div className="min-h-screen flex flex-col bg-background" style={accentStyles}>
+      <PortalHeader orgName={organization.name} branding={branding} />
 
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Sidebar */}
         <aside className="lg:w-80 border-b lg:border-b-0 lg:border-r border-border/40 bg-muted/20 relative overflow-hidden">
           {/* Gradient orb */}
-          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-vibrant/10 rounded-full blur-[100px] opacity-50" />
+          <div
+            className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full blur-[100px] opacity-50"
+            style={{ backgroundColor: `${accentColor}20` }}
+          />
 
           <div className="relative p-6 lg:p-8">
             {/* Customer Info */}
             <div className="mb-8">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-vibrant shadow-lg shadow-vibrant/25 mb-4">
+              <div
+                className="flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg mb-4"
+                style={{
+                  background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
+                  boxShadow: `0 10px 15px -3px ${accentColor}40`
+                }}
+              >
                 <span className="text-xl font-bold text-white">
                   {customer.name.charAt(0).toUpperCase()}
                 </span>
@@ -497,7 +546,9 @@ function CustomerPortal() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="rounded-2xl border border-border/60 bg-card p-4">
-                <p className="text-3xl font-bold text-vibrant">{licenses.length}</p>
+                <p className="text-3xl font-bold" style={{ color: accentColor }}>
+                  {licenses.length}
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {licenses.length === 1 ? "License" : "Licenses"}
                 </p>
@@ -515,7 +566,10 @@ function CustomerPortal() {
             {/* Back link */}
             <button
               onClick={() => window.history.back()}
-              className="flex items-center text-sm text-muted-foreground hover:text-vibrant transition-colors group"
+              className="flex items-center text-sm text-muted-foreground transition-colors group"
+              style={{ ["--hover-color" as string]: accentColor }}
+              onMouseEnter={(e) => e.currentTarget.style.color = accentColor}
+              onMouseLeave={(e) => e.currentTarget.style.color = ""}
             >
               <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
               Return to {organization.name}
@@ -550,11 +604,31 @@ function CustomerPortal() {
               <ul className="space-y-4">
                 {licenses.map((license) => (
                   <li key={license.id}>
-                    <Card className="rounded-3xl border-border/60 transition-all hover:border-vibrant/40 hover:shadow-xl hover:shadow-vibrant/5 overflow-hidden">
+                    <Card
+                      className="rounded-3xl border-border/60 transition-all hover:shadow-xl overflow-hidden"
+                      style={{
+                        ["--hover-border" as string]: `${accentColor}60`,
+                        ["--hover-shadow" as string]: `${accentColor}10`,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = `${accentColor}60`;
+                        e.currentTarget.style.boxShadow = `0 25px 50px -12px ${accentColor}10`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "";
+                        e.currentTarget.style.boxShadow = "";
+                      }}
+                    >
                       <CardHeader className="pb-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-4">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-vibrant text-white shadow-lg shadow-vibrant/25 shrink-0">
+                            <div
+                              className="flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg shrink-0"
+                              style={{
+                                background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
+                                boxShadow: `0 10px 15px -3px ${accentColor}40`
+                              }}
+                            >
                               <Key className="h-7 w-7" />
                             </div>
                             <div>
@@ -628,14 +702,31 @@ function CustomerPortal() {
 
       {/* Footer */}
       <footer className="border-t border-border/40 py-6">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-center gap-2">
-          <span className="text-sm text-muted-foreground">Powered by</span>
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-vibrant">
-              <span className="text-[10px] font-bold text-white">P</span>
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-center gap-4">
+          {branding?.supportEmail && (
+            <a
+              href={`mailto:${branding.supportEmail}`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Contact Support
+            </a>
+          )}
+          {!branding?.hidePoweredBy && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Powered by</span>
+              <a
+                href="https://perpetually.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-vibrant">
+                  <span className="text-[10px] font-bold text-white">P</span>
+                </div>
+                <span className="text-sm font-semibold">Perpetually</span>
+              </a>
             </div>
-            <span className="text-sm font-semibold">Perpetually</span>
-          </div>
+          )}
         </div>
       </footer>
     </div>
