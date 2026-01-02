@@ -9,7 +9,11 @@ import {
   licensePolicy,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import app from "../app";
+
+// Import route handlers - access the POST handler from Route.options.server.handlers.POST
+import { Route as ValidateRoute } from "@/routes/api/v1/validate";
+import { Route as ActivateRoute } from "@/routes/api/v1/activate";
+import { Route as DeactivateRoute } from "@/routes/api/v1/deactivate";
 
 // ============================================
 // Test Factory - Creates test data
@@ -205,9 +209,35 @@ function generateLicenseKey(): string {
 }
 
 // ============================================
+// Route Handler Access
+// ============================================
+
+// Extract POST handlers from routes
+// The routes export Route which has options.server.handlers.POST
+type RouteWithServer = {
+  options: {
+    server?: {
+      handlers?: {
+        POST?: (ctx: { request: Request }) => Promise<Response>;
+      };
+    };
+  };
+};
+
+const routeHandlers: Record<string, (ctx: { request: Request }) => Promise<Response>> = {
+  "/validate": (ValidateRoute as RouteWithServer).options.server?.handlers?.POST!,
+  "/activate": (ActivateRoute as RouteWithServer).options.server?.handlers?.POST!,
+  "/deactivate": (DeactivateRoute as RouteWithServer).options.server?.handlers?.POST!,
+};
+
+// ============================================
 // API Request Helper
 // ============================================
 
+/**
+ * Simulates an API request to a route handler.
+ * Calls the route handler directly with a mock Request object.
+ */
 export async function apiRequest(
   method: "GET" | "POST" | "PUT" | "DELETE",
   path: string,
@@ -216,7 +246,7 @@ export async function apiRequest(
     apiKey?: string;
     headers?: Record<string, string>;
   } = {}
-) {
+): Promise<{ status: number; body: Record<string, unknown> }> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...options.headers,
@@ -232,14 +262,21 @@ export async function apiRequest(
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  const response = await app.fetch(request);
-  const text = await response.text();
+  // Get the handler for this path
+  const handler = routeHandlers[path];
+  if (!handler) {
+    return { status: 404, body: { error: "Route not found" } };
+  }
 
+  // Call the handler directly
+  const response = await handler({ request });
+
+  const text = await response.text();
   let json: unknown;
   try {
     json = JSON.parse(text);
   } catch {
-    json = text;
+    json = { raw: text };
   }
 
   return {

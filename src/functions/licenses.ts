@@ -10,6 +10,28 @@ import {
   createActivationData,
   createExtensionData,
 } from "@/lib/audit";
+import {
+  activateLicense,
+  deactivate,
+  LicenseErrorCode,
+  ActivationErrorCode,
+} from "@/lib/services/license";
+
+// ============================================
+// Error Mapping (core service -> exceptions)
+// ============================================
+
+const licenseErrorMessages: Record<LicenseErrorCode, string> = {
+  [LicenseErrorCode.NOT_FOUND]: "License not found",
+  [LicenseErrorCode.DISABLED]: "License is disabled",
+  [LicenseErrorCode.EXPIRED]: "License is expired",
+  [LicenseErrorCode.ACTIVATION_LIMIT_REACHED]: "Activation limit reached",
+  [LicenseErrorCode.INVALID_KEY]: "Invalid license key",
+};
+
+const activationErrorMessages: Record<ActivationErrorCode, string> = {
+  [ActivationErrorCode.NOT_FOUND]: "Activation not found",
+};
 
 // Generate license key (e.g., XXXX-XXXX-XXXX-XXXX)
 // Uses crypto.getRandomValues() for cryptographically secure randomness
@@ -205,42 +227,21 @@ export const createActivation = createServerFn({ method: "POST" })
     (data: { licenseId: string; name?: string; machineId?: string }) => data
   )
   .handler(async ({ data, context: { organizationId, user } }) => {
-    // Check license exists and belongs to org
-    const [licenseData] = await db
-      .select()
-      .from(license)
-      .where(
-        and(eq(license.id, data.licenseId), eq(license.organizationId, organizationId))
-      )
-      .limit(1);
+    // Use core service for validation and creation
+    const result = await activateLicense({
+      licenseId: data.licenseId,
+      organizationId,
+      name: data.name,
+      machineId: data.machineId,
+    });
 
-    if (!licenseData) {
-      throw new Error("License not found");
+    if (!result.success) {
+      throw new Error(licenseErrorMessages[result.error]);
     }
 
-    // Check activation limit
-    if (licenseData.activationLimit !== null) {
-      const activations = await db
-        .select()
-        .from(activation)
-        .where(eq(activation.licenseId, data.licenseId));
+    const newActivation = result.data;
 
-      if (activations.length >= licenseData.activationLimit) {
-        throw new Error("Activation limit reached");
-      }
-    }
-
-    const [newActivation] = await db
-      .insert(activation)
-      .values({
-        name: data.name,
-        machineId: data.machineId,
-        licenseId: data.licenseId,
-        organizationId,
-      })
-      .returning();
-
-    // Log activation.created event
+    // Log activation.created event (audit trail - server function specific)
     await logLicenseEvent({
       licenseId: data.licenseId,
       organizationId,
@@ -262,21 +263,19 @@ export const deleteActivation = createServerFn({ method: "POST" })
   .middleware([authMiddleware, loggingMiddleware("deleteActivation")])
   .inputValidator((data: { activationId: string }) => data)
   .handler(async ({ data, context: { organizationId, user } }) => {
-    const [deleted] = await db
-      .delete(activation)
-      .where(
-        and(
-          eq(activation.id, data.activationId),
-          eq(activation.organizationId, organizationId)
-        )
-      )
-      .returning();
+    // Use core service for deactivation
+    const result = await deactivate({
+      activationId: data.activationId,
+      organizationId,
+    });
 
-    if (!deleted) {
-      throw new Error("Activation not found");
+    if (!result.success) {
+      throw new Error(activationErrorMessages[result.error]);
     }
 
-    // Log activation.removed event
+    const deleted = result.data;
+
+    // Log activation.removed event (audit trail - server function specific)
     await logLicenseEvent({
       licenseId: deleted.licenseId,
       organizationId,

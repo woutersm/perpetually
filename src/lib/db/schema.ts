@@ -1,41 +1,40 @@
-import { defineRelations, sql } from "drizzle-orm";
+import { defineRelations } from "drizzle-orm";
 import {
   text,
   integer,
-  sqliteTable,
+  pgTable,
   uniqueIndex,
   index,
-} from "drizzle-orm/sqlite-core";
+  uuid,
+  timestamp,
+  boolean,
+  jsonb,
+} from "drizzle-orm/pg-core";
 
 // ==================== BETTER-AUTH TABLES ====================
 
-export const user = sqliteTable("user", {
+export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  emailVerified: integer("email_verified", { mode: "boolean" })
-    .default(false)
-    .notNull(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-    .notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
 });
 
-export const session = sqliteTable(
+export const session = pgTable(
   "session",
   {
     id: text("id").primaryKey(),
-    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     token: text("token").notNull().unique(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
     ipAddress: text("ip_address"),
@@ -44,12 +43,12 @@ export const session = sqliteTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => ({
-    userIdIdx: index("session_userId_idx").on(table.userId),
-  })
+  (table) => [
+    index("session_userId_idx").on(table.userId),
+  ]
 );
 
-export const account = sqliteTable(
+export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
@@ -61,57 +60,46 @@ export const account = sqliteTable(
     accessToken: text("access_token"),
     refreshToken: text("refresh_token"),
     idToken: text("id_token"),
-    accessTokenExpiresAt: integer("access_token_expires_at", {
-      mode: "timestamp_ms",
-    }),
-    refreshTokenExpiresAt: integer("refresh_token_expires_at", {
-      mode: "timestamp_ms",
-    }),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
     scope: text("scope"),
     password: text("password"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => ({
-    userIdIdx: index("account_userId_idx").on(table.userId),
-  })
+  (table) => [
+    index("account_userId_idx").on(table.userId),
+  ]
 );
 
-export const verification = sqliteTable(
+export const verification = pgTable(
   "verification",
   {
     id: text("id").primaryKey(),
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
-    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => ({
-    identifierIdx: index("verification_identifier_idx").on(table.identifier),
-  })
+  (table) => [
+    index("verification_identifier_idx").on(table.identifier),
+  ]
 );
 
 // ==================== ORGANIZATION (Multi-tenancy) ====================
 
-export const organization = sqliteTable("organization", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-    .notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+export const organization = pgTable("organization", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
 
@@ -122,9 +110,7 @@ export const organization = sqliteTable("organization", {
   apiKey: text("api_key").notNull(),
 
   // Onboarding state
-  isOnboarded: integer("is_onboarded", { mode: "boolean" })
-    .default(false)
-    .notNull(),
+  isOnboarded: boolean("is_onboarded").default(false).notNull(),
 
   // Stripe Connect OAuth (for org's own Stripe account to sell licenses)
   stripeConnectId: text("stripe_connect_id"), // acct_xxx
@@ -132,7 +118,7 @@ export const organization = sqliteTable("organization", {
   stripeRefreshToken: text("stripe_refresh_token"),
   stripeScope: text("stripe_scope"),
   stripeTokenType: text("stripe_token_type"),
-  stripeConnectedAt: integer("stripe_connected_at", { mode: "timestamp_ms" }),
+  stripeConnectedAt: timestamp("stripe_connected_at", { withTimezone: true }),
   stripeWebhookSecret: text("stripe_webhook_secret"),
   stripeWebhookEndpointId: text("stripe_webhook_endpoint_id"),
 
@@ -152,35 +138,25 @@ export const organization = sqliteTable("organization", {
   // Stripe customer for Perpetually billing
   billingStripeCustomerId: text("billing_stripe_customer_id"), // cus_xxx
   billingStripeSubscriptionId: text("billing_stripe_subscription_id"), // sub_xxx
-  billingCurrentPeriodEnd: integer("billing_current_period_end", {
-    mode: "timestamp_ms",
-  }),
-  billingTrialEndsAt: integer("billing_trial_ends_at", { mode: "timestamp_ms" }),
+  billingCurrentPeriodEnd: timestamp("billing_current_period_end", { withTimezone: true }),
+  billingTrialEndsAt: timestamp("billing_trial_ends_at", { withTimezone: true }),
 
   // ==================== BRANDING (Business tier only) ====================
 
-  brandingEnabled: integer("branding_enabled", { mode: "boolean" })
-    .default(false)
-    .notNull(),
+  brandingEnabled: boolean("branding_enabled").default(false).notNull(),
   brandLogo: text("brand_logo"), // URL to logo image
   brandAccentColor: text("brand_accent_color"), // Hex color, e.g., "#FF6B35"
   brandSupportEmail: text("brand_support_email"),
-  brandHidePoweredBy: integer("brand_hide_powered_by", { mode: "boolean" })
-    .default(false)
-    .notNull(),
+  brandHidePoweredBy: boolean("brand_hide_powered_by").default(false).notNull(),
 });
 
 // ==================== MEMBERSHIP (User <-> Organization) ====================
 
-export const membership = sqliteTable(
+export const membership = pgTable(
   "membership",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 
     role: text("role", { enum: ["owner", "admin", "member"] })
       .notNull()
@@ -189,66 +165,55 @@ export const membership = sqliteTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id")
+    organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
   },
-  (table) => ({
-    userIdIdx: index("membership_userId_idx").on(table.userId),
-    orgIdIdx: index("membership_orgId_idx").on(table.organizationId),
-    uniqueMembership: uniqueIndex("membership_unique").on(
-      table.userId,
-      table.organizationId
-    ),
-  })
+  (table) => [
+    index("membership_userId_idx").on(table.userId),
+    index("membership_orgId_idx").on(table.organizationId),
+    uniqueIndex("membership_unique").on(table.userId, table.organizationId),
+  ]
 );
 
 // ==================== INVITATION ====================
 
-export const invitation = sqliteTable(
+export const invitation = pgTable(
   "invitation",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 
     email: text("email").notNull(),
     role: text("role", { enum: ["member"] })
       .notNull()
       .default("member"),
     token: text("token").notNull().unique(),
-    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 
-    organizationId: text("organization_id")
+    organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     invitedBy: text("invited_by")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => ({
-    orgIdIdx: index("invitation_orgId_idx").on(table.organizationId),
-    emailIdx: index("invitation_email_idx").on(table.email),
-    tokenIdx: index("invitation_token_idx").on(table.token),
-  })
+  (table) => [
+    index("invitation_orgId_idx").on(table.organizationId),
+    index("invitation_email_idx").on(table.email),
+    index("invitation_token_idx").on(table.token),
+  ]
 );
 
 // ==================== PRODUCT ====================
 
-export const product = sqliteTable(
+export const product = pgTable(
   "product",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
 
@@ -257,38 +222,31 @@ export const product = sqliteTable(
     description: text("description"),
 
     // Mirrors Stripe's active state (no local override)
-    isActive: integer("is_active", { mode: "boolean" }).default(true).notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
 
     // Stripe sync
     stripeProductId: text("stripe_product_id"),
-    syncedAt: integer("synced_at", { mode: "timestamp_ms" }),
+    syncedAt: timestamp("synced_at", { withTimezone: true }),
 
-    organizationId: text("organization_id")
+    organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
   },
-  (table) => ({
-    orgIdIdx: index("product_orgId_idx").on(table.organizationId),
-    slugOrgUnique: uniqueIndex("product_slug_org_unique").on(
-      table.slug,
-      table.organizationId
-    ),
-  })
+  (table) => [
+    index("product_orgId_idx").on(table.organizationId),
+    uniqueIndex("product_slug_org_unique").on(table.slug, table.organizationId),
+  ]
 );
 
 // ==================== LICENSE POLICY ====================
 
-export const licensePolicy = sqliteTable(
+export const licensePolicy = pgTable(
   "license_policy",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
 
@@ -296,28 +254,24 @@ export const licensePolicy = sqliteTable(
     licenseLengthDays: integer("license_length_days"), // null = perpetual (never expires)
     activationLimit: integer("activation_limit"), // null = unlimited
 
-    productId: text("product_id")
+    productId: uuid("product_id")
       .notNull()
       .references(() => product.id, { onDelete: "cascade" }),
   },
-  (table) => ({
-    productIdIdx: index("license_policy_productId_idx").on(table.productId),
-  })
+  (table) => [
+    index("license_policy_productId_idx").on(table.productId),
+  ]
 );
 
 // ==================== CUSTOMER ====================
 
-export const customer = sqliteTable(
+export const customer = pgTable(
   "customer",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
 
@@ -327,40 +281,33 @@ export const customer = sqliteTable(
 
     // Stripe sync
     stripeCustomerId: text("stripe_customer_id"),
-    syncedAt: integer("synced_at", { mode: "timestamp_ms" }),
+    syncedAt: timestamp("synced_at", { withTimezone: true }),
 
-    organizationId: text("organization_id")
+    organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
   },
-  (table) => ({
-    orgIdIdx: index("customer_orgId_idx").on(table.organizationId),
-    emailOrgUnique: uniqueIndex("customer_email_org_unique").on(
-      table.email,
-      table.organizationId
-    ),
-  })
+  (table) => [
+    index("customer_orgId_idx").on(table.organizationId),
+    uniqueIndex("customer_email_org_unique").on(table.email, table.organizationId),
+  ]
 );
 
 // ==================== LICENSE ====================
 
-export const license = sqliteTable(
+export const license = pgTable(
   "license",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
 
     // License key (unique, user-facing)
     key: text("key").notNull().unique(),
-    keyCreatedAt: integer("key_created_at", { mode: "timestamp_ms" }).notNull(),
+    keyCreatedAt: timestamp("key_created_at", { withTimezone: true }).notNull(),
 
     // Status (simple: active or disabled, expired is computed from expiresAt)
     status: text("status", {
@@ -370,13 +317,13 @@ export const license = sqliteTable(
       .default("active"),
 
     // Expiration (null = never expires, expired = now > expiresAt AND status = active)
-    expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
 
     // Limits (copied from policy at creation, can be overridden)
     activationLimit: integer("activation_limit"), // null = unlimited
 
     // Disable tracking (only set when status = disabled)
-    disabledAt: integer("disabled_at", { mode: "timestamp_ms" }),
+    disabledAt: timestamp("disabled_at", { withTimezone: true }),
     disabledReason: text("disabled_reason", {
       enum: ["refund", "chargeback", "fraud", "customer_request", "other"],
     }),
@@ -386,56 +333,45 @@ export const license = sqliteTable(
     stripePaymentIntentId: text("stripe_payment_intent_id"),
 
     // Test mode flag (mirrors Stripe's livemode)
-    isTest: integer("is_test", { mode: "boolean" }).default(false).notNull(),
+    isTest: boolean("is_test").default(false).notNull(),
 
     // Expiration notification tracking
-    expiryNotified7DaysAt: integer("expiry_notified_7days_at", {
-      mode: "timestamp_ms",
-    }),
-    expiryNotified1DayAt: integer("expiry_notified_1day_at", {
-      mode: "timestamp_ms",
-    }),
-    expiryNotifiedExpiredAt: integer("expiry_notified_expired_at", {
-      mode: "timestamp_ms",
-    }),
+    expiryNotified7DaysAt: timestamp("expiry_notified_7days_at", { withTimezone: true }),
+    expiryNotified1DayAt: timestamp("expiry_notified_1day_at", { withTimezone: true }),
+    expiryNotifiedExpiredAt: timestamp("expiry_notified_expired_at", { withTimezone: true }),
 
     // Relations
-    productId: text("product_id")
+    productId: uuid("product_id")
       .notNull()
       .references(() => product.id, { onDelete: "cascade" }),
-    customerId: text("customer_id")
+    customerId: uuid("customer_id")
       .notNull()
       .references(() => customer.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id")
+    organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
-    licensePolicyId: text("license_policy_id").references(
-      () => licensePolicy.id,
-      { onDelete: "set null" }
-    ),
+    licensePolicyId: uuid("license_policy_id").references(() => licensePolicy.id, {
+      onDelete: "set null",
+    }),
   },
-  (table) => ({
-    orgIdIdx: index("license_orgId_idx").on(table.organizationId),
-    productIdIdx: index("license_productId_idx").on(table.productId),
-    customerIdIdx: index("license_customerId_idx").on(table.customerId),
-    statusIdx: index("license_status_idx").on(table.status),
-    isTestIdx: index("license_isTest_idx").on(table.isTest),
-  })
+  (table) => [
+    index("license_orgId_idx").on(table.organizationId),
+    index("license_productId_idx").on(table.productId),
+    index("license_customerId_idx").on(table.customerId),
+    index("license_status_idx").on(table.status),
+    index("license_isTest_idx").on(table.isTest),
+  ]
 );
 
 // ==================== ACTIVATION ====================
 
-export const activation = sqliteTable(
+export const activation = pgTable(
   "activation",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
 
@@ -446,64 +382,56 @@ export const activation = sqliteTable(
     // Metadata
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
-    lastSeenAt: integer("last_seen_at", { mode: "timestamp_ms" }),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
 
-    licenseId: text("license_id")
+    licenseId: uuid("license_id")
       .notNull()
       .references(() => license.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id")
+    organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
   },
-  (table) => ({
-    licenseIdIdx: index("activation_licenseId_idx").on(table.licenseId),
-    orgIdIdx: index("activation_orgId_idx").on(table.organizationId),
-  })
+  (table) => [
+    index("activation_licenseId_idx").on(table.licenseId),
+    index("activation_orgId_idx").on(table.organizationId),
+  ]
 );
 
 // ==================== SECRET KEY (API Authentication) ====================
 
-export const secretKey = sqliteTable(
+export const secretKey = pgTable(
   "secret_key",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 
     // The actual secret key
     key: text("key").notNull(),
     name: text("name"), // Optional friendly name
 
     // Scope/permissions
-    scopes: text("scopes", { mode: "json" }).$type<string[]>().default([]),
+    scopes: jsonb("scopes").$type<string[]>().default([]),
 
     // Optional expiry
-    expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
-    lastUsedAt: integer("last_used_at", { mode: "timestamp_ms" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
 
-    organizationId: text("organization_id")
+    organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
   },
-  (table) => ({
-    orgIdIdx: index("secret_key_orgId_idx").on(table.organizationId),
-  })
+  (table) => [
+    index("secret_key_orgId_idx").on(table.organizationId),
+  ]
 );
 
 // ==================== LICENSE EVENT (Audit Trail) ====================
 
-export const licenseEvent = sqliteTable(
+export const licenseEvent = pgTable(
   "license_event",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 
     // Event type
     type: text("type", {
@@ -524,26 +452,26 @@ export const licenseEvent = sqliteTable(
     actorId: text("actor_id"), // userId, secretKeyId, or null for system
 
     // Event data (varies by type)
-    data: text("data", { mode: "json" }).$type<Record<string, unknown>>(),
+    data: jsonb("data").$type<Record<string, unknown>>(),
 
     // Metadata
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
 
     // Relations
-    licenseId: text("license_id")
+    licenseId: uuid("license_id")
       .notNull()
       .references(() => license.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id")
+    organizationId: uuid("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
   },
-  (table) => ({
-    licenseIdIdx: index("license_event_licenseId_idx").on(table.licenseId),
-    orgIdIdx: index("license_event_orgId_idx").on(table.organizationId),
-    typeIdx: index("license_event_type_idx").on(table.type),
-    createdAtIdx: index("license_event_createdAt_idx").on(table.createdAt),
-  })
+  (table) => [
+    index("license_event_licenseId_idx").on(table.licenseId),
+    index("license_event_orgId_idx").on(table.organizationId),
+    index("license_event_type_idx").on(table.type),
+    index("license_event_createdAt_idx").on(table.createdAt),
+  ]
 );
 
 // ==================== RELATIONS ====================

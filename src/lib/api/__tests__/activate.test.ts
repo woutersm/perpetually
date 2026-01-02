@@ -233,6 +233,53 @@ describe("POST /api/v1/activate", () => {
   });
 
   // ==========================================
+  // Expired License Cases
+  // ==========================================
+
+  describe("Expired license cases", () => {
+    it("should reject activation for expired license", async () => {
+      const expiredLicense = await createExpiredLicense(testData);
+
+      const res = await apiRequest("POST", "/activate", {
+        apiKey: testData.apiKey,
+        body: {
+          licenseId: expiredLicense.id,
+        },
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.activated).toBe(false);
+      expect(res.body.error).toBe(ApiErrors.licenseExpired);
+    });
+
+    it("should allow activation for license with null expiresAt (perpetual)", async () => {
+      const [perpetualLicense] = await db
+        .insert(license)
+        .values({
+          key: `TEST-${Date.now()}-PERP`,
+          keyCreatedAt: new Date(),
+          status: "active",
+          expiresAt: null, // Perpetual license
+          activationLimit: 5,
+          productId: testData.product.id,
+          customerId: testData.customer.id,
+          organizationId: testData.organization.id,
+        })
+        .returning();
+
+      const res = await apiRequest("POST", "/activate", {
+        apiKey: testData.apiKey,
+        body: {
+          licenseId: perpetualLicense.id,
+        },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body.activated).toBe(true);
+    });
+  });
+
+  // ==========================================
   // Not Found Cases
   // ==========================================
 
@@ -241,7 +288,7 @@ describe("POST /api/v1/activate", () => {
       const res = await apiRequest("POST", "/activate", {
         apiKey: testData.apiKey,
         body: {
-          licenseId: "non-existent-id-12345",
+          licenseId: "00000000-0000-0000-0000-000000000000",
         },
       });
 
@@ -301,7 +348,7 @@ describe("POST /api/v1/activate", () => {
       });
 
       expect(res.status).toBe(401);
-      expect(res.body.type).toBe(OpenApiErrors.unauthorized);
+      expect(res.body.error).toBe("Authorization header required");
     });
 
     it("should return 403 for invalid API key", async () => {
@@ -313,7 +360,7 @@ describe("POST /api/v1/activate", () => {
       });
 
       expect(res.status).toBe(403);
-      expect(res.body.type).toBe(OpenApiErrors.unauthorized);
+      expect(res.body.error).toBe(ApiErrors.apiKeyInvalid);
     });
   });
 });

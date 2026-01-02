@@ -188,7 +188,7 @@ describe("POST /api/v1/validate", () => {
       const res = await apiRequest("POST", "/validate", {
         apiKey: testData.apiKey,
         body: {
-          licenseId: "non-existent-id-12345",
+          licenseId: "00000000-0000-0000-0000-000000000000",
           key: testData.license.key,
         },
       });
@@ -265,11 +265,7 @@ describe("POST /api/v1/validate", () => {
       });
 
       expect(res.status).toBe(401);
-      expect(res.body.type).toBe(OpenApiErrors.unauthorized);
-      expect(res.body.errors).toBeInstanceOf(Array);
-      expect((res.body.errors as Array<{ message: string }>)[0].message).toBe(
-        "Authorization header required"
-      );
+      expect(res.body.error).toBe("Authorization header required");
     });
 
     it("should return 403 for invalid API key", async () => {
@@ -282,11 +278,7 @@ describe("POST /api/v1/validate", () => {
       });
 
       expect(res.status).toBe(403);
-      expect(res.body.type).toBe(OpenApiErrors.unauthorized);
-      expect(res.body.errors).toBeInstanceOf(Array);
-      expect((res.body.errors as Array<{ message: string }>)[0].message).toBe(
-        ApiErrors.apiKeyInvalid
-      );
+      expect(res.body.error).toBe(ApiErrors.apiKeyInvalid);
     });
 
     it("should return 403 for malformed Bearer token", async () => {

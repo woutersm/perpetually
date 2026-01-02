@@ -24,7 +24,9 @@ import { Route as AuthOnboardingIndexRouteImport } from './routes/_auth/onboardi
 import { Route as AuthLicensesIndexRouteImport } from './routes/_auth/licenses/index'
 import { Route as AuthCustomersIndexRouteImport } from './routes/_auth/customers/index'
 import { Route as PortalSlugCustomerIdRouteImport } from './routes/portal/$slug/$customerId'
-import { Route as ApiV1SplatRouteImport } from './routes/api/v1/$'
+import { Route as ApiV1ValidateRouteImport } from './routes/api/v1/validate'
+import { Route as ApiV1DeactivateRouteImport } from './routes/api/v1/deactivate'
+import { Route as ApiV1ActivateRouteImport } from './routes/api/v1/activate'
 import { Route as ApiStripeConnectRouteImport } from './routes/api/stripe/connect'
 import { Route as ApiStripeCallbackRouteImport } from './routes/api/stripe/callback'
 import { Route as ApiHooksOrganizationIdRouteImport } from './routes/api/hooks/$organizationId'
@@ -114,9 +116,19 @@ const PortalSlugCustomerIdRoute = PortalSlugCustomerIdRouteImport.update({
   path: '/portal/$slug/$customerId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
-  id: '/api/v1/$',
-  path: '/api/v1/$',
+const ApiV1ValidateRoute = ApiV1ValidateRouteImport.update({
+  id: '/api/v1/validate',
+  path: '/api/v1/validate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DeactivateRoute = ApiV1DeactivateRouteImport.update({
+  id: '/api/v1/deactivate',
+  path: '/api/v1/deactivate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1ActivateRoute = ApiV1ActivateRouteImport.update({
+  id: '/api/v1/activate',
+  path: '/api/v1/activate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiStripeConnectRoute = ApiStripeConnectRouteImport.update({
@@ -213,7 +225,9 @@ export interface FileRoutesByFullPath {
   '/api/hooks/$organizationId': typeof ApiHooksOrganizationIdRoute
   '/api/stripe/callback': typeof ApiStripeCallbackRoute
   '/api/stripe/connect': typeof ApiStripeConnectRoute
-  '/api/v1/$': typeof ApiV1SplatRoute
+  '/api/v1/activate': typeof ApiV1ActivateRoute
+  '/api/v1/deactivate': typeof ApiV1DeactivateRoute
+  '/api/v1/validate': typeof ApiV1ValidateRoute
   '/portal/$slug/$customerId': typeof PortalSlugCustomerIdRoute
   '/customers': typeof AuthCustomersIndexRoute
   '/licenses': typeof AuthLicensesIndexRoute
@@ -244,7 +258,9 @@ export interface FileRoutesByTo {
   '/api/hooks/$organizationId': typeof ApiHooksOrganizationIdRoute
   '/api/stripe/callback': typeof ApiStripeCallbackRoute
   '/api/stripe/connect': typeof ApiStripeConnectRoute
-  '/api/v1/$': typeof ApiV1SplatRoute
+  '/api/v1/activate': typeof ApiV1ActivateRoute
+  '/api/v1/deactivate': typeof ApiV1DeactivateRoute
+  '/api/v1/validate': typeof ApiV1ValidateRoute
   '/portal/$slug/$customerId': typeof PortalSlugCustomerIdRoute
   '/customers': typeof AuthCustomersIndexRoute
   '/licenses': typeof AuthLicensesIndexRoute
@@ -277,7 +293,9 @@ export interface FileRoutesById {
   '/api/hooks/$organizationId': typeof ApiHooksOrganizationIdRoute
   '/api/stripe/callback': typeof ApiStripeCallbackRoute
   '/api/stripe/connect': typeof ApiStripeConnectRoute
-  '/api/v1/$': typeof ApiV1SplatRoute
+  '/api/v1/activate': typeof ApiV1ActivateRoute
+  '/api/v1/deactivate': typeof ApiV1DeactivateRoute
+  '/api/v1/validate': typeof ApiV1ValidateRoute
   '/portal/$slug/$customerId': typeof PortalSlugCustomerIdRoute
   '/_auth/customers/': typeof AuthCustomersIndexRoute
   '/_auth/licenses/': typeof AuthLicensesIndexRoute
@@ -310,7 +328,9 @@ export interface FileRouteTypes {
     | '/api/hooks/$organizationId'
     | '/api/stripe/callback'
     | '/api/stripe/connect'
-    | '/api/v1/$'
+    | '/api/v1/activate'
+    | '/api/v1/deactivate'
+    | '/api/v1/validate'
     | '/portal/$slug/$customerId'
     | '/customers'
     | '/licenses'
@@ -341,7 +361,9 @@ export interface FileRouteTypes {
     | '/api/hooks/$organizationId'
     | '/api/stripe/callback'
     | '/api/stripe/connect'
-    | '/api/v1/$'
+    | '/api/v1/activate'
+    | '/api/v1/deactivate'
+    | '/api/v1/validate'
     | '/portal/$slug/$customerId'
     | '/customers'
     | '/licenses'
@@ -373,7 +395,9 @@ export interface FileRouteTypes {
     | '/api/hooks/$organizationId'
     | '/api/stripe/callback'
     | '/api/stripe/connect'
-    | '/api/v1/$'
+    | '/api/v1/activate'
+    | '/api/v1/deactivate'
+    | '/api/v1/validate'
     | '/portal/$slug/$customerId'
     | '/_auth/customers/'
     | '/_auth/licenses/'
@@ -396,7 +420,9 @@ export interface RootRouteChildren {
   ApiHooksOrganizationIdRoute: typeof ApiHooksOrganizationIdRoute
   ApiStripeCallbackRoute: typeof ApiStripeCallbackRoute
   ApiStripeConnectRoute: typeof ApiStripeConnectRoute
-  ApiV1SplatRoute: typeof ApiV1SplatRoute
+  ApiV1ActivateRoute: typeof ApiV1ActivateRoute
+  ApiV1DeactivateRoute: typeof ApiV1DeactivateRoute
+  ApiV1ValidateRoute: typeof ApiV1ValidateRoute
   PortalSlugCustomerIdRoute: typeof PortalSlugCustomerIdRoute
 }
 
@@ -507,11 +533,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalSlugCustomerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/v1/$': {
-      id: '/api/v1/$'
-      path: '/api/v1/$'
-      fullPath: '/api/v1/$'
-      preLoaderRoute: typeof ApiV1SplatRouteImport
+    '/api/v1/validate': {
+      id: '/api/v1/validate'
+      path: '/api/v1/validate'
+      fullPath: '/api/v1/validate'
+      preLoaderRoute: typeof ApiV1ValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/deactivate': {
+      id: '/api/v1/deactivate'
+      path: '/api/v1/deactivate'
+      fullPath: '/api/v1/deactivate'
+      preLoaderRoute: typeof ApiV1DeactivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/activate': {
+      id: '/api/v1/activate'
+      path: '/api/v1/activate'
+      fullPath: '/api/v1/activate'
+      preLoaderRoute: typeof ApiV1ActivateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/stripe/connect': {
@@ -669,7 +709,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHooksOrganizationIdRoute: ApiHooksOrganizationIdRoute,
   ApiStripeCallbackRoute: ApiStripeCallbackRoute,
   ApiStripeConnectRoute: ApiStripeConnectRoute,
-  ApiV1SplatRoute: ApiV1SplatRoute,
+  ApiV1ActivateRoute: ApiV1ActivateRoute,
+  ApiV1DeactivateRoute: ApiV1DeactivateRoute,
+  ApiV1ValidateRoute: ApiV1ValidateRoute,
   PortalSlugCustomerIdRoute: PortalSlugCustomerIdRoute,
 }
 export const routeTree = rootRouteImport

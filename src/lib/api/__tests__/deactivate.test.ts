@@ -156,7 +156,7 @@ describe("POST /api/v1/deactivate", () => {
       const res = await apiRequest("POST", "/deactivate", {
         apiKey: testData.apiKey,
         body: {
-          activationId: "non-existent-id-12345",
+          activationId: "00000000-0000-0000-0000-000000000000",
         },
       });
 
@@ -274,7 +274,7 @@ describe("POST /api/v1/deactivate", () => {
       });
 
       expect(res.status).toBe(401);
-      expect(res.body.type).toBe(OpenApiErrors.unauthorized);
+      expect(res.body.error).toBe("Authorization header required");
     });
 
     it("should return 403 for invalid API key", async () => {
@@ -288,7 +288,7 @@ describe("POST /api/v1/deactivate", () => {
       });
 
       expect(res.status).toBe(403);
-      expect(res.body.type).toBe(OpenApiErrors.unauthorized);
+      expect(res.body.error).toBe(ApiErrors.apiKeyInvalid);
     });
   });
 });

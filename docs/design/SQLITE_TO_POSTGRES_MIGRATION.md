@@ -83,7 +83,7 @@ services:
       POSTGRES_PASSWORD: perpetually
       POSTGRES_DB: perpetually
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Uses 5433 to avoid conflict with local PostgreSQL
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
@@ -139,10 +139,10 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 ```bash
 # .env.local (development)
-DATABASE_URL=postgresql://perpetually:perpetually@localhost:5432/perpetually
+DATABASE_URL=postgresql://perpetually:perpetually@localhost:5433/perpetually
 
 # .env.test (testing)
-DATABASE_URL=postgresql://perpetually:perpetually@localhost:5432/perpetually_test
+DATABASE_URL=postgresql://perpetually:perpetually@localhost:5433/perpetually_test
 
 # .env.production (production - example for Neon)
 DATABASE_URL=postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/perpetually?sslmode=require
@@ -170,8 +170,8 @@ DATABASE_URL=postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/perpetually?s
     "db:setup": "bun run db:start && sleep 2 && bun run db:migrate && bun run db:seed",
 
     "test": "bun --bun test",
-    "test:db": "DATABASE_URL=postgresql://perpetually:perpetually@localhost:5432/perpetually_test bun --bun test",
-    "test:migrate": "DATABASE_URL=postgresql://perpetually:perpetually@localhost:5432/perpetually_test bunx drizzle-kit migrate"
+    "test:db": "DATABASE_URL=postgresql://perpetually:perpetually@localhost:5433/perpetually_test bun --bun test",
+    "test:migrate": "DATABASE_URL=postgresql://perpetually:perpetually@localhost:5433/perpetually_test bunx drizzle-kit migrate"
   }
 }
 ```
@@ -288,7 +288,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/lib/api/__tests__/setup.ts"],
     env: {
-      DATABASE_URL: "postgresql://perpetually:perpetually@localhost:5432/perpetually_test",
+      DATABASE_URL: "postgresql://perpetually:perpetually@localhost:5433/perpetually_test",
     },
     // Run tests sequentially to avoid race conditions
     pool: "forks",
@@ -377,7 +377,7 @@ jobs:
           POSTGRES_PASSWORD: perpetually
           POSTGRES_DB: perpetually_test
         ports:
-          - 5432:5432
+          - 5433:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -396,12 +396,12 @@ jobs:
       - name: Run migrations
         run: bunx drizzle-kit migrate
         env:
-          DATABASE_URL: postgresql://perpetually:perpetually@localhost:5432/perpetually_test
+          DATABASE_URL: postgresql://perpetually:perpetually@localhost:5433/perpetually_test
 
       - name: Run tests
         run: bun --bun test
         env:
-          DATABASE_URL: postgresql://perpetually:perpetually@localhost:5432/perpetually_test
+          DATABASE_URL: postgresql://perpetually:perpetually@localhost:5433/perpetually_test
 ```
 
 ---
