@@ -1,3 +1,6 @@
+import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
+import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "./schema";
 
 const databaseUrl =
@@ -8,24 +11,18 @@ const databaseUrl =
 // Netlify uses Neon (serverless), local uses pg
 const isNetlify = !!process.env.NETLIFY_DATABASE_URL;
 
-let db: any;
-
-if (isNetlify) {
-  // Neon HTTP driver - just pass the connection string directly
-  const { drizzle } = await import("drizzle-orm/neon-http");
-  db = drizzle(databaseUrl, { schema });
-} else {
-  // pg driver for local development
-  const { Pool } = await import("pg");
-  const { drizzle } = await import("drizzle-orm/node-postgres");
-  const pool = new Pool({
-    connectionString: databaseUrl,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  });
-  db = drizzle({ client: pool, schema });
-}
+// Create the appropriate db instance
+const db = isNetlify
+  ? drizzleNeon(databaseUrl, { schema })
+  : drizzlePg({
+      client: new Pool({
+        connectionString: databaseUrl,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+      }),
+      schema,
+    });
 
 export { db };
 export default db;
