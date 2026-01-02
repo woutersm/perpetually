@@ -1,7 +1,8 @@
 import { defineConfig } from "drizzle-kit";
 
-// Netlify injects NETLIFY_DATABASE_URL, fall back to DATABASE_URL for other environments
+// Netlify injects NETLIFY_DATABASE_URL_UNPOOLED for serverless
 const databaseUrl =
+  process.env.NETLIFY_DATABASE_URL_UNPOOLED ||
   process.env.NETLIFY_DATABASE_URL ||
   process.env.DATABASE_URL ||
   "postgresql://perpetually:perpetually@localhost:5433/perpetually";

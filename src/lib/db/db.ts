@@ -2,8 +2,10 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
 
-// Netlify injects NETLIFY_DATABASE_URL, fall back to DATABASE_URL for other environments
+// Netlify injects NETLIFY_DATABASE_URL_UNPOOLED for serverless (no connection pooling needed)
+// Fall back to pooled URL, then DATABASE_URL for other environments
 const databaseUrl =
+  process.env.NETLIFY_DATABASE_URL_UNPOOLED ||
   process.env.NETLIFY_DATABASE_URL ||
   process.env.DATABASE_URL ||
   "postgresql://perpetually:perpetually@localhost:5433/perpetually";
