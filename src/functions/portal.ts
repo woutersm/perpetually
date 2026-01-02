@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { loggingMiddleware } from "@/middleware/logging";
 import db from "@/lib/db/db";
 import {
   license,
@@ -30,6 +31,7 @@ function generateLicenseKey(): string {
 
 // Get customer with their licenses for the portal (public, no auth required)
 export const getPortalCustomer = createServerFn({ method: "GET" })
+  .middleware([loggingMiddleware("getPortalCustomer")])
   .inputValidator((data: { slug: string; customerId: string }) => data)
   .handler(async ({ data }) => {
     const { slug, customerId } = data;
@@ -163,6 +165,7 @@ export const getPortalCustomer = createServerFn({ method: "GET" })
 
 // Regenerate license key for a customer (public, no auth required)
 export const regenerateLicenseKey = createServerFn({ method: "POST" })
+  .middleware([loggingMiddleware("regenerateLicenseKey")])
   .inputValidator((data: { slug: string; customerId: string; licenseId: string }) => data)
   .handler(async ({ data }) => {
     const { slug, customerId, licenseId } = data;
@@ -230,6 +233,7 @@ export const regenerateLicenseKey = createServerFn({ method: "POST" })
 
 // Remove an activation for a customer (public, no auth required)
 export const removeActivation = createServerFn({ method: "POST" })
+  .middleware([loggingMiddleware("removeActivation")])
   .inputValidator(
     (data: { slug: string; customerId: string; licenseId: string; activationId: string }) =>
       data
