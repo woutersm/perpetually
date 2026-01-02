@@ -5,18 +5,17 @@ const databaseUrl =
   process.env.DATABASE_URL ||
   "postgresql://perpetually:perpetually@localhost:5433/perpetually";
 
-// Netlify uses Neon, local uses pg
+// Netlify uses Neon (serverless), local uses pg
 const isNetlify = !!process.env.NETLIFY_DATABASE_URL;
 
-let db: ReturnType<typeof import("drizzle-orm/neon-http").drizzle> | ReturnType<typeof import("drizzle-orm/node-postgres").drizzle>;
+let db: any;
 
 if (isNetlify) {
-  // Dynamic import for Neon (serverless)
-  const { neon } = await import("@neondatabase/serverless");
+  // Neon HTTP driver - just pass the connection string directly
   const { drizzle } = await import("drizzle-orm/neon-http");
-  db = drizzle(neon(databaseUrl), { schema });
+  db = drizzle(databaseUrl, { schema });
 } else {
-  // Dynamic import for pg (local development)
+  // pg driver for local development
   const { Pool } = await import("pg");
   const { drizzle } = await import("drizzle-orm/node-postgres");
   const pool = new Pool({
