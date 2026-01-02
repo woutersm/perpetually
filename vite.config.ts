@@ -4,7 +4,9 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import viteTsConfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
-import { nitro } from "nitro/vite";
+import netlify from "@netlify/vite-plugin-tanstack-start";
+
+const isNetlifyBuild = process.env.NETLIFY === "true";
 
 const config = defineConfig({
   server: {
@@ -12,16 +14,16 @@ const config = defineConfig({
   },
   plugins: [
     devtools({ eventBusConfig: { port: 42070 } }),
-    nitro({ preset: "bun", devServer: { port: 42071 } }),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
     }),
     tailwindcss(),
     tanstackStart(),
+    // Netlify plugin only during Netlify builds (NETLIFY=true is auto-set by Netlify)
+    isNetlifyBuild && netlify(),
     viteReact(),
-  ],
-  nitro: {},
+  ].filter(Boolean),
 });
 
 export default config;

@@ -1,0 +1,11 @@
+[build]
+  command = "bun run db:migrate && bun run build"
+  publish = "dist/client"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Environment variables set in Netlify Dashboard:
+# - DATABASE_URL: Auto-injected by Netlify DB (Neon)
+# - BETTER_AUTH_SECRET: Generate with `openssl rand -base64 32`
+# - BETTER_AUTH_URL: Your Netlify site URL (e.g., https://your-site.netlify.app)
