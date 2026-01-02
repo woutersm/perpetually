@@ -25,10 +25,11 @@ const config = defineConfig({
     viteReact(),
   ].filter(Boolean),
   // Externalize pg for Netlify (uses Neon HTTP driver instead)
+  // Ensure zod and better-auth are bundled, not externalized
   ssr: isNetlifyBuild
     ? {
         external: ["pg", "pg-pool", "pg-native"],
-        noExternal: ["@neondatabase/serverless"],
+        noExternal: ["@neondatabase/serverless", "zod", "better-auth"],
       }
     : undefined,
 });
