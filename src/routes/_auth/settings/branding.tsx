@@ -189,16 +189,23 @@ function BrandingPage() {
                 </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <a
-                href={`/portal/${branding.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+            {branding.sampleCustomerId ? (
+              <Button variant="outline" size="sm" asChild>
+                <a
+                  href={`/portal/${branding.slug}/${branding.sampleCustomerId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open Portal
+                </a>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" disabled>
                 <ExternalLink className="h-4 w-4 mr-2" />
-                Open Portal
-              </a>
-            </Button>
+                No customers yet
+              </Button>
+            )}
           </div>
         </div>
 

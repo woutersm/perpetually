@@ -17,6 +17,7 @@ const authMiddleware = createMiddleware({ type: "function" }).server(
       context: {
         session,
         user: session.user,
+        userId: session.user.id,
         organization: session.currentOrganization,
         organizationId: session.currentOrganization.id,
       },

@@ -455,6 +455,7 @@ export const getBrandingSettings = createServerFn({ method: "GET" })
       .select({
         id: organization.id,
         name: organization.name,
+        slug: organization.slug,
         brandingEnabled: organization.brandingEnabled,
         brandLogo: organization.brandLogo,
         brandAccentColor: organization.brandAccentColor,
@@ -472,9 +473,18 @@ export const getBrandingSettings = createServerFn({ method: "GET" })
     // Check feature access
     const { allowed } = await checkFeatureAccess(organizationId, "customBranding");
 
+    // Get a sample customer for portal preview (if any exist)
+    const { customer } = await import("@/lib/db/schema");
+    const [sampleCustomer] = await db
+      .select({ id: customer.id })
+      .from(customer)
+      .where(eq(customer.organizationId, organizationId))
+      .limit(1);
+
     return {
       ...org,
       featureEnabled: allowed,
+      sampleCustomerId: sampleCustomer?.id || null,
     };
   });
 
