@@ -14,6 +14,12 @@ import { CreditCard, ArrowRight, Shield, Webhook, Package } from "lucide-react";
 
 export const Route = createFileRoute("/_auth/onboarding/1")({
   component: OnboardingStep1,
+  beforeLoad: async ({ context }) => {
+    // If no organization, go to setup first
+    if (!context.organization) {
+      throw redirect({ to: "/onboarding/setup" });
+    }
+  },
   loader: async ({ location }) => {
     const status = await getOnboardingStatus();
 

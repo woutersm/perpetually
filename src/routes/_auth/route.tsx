@@ -19,9 +19,9 @@ export const Route = createFileRoute("/_auth")({
 
     // Check if user has an organization
     if (!session.currentOrganization) {
-      // Only redirect if not already on onboarding
-      if (!location.pathname.startsWith("/onboarding")) {
-        throw redirect({ to: "/onboarding" });
+      // No organization - redirect to setup
+      if (!location.pathname.startsWith("/onboarding/setup")) {
+        throw redirect({ to: "/onboarding/setup" });
       }
     } else if (!session.currentOrganization.isOnboarded) {
       // Org exists but not onboarded - redirect to onboarding

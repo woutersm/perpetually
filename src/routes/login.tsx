@@ -1,23 +1,41 @@
 import { authClient } from "@/lib/auth-client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Key } from "lucide-react";
 
+// Validate search params
+type LoginSearch = {
+  invite?: string;
+};
+
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>): LoginSearch => ({
+    invite: typeof search.invite === "string" ? search.invite : undefined,
+  }),
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const navigate = useNavigate();
+  const { invite: inviteToken } = Route.useSearch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  // Check for pending invite in localStorage (from registration flow)
+  useEffect(() => {
+    const pendingInvite = localStorage.getItem("pendingInvite");
+    if (pendingInvite && !inviteToken) {
+      // Redirect to login with the invite token
+      navigate({ to: "/login", search: { invite: pendingInvite }, replace: true });
+    }
+  }, [inviteToken, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -37,7 +55,6 @@ function RouteComponent() {
         email: formData.email,
         password: formData.password,
         rememberMe: true,
-        callbackURL: "/dashboard",
       });
 
       if (error) {
@@ -46,7 +63,19 @@ function RouteComponent() {
       }
 
       if (data) {
-        navigate({ to: "/dashboard" });
+        // Clear any pending invite from localStorage
+        const pendingInvite = localStorage.getItem("pendingInvite");
+        if (pendingInvite) {
+          localStorage.removeItem("pendingInvite");
+        }
+
+        // Redirect to invite page if invite token is present
+        const tokenToUse = inviteToken || pendingInvite;
+        if (tokenToUse) {
+          navigate({ to: "/invite/$token", params: { token: tokenToUse } });
+        } else {
+          navigate({ to: "/dashboard" });
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -67,7 +96,7 @@ function RouteComponent() {
             <span className="text-lg font-semibold tracking-tight">Perpetually</span>
           </Link>
           <Button variant="vibrant" size="sm" className="shadow-lg shadow-vibrant/25" asChild>
-            <Link to="/register">
+            <Link to="/register" search={inviteToken ? { invite: inviteToken } : undefined}>
               Get Started
               <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
             </Link>
@@ -82,7 +111,9 @@ function RouteComponent() {
             <div className="text-center space-y-2">
               <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
               <p className="text-muted-foreground">
-                Sign in to your account to continue
+                {inviteToken
+                  ? "Sign in to accept your invitation"
+                  : "Sign in to your account to continue"}
               </p>
             </div>
 
@@ -144,6 +175,7 @@ function RouteComponent() {
                 Don't have an account?{" "}
                 <Link
                   to="/register"
+                  search={inviteToken ? { invite: inviteToken } : undefined}
                   className="font-medium text-vibrant hover:text-vibrant/80 transition-colors"
                 >
                   Sign up

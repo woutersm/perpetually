@@ -37,6 +37,7 @@ import { Route as AuthSettingsBrandingRouteImport } from './routes/_auth/setting
 import { Route as AuthSettingsBillingRouteImport } from './routes/_auth/settings/billing'
 import { Route as AuthSettingsApiRouteImport } from './routes/_auth/settings/api'
 import { Route as AuthProductsProductIdRouteImport } from './routes/_auth/products/$productId'
+import { Route as AuthOnboardingSetupRouteImport } from './routes/_auth/onboarding/setup'
 import { Route as AuthOnboardingImportRouteImport } from './routes/_auth/onboarding/import'
 import { Route as AuthOnboarding1RouteImport } from './routes/_auth/onboarding/1'
 import { Route as AuthLicensesLicenseIdRouteImport } from './routes/_auth/licenses/$licenseId'
@@ -181,6 +182,11 @@ const AuthProductsProductIdRoute = AuthProductsProductIdRouteImport.update({
   path: '/products/$productId',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthOnboardingSetupRoute = AuthOnboardingSetupRouteImport.update({
+  id: '/onboarding/setup',
+  path: '/onboarding/setup',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthOnboardingImportRoute = AuthOnboardingImportRouteImport.update({
   id: '/onboarding/import',
   path: '/onboarding/import',
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
   '/onboarding/1': typeof AuthOnboarding1Route
   '/onboarding/import': typeof AuthOnboardingImportRoute
+  '/onboarding/setup': typeof AuthOnboardingSetupRoute
   '/products/$productId': typeof AuthProductsProductIdRoute
   '/settings/api': typeof AuthSettingsApiRoute
   '/settings/billing': typeof AuthSettingsBillingRoute
@@ -248,6 +255,7 @@ export interface FileRoutesByTo {
   '/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
   '/onboarding/1': typeof AuthOnboarding1Route
   '/onboarding/import': typeof AuthOnboardingImportRoute
+  '/onboarding/setup': typeof AuthOnboardingSetupRoute
   '/products/$productId': typeof AuthProductsProductIdRoute
   '/settings/api': typeof AuthSettingsApiRoute
   '/settings/billing': typeof AuthSettingsBillingRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/_auth/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
   '/_auth/onboarding/1': typeof AuthOnboarding1Route
   '/_auth/onboarding/import': typeof AuthOnboardingImportRoute
+  '/_auth/onboarding/setup': typeof AuthOnboardingSetupRoute
   '/_auth/products/$productId': typeof AuthProductsProductIdRoute
   '/_auth/settings/api': typeof AuthSettingsApiRoute
   '/_auth/settings/billing': typeof AuthSettingsBillingRoute
@@ -318,6 +327,7 @@ export interface FileRouteTypes {
     | '/licenses/$licenseId'
     | '/onboarding/1'
     | '/onboarding/import'
+    | '/onboarding/setup'
     | '/products/$productId'
     | '/settings/api'
     | '/settings/billing'
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
     | '/licenses/$licenseId'
     | '/onboarding/1'
     | '/onboarding/import'
+    | '/onboarding/setup'
     | '/products/$productId'
     | '/settings/api'
     | '/settings/billing'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/_auth/licenses/$licenseId'
     | '/_auth/onboarding/1'
     | '/_auth/onboarding/import'
+    | '/_auth/onboarding/setup'
     | '/_auth/products/$productId'
     | '/_auth/settings/api'
     | '/_auth/settings/billing'
@@ -624,6 +636,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthProductsProductIdRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/onboarding/setup': {
+      id: '/_auth/onboarding/setup'
+      path: '/onboarding/setup'
+      fullPath: '/onboarding/setup'
+      preLoaderRoute: typeof AuthOnboardingSetupRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/onboarding/import': {
       id: '/_auth/onboarding/import'
       path: '/onboarding/import'
@@ -661,6 +680,7 @@ interface AuthRouteRouteChildren {
   AuthLicensesLicenseIdRoute: typeof AuthLicensesLicenseIdRoute
   AuthOnboarding1Route: typeof AuthOnboarding1Route
   AuthOnboardingImportRoute: typeof AuthOnboardingImportRoute
+  AuthOnboardingSetupRoute: typeof AuthOnboardingSetupRoute
   AuthProductsProductIdRoute: typeof AuthProductsProductIdRoute
   AuthSettingsApiRoute: typeof AuthSettingsApiRoute
   AuthSettingsBillingRoute: typeof AuthSettingsBillingRoute
@@ -679,6 +699,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthLicensesLicenseIdRoute: AuthLicensesLicenseIdRoute,
   AuthOnboarding1Route: AuthOnboarding1Route,
   AuthOnboardingImportRoute: AuthOnboardingImportRoute,
+  AuthOnboardingSetupRoute: AuthOnboardingSetupRoute,
   AuthProductsProductIdRoute: AuthProductsProductIdRoute,
   AuthSettingsApiRoute: AuthSettingsApiRoute,
   AuthSettingsBillingRoute: AuthSettingsBillingRoute,
