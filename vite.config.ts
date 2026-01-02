@@ -24,6 +24,13 @@ const config = defineConfig({
     isNetlifyBuild && netlify(),
     viteReact(),
   ].filter(Boolean),
+  // Externalize pg for Netlify (uses Neon HTTP driver instead)
+  ssr: isNetlifyBuild
+    ? {
+        external: ["pg", "pg-pool", "pg-native"],
+        noExternal: ["@neondatabase/serverless"],
+      }
+    : undefined,
 });
 
 export default config;
