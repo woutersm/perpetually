@@ -33,32 +33,6 @@ const activationErrorMessages: Record<ActivationErrorCode, string> = {
   [ActivationErrorCode.NOT_FOUND]: "Activation not found",
 };
 
-// Generate license key (e.g., XXXX-XXXX-XXXX-XXXX)
-// Uses crypto.getRandomValues() for cryptographically secure randomness
-function generateLicenseKey(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const segments = 4;
-  const segmentLength = 4;
-  const totalChars = segments * segmentLength;
-
-  // Generate all random bytes at once
-  const randomBytes = new Uint8Array(totalChars);
-  crypto.getRandomValues(randomBytes);
-
-  const parts: string[] = [];
-  let byteIndex = 0;
-
-  for (let i = 0; i < segments; i++) {
-    let segment = "";
-    for (let j = 0; j < segmentLength; j++) {
-      segment += chars[randomBytes[byteIndex++] % chars.length];
-    }
-    parts.push(segment);
-  }
-
-  return parts.join("-");
-}
-
 // Get all licenses for the current organization
 export const getLicenses = createServerFn({ method: "GET" })
   .middleware([authMiddleware, loggingMiddleware("getLicenses")])
@@ -380,6 +354,7 @@ export const enableLicense = createServerFn({ method: "POST" })
 export const getLicenseEvents = createServerFn({ method: "GET" })
   .middleware([authMiddleware, loggingMiddleware("getLicenseEvents")])
   .inputValidator((data: { licenseId: string }) => data)
+  // @ts-expect-error - Drizzle json mode infers unknown for data field which conflicts with TanStack Start's type inference
   .handler(async ({ data, context: { organizationId } }) => {
     // First verify the license belongs to this org
     const [licenseData] = await db

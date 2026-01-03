@@ -11,7 +11,7 @@ import {
   user,
   membership,
 } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import {
   activateLicense,
   deactivate,

@@ -22,6 +22,7 @@ function ForgotPasswordPage() {
     setLoading(true);
 
     try {
+      // @ts-expect-error - forgetPassword exists at runtime but types may be incomplete
       const { error } = await authClient.forgetPassword({
         email,
         redirectTo: "/reset-password",

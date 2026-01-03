@@ -48,6 +48,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_auth/licenses/$licenseId")({
   component: LicenseDetailPage,
+  // @ts-expect-error - Drizzle json mode type inference conflict with TanStack Start
   loader: async ({ params }) => {
     const [license, events] = await Promise.all([
       getLicense({ data: { licenseId: params.licenseId } }),
@@ -56,6 +57,32 @@ export const Route = createFileRoute("/_auth/licenses/$licenseId")({
     return { license, events };
   },
 });
+
+type LicenseEventData = {
+  id: string;
+  type: EventType;
+  actorType: string;
+  actorId: string | null;
+  data: Record<string, unknown> | null;
+  createdAt: Date;
+  licenseId: string;
+  organizationId: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+};
+
+type ActivationData = {
+  id: string;
+  name: string | null;
+  machineId: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  lastSeenAt: Date | null;
+  licenseId: string;
+  organizationId: string;
+};
 
 type DisabledReason = "refund" | "chargeback" | "fraud" | "customer_request" | "other";
 
@@ -91,8 +118,13 @@ const ACTOR_TYPE_LABELS: Record<string, string> = {
   customer: "Customer",
 };
 
+type LoaderData = {
+  license: Awaited<ReturnType<typeof getLicense>>;
+  events: LicenseEventData[];
+};
+
 function LicenseDetailPage() {
-  const { license, events } = Route.useLoaderData();
+  const { license, events } = Route.useLoaderData() as LoaderData;
   const router = useRouter();
   const [activationOpen, setActivationOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -456,7 +488,7 @@ function LicenseDetailPage() {
             </div>
           ) : (
             <div className="divide-y divide-border/40">
-              {license.activations.map((activation) => (
+              {license.activations.map((activation: ActivationData) => (
                 <div
                   key={activation.id}
                   className="flex items-center justify-between px-6 py-4 hover:bg-muted/20 transition-colors"
@@ -526,7 +558,7 @@ function LicenseDetailPage() {
             </div>
           ) : (
             <div className="divide-y divide-border/40">
-              {events.map((event) => (
+              {events.map((event: LicenseEventData) => (
                 <div
                   key={event.id}
                   className="px-6 py-4 hover:bg-muted/20 transition-colors"
@@ -552,7 +584,7 @@ function LicenseDetailPage() {
                                   (
                                   {DISABLED_REASON_LABELS[
                                     (event.data as Record<string, unknown>).reason as DisabledReason
-                                  ] || (event.data as Record<string, unknown>).reason}
+                                  ] || String((event.data as Record<string, unknown>).reason)}
                                   )
                                 </span>
                               )}

@@ -1,14 +1,14 @@
 import { authClient } from "@/lib/auth-client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Check, Sparkles, Mail, Users } from "lucide-react";
 import db from "@/lib/db/db";
-import { invitation, organization, user } from "@/lib/db/schema";
-import { eq, gt } from "drizzle-orm";
+import { invitation, organization } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 // Fetch invitation details for pre-filling (public)
 const getInvitationForRegister = createServerFn({ method: "GET" })
@@ -38,7 +38,8 @@ export const Route = createFileRoute("/register")({
     invite: typeof search.invite === "string" ? search.invite : undefined,
   }),
   component: RouteComponent,
-  loader: async ({ search }) => {
+  // @ts-expect-error - TanStack Router loader context type mismatch with validateSearch
+  loader: async ({ search }: { search: RegisterSearch }) => {
     // If invite token provided, fetch invitation details
     if (search?.invite) {
       const invitation = await getInvitationForRegister({

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageLayout } from "@/components/page-layout";
-import { getProduct, updateProduct, createLicensePolicy } from "@/functions/products";
+import { getProduct, createLicensePolicy } from "@/functions/products";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -47,7 +47,6 @@ function ProductDetailPage() {
   const [policyOpen, setPolicyOpen] = useState(false);
 
   const submitPolicy = useServerFn(createLicensePolicy);
-  const submitUpdate = useServerFn(updateProduct);
 
   const policyForm = useForm({
     defaultValues: {

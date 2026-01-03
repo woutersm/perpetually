@@ -109,6 +109,7 @@ type PortalData = {
 
 export const Route = createFileRoute("/portal/$slug/$customerId")({
   component: CustomerPortal,
+  // @ts-expect-error - Drizzle json mode type inference conflict with TanStack Start
   loader: async ({ params }) => {
     const data = await getPortalCustomer({
       data: { slug: params.slug, customerId: params.customerId },

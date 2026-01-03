@@ -6,8 +6,6 @@ import db from "./db/db";
 import * as schema from "./db/schema";
 import { sendEmail } from "./email";
 
-const APP_URL = process.env.APP_URL || "http://localhost:3000";
-
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "sqlite",

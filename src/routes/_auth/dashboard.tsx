@@ -116,17 +116,23 @@ function DashboardPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge
-                          variant={
-                            license.status === "active"
-                              ? "outline-success"
-                              : license.status === "expired"
-                                ? "outline-warning"
-                                : "outline-destructive"
-                          }
-                        >
-                          {license.status}
-                        </Badge>
+                        {(() => {
+                          const isExpired = license.status === "active" && license.expiresAt && new Date(license.expiresAt) < new Date();
+                          const displayStatus = isExpired ? "expired" : license.status;
+                          return (
+                            <Badge
+                              variant={
+                                displayStatus === "active"
+                                  ? "outline-success"
+                                  : displayStatus === "expired"
+                                    ? "outline-warning"
+                                    : "outline-destructive"
+                              }
+                            >
+                              {displayStatus}
+                            </Badge>
+                          );
+                        })()}
                         <span className="text-xs text-muted-foreground">
                           {new Date(license.createdAt).toLocaleDateString()}
                         </span>

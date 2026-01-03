@@ -8,7 +8,6 @@ import {
   cleanupTestData,
   apiRequest,
   ApiErrors,
-  OpenApiErrors,
   type TestData,
 } from "./helpers";
 

@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import db from "@/lib/db/db";
-import { license, activation } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { license } from "@/lib/db/schema";
 import {
   createTestData,
   createExpiredLicense,
@@ -10,7 +9,6 @@ import {
   cleanupTestData,
   apiRequest,
   ApiErrors,
-  OpenApiErrors,
   type TestData,
 } from "./helpers";
 

@@ -33,6 +33,7 @@ function generateLicenseKey(): string {
 export const getPortalCustomer = createServerFn({ method: "GET" })
   .middleware([loggingMiddleware("getPortalCustomer")])
   .inputValidator((data: { slug: string; customerId: string }) => data)
+  // @ts-expect-error - Drizzle json mode infers unknown for data field which conflicts with TanStack Start's type inference
   .handler(async ({ data }) => {
     const { slug, customerId } = data;
 

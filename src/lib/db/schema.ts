@@ -1,9 +1,6 @@
 import { defineRelations } from "drizzle-orm";
 import { sqliteTable, text, integer, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 
-// Helper for generating UUIDs
-const uuid = () => text("id").primaryKey().$defaultFn(() => crypto.randomUUID());
-
 // ==================== BETTER-AUTH TABLES ====================
 
 export const user = sqliteTable("user", {
@@ -416,7 +413,7 @@ export const licenseEvent = sqliteTable(
     actorId: text("actor_id"), // userId, secretKeyId, or null for system
 
     // Event data (varies by type, stored as JSON string)
-    data: text("data", { mode: "json" }).$type<Record<string, unknown>>(),
+    data: text("data", { mode: "json" }),
 
     // Metadata
     ipAddress: text("ip_address"),
