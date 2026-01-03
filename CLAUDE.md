@@ -7,9 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Running the Application
 ```bash
 bun install                 # Install dependencies
-bun --bun run dev           # Start development server on port 3000
+bun --bun run dev           # Start development server on port 3001
 bun --bun run build         # Build for production
-bun --bun run serve         # Preview production build
+bun --bun run preview       # Preview production build
 bun run start               # Start production server
 ```
 
@@ -32,7 +32,7 @@ bun --bun run test          # Run all tests with Vitest
 
 ### Stack
 - **Framework**: TanStack Start (full-stack React framework with TanStack Router)
-- **Database**: SQLite with Drizzle ORM v2
+- **Database**: SQLite with Drizzle ORM v2 (using Bun's native SQLite)
 - **Authentication**: Better Auth with email/password
 - **Styling**: Tailwind CSS v4 with shadcn/ui components
 - **Payments**: Stripe integration for license purchases
@@ -66,7 +66,7 @@ src/
 │   └── settings.ts           # Org settings
 ├── lib/
 │   ├── db/
-│   │   ├── db.ts             # Database connection (DO NOT MODIFY)
+│   │   ├── db.ts             # Database connection
 │   │   └── schema.ts         # Drizzle schema + relations
 │   ├── auth.ts               # Better Auth server config
 │   └── auth-client.ts        # Better Auth client
@@ -90,13 +90,12 @@ import { license, customer } from "@/lib/db/schema";
 
 ---
 
-## Database Patterns (Drizzle ORM v2)
+## Database Patterns (Drizzle ORM v2 with SQLite)
 
 ### Schema Definition
 
 ```typescript
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
 // Use text IDs with UUID generation
 export const items = sqliteTable("items", {
@@ -105,12 +104,16 @@ export const items = sqliteTable("items", {
   // Enums as text with options
   status: text("status", { enum: ["pending", "active", "archived"] }),
 
-  // JSON columns with type safety
+  // JSON columns stored as text
   data: text("data", { mode: "json" }).$type<MyType>(),
 
-  // Timestamps as milliseconds
+  // Booleans stored as integers
+  isActive: integer("is_active", { mode: "boolean" }).default(true),
+
+  // Timestamps as milliseconds (integer)
   createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 ```
 
@@ -496,8 +499,8 @@ toast.error("Failed to create license");
 ## Environment Variables
 
 ```bash
-# Database
-DATABASE_URL=file:sqlite.db
+# Database (SQLite file path)
+DATABASE_URL=sqlite.db
 
 # Auth
 BETTER_AUTH_SECRET=your-secret-key
@@ -505,6 +508,26 @@ BETTER_AUTH_SECRET=your-secret-key
 # Stripe (per-organization, stored in DB)
 # Organizations store their own stripeApiKey and stripeWebhookSecret
 ```
+
+---
+
+## Local Database Access
+
+Connect to local SQLite:
+
+```bash
+# Using sqlite3 CLI
+sqlite3 sqlite.db
+
+# Common queries
+sqlite3 sqlite.db "SELECT * FROM user;"
+sqlite3 sqlite.db "SELECT * FROM organization;"
+
+# Update user email verification
+sqlite3 sqlite.db "UPDATE user SET email_verified = 1 WHERE email = 'user@example.com';"
+```
+
+**Note**: Table/column names use snake_case in the database (e.g., `email_verified`, not `emailVerified`). SQLite stores booleans as integers (0/1).
 
 ---
 

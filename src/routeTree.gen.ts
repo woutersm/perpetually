@@ -27,8 +27,6 @@ import { Route as PortalSlugCustomerIdRouteImport } from './routes/portal/$slug/
 import { Route as ApiV1ValidateRouteImport } from './routes/api/v1/validate'
 import { Route as ApiV1DeactivateRouteImport } from './routes/api/v1/deactivate'
 import { Route as ApiV1ActivateRouteImport } from './routes/api/v1/activate'
-import { Route as ApiStripeConnectRouteImport } from './routes/api/stripe/connect'
-import { Route as ApiStripeCallbackRouteImport } from './routes/api/stripe/callback'
 import { Route as ApiHooksOrganizationIdRouteImport } from './routes/api/hooks/$organizationId'
 import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -37,6 +35,7 @@ import { Route as AuthSettingsBrandingRouteImport } from './routes/_auth/setting
 import { Route as AuthSettingsBillingRouteImport } from './routes/_auth/settings/billing'
 import { Route as AuthSettingsApiRouteImport } from './routes/_auth/settings/api'
 import { Route as AuthProductsProductIdRouteImport } from './routes/_auth/products/$productId'
+import { Route as AuthOnboardingWebhookRouteImport } from './routes/_auth/onboarding/webhook'
 import { Route as AuthOnboardingSetupRouteImport } from './routes/_auth/onboarding/setup'
 import { Route as AuthOnboardingImportRouteImport } from './routes/_auth/onboarding/import'
 import { Route as AuthOnboarding1RouteImport } from './routes/_auth/onboarding/1'
@@ -132,16 +131,6 @@ const ApiV1ActivateRoute = ApiV1ActivateRouteImport.update({
   path: '/api/v1/activate',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiStripeConnectRoute = ApiStripeConnectRouteImport.update({
-  id: '/api/stripe/connect',
-  path: '/api/stripe/connect',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiStripeCallbackRoute = ApiStripeCallbackRouteImport.update({
-  id: '/api/stripe/callback',
-  path: '/api/stripe/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiHooksOrganizationIdRoute = ApiHooksOrganizationIdRouteImport.update({
   id: '/api/hooks/$organizationId',
   path: '/api/hooks/$organizationId',
@@ -180,6 +169,11 @@ const AuthSettingsApiRoute = AuthSettingsApiRouteImport.update({
 const AuthProductsProductIdRoute = AuthProductsProductIdRouteImport.update({
   id: '/products/$productId',
   path: '/products/$productId',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthOnboardingWebhookRoute = AuthOnboardingWebhookRouteImport.update({
+  id: '/onboarding/webhook',
+  path: '/onboarding/webhook',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthOnboardingSetupRoute = AuthOnboardingSetupRouteImport.update({
@@ -222,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/1': typeof AuthOnboarding1Route
   '/onboarding/import': typeof AuthOnboardingImportRoute
   '/onboarding/setup': typeof AuthOnboardingSetupRoute
+  '/onboarding/webhook': typeof AuthOnboardingWebhookRoute
   '/products/$productId': typeof AuthProductsProductIdRoute
   '/settings/api': typeof AuthSettingsApiRoute
   '/settings/billing': typeof AuthSettingsBillingRoute
@@ -230,8 +225,6 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/hooks/$organizationId': typeof ApiHooksOrganizationIdRoute
-  '/api/stripe/callback': typeof ApiStripeCallbackRoute
-  '/api/stripe/connect': typeof ApiStripeConnectRoute
   '/api/v1/activate': typeof ApiV1ActivateRoute
   '/api/v1/deactivate': typeof ApiV1DeactivateRoute
   '/api/v1/validate': typeof ApiV1ValidateRoute
@@ -256,6 +249,7 @@ export interface FileRoutesByTo {
   '/onboarding/1': typeof AuthOnboarding1Route
   '/onboarding/import': typeof AuthOnboardingImportRoute
   '/onboarding/setup': typeof AuthOnboardingSetupRoute
+  '/onboarding/webhook': typeof AuthOnboardingWebhookRoute
   '/products/$productId': typeof AuthProductsProductIdRoute
   '/settings/api': typeof AuthSettingsApiRoute
   '/settings/billing': typeof AuthSettingsBillingRoute
@@ -264,8 +258,6 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/hooks/$organizationId': typeof ApiHooksOrganizationIdRoute
-  '/api/stripe/callback': typeof ApiStripeCallbackRoute
-  '/api/stripe/connect': typeof ApiStripeConnectRoute
   '/api/v1/activate': typeof ApiV1ActivateRoute
   '/api/v1/deactivate': typeof ApiV1DeactivateRoute
   '/api/v1/validate': typeof ApiV1ValidateRoute
@@ -292,6 +284,7 @@ export interface FileRoutesById {
   '/_auth/onboarding/1': typeof AuthOnboarding1Route
   '/_auth/onboarding/import': typeof AuthOnboardingImportRoute
   '/_auth/onboarding/setup': typeof AuthOnboardingSetupRoute
+  '/_auth/onboarding/webhook': typeof AuthOnboardingWebhookRoute
   '/_auth/products/$productId': typeof AuthProductsProductIdRoute
   '/_auth/settings/api': typeof AuthSettingsApiRoute
   '/_auth/settings/billing': typeof AuthSettingsBillingRoute
@@ -300,8 +293,6 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/billing/webhook': typeof ApiBillingWebhookRoute
   '/api/hooks/$organizationId': typeof ApiHooksOrganizationIdRoute
-  '/api/stripe/callback': typeof ApiStripeCallbackRoute
-  '/api/stripe/connect': typeof ApiStripeConnectRoute
   '/api/v1/activate': typeof ApiV1ActivateRoute
   '/api/v1/deactivate': typeof ApiV1DeactivateRoute
   '/api/v1/validate': typeof ApiV1ValidateRoute
@@ -328,6 +319,7 @@ export interface FileRouteTypes {
     | '/onboarding/1'
     | '/onboarding/import'
     | '/onboarding/setup'
+    | '/onboarding/webhook'
     | '/products/$productId'
     | '/settings/api'
     | '/settings/billing'
@@ -336,8 +328,6 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/billing/webhook'
     | '/api/hooks/$organizationId'
-    | '/api/stripe/callback'
-    | '/api/stripe/connect'
     | '/api/v1/activate'
     | '/api/v1/deactivate'
     | '/api/v1/validate'
@@ -362,6 +352,7 @@ export interface FileRouteTypes {
     | '/onboarding/1'
     | '/onboarding/import'
     | '/onboarding/setup'
+    | '/onboarding/webhook'
     | '/products/$productId'
     | '/settings/api'
     | '/settings/billing'
@@ -370,8 +361,6 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/billing/webhook'
     | '/api/hooks/$organizationId'
-    | '/api/stripe/callback'
-    | '/api/stripe/connect'
     | '/api/v1/activate'
     | '/api/v1/deactivate'
     | '/api/v1/validate'
@@ -397,6 +386,7 @@ export interface FileRouteTypes {
     | '/_auth/onboarding/1'
     | '/_auth/onboarding/import'
     | '/_auth/onboarding/setup'
+    | '/_auth/onboarding/webhook'
     | '/_auth/products/$productId'
     | '/_auth/settings/api'
     | '/_auth/settings/billing'
@@ -405,8 +395,6 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/billing/webhook'
     | '/api/hooks/$organizationId'
-    | '/api/stripe/callback'
-    | '/api/stripe/connect'
     | '/api/v1/activate'
     | '/api/v1/deactivate'
     | '/api/v1/validate'
@@ -430,8 +418,6 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiBillingWebhookRoute: typeof ApiBillingWebhookRoute
   ApiHooksOrganizationIdRoute: typeof ApiHooksOrganizationIdRoute
-  ApiStripeCallbackRoute: typeof ApiStripeCallbackRoute
-  ApiStripeConnectRoute: typeof ApiStripeConnectRoute
   ApiV1ActivateRoute: typeof ApiV1ActivateRoute
   ApiV1DeactivateRoute: typeof ApiV1DeactivateRoute
   ApiV1ValidateRoute: typeof ApiV1ValidateRoute
@@ -566,20 +552,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1ActivateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/stripe/connect': {
-      id: '/api/stripe/connect'
-      path: '/api/stripe/connect'
-      fullPath: '/api/stripe/connect'
-      preLoaderRoute: typeof ApiStripeConnectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/stripe/callback': {
-      id: '/api/stripe/callback'
-      path: '/api/stripe/callback'
-      fullPath: '/api/stripe/callback'
-      preLoaderRoute: typeof ApiStripeCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/hooks/$organizationId': {
       id: '/api/hooks/$organizationId'
       path: '/api/hooks/$organizationId'
@@ -636,6 +608,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthProductsProductIdRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/onboarding/webhook': {
+      id: '/_auth/onboarding/webhook'
+      path: '/onboarding/webhook'
+      fullPath: '/onboarding/webhook'
+      preLoaderRoute: typeof AuthOnboardingWebhookRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/onboarding/setup': {
       id: '/_auth/onboarding/setup'
       path: '/onboarding/setup'
@@ -681,6 +660,7 @@ interface AuthRouteRouteChildren {
   AuthOnboarding1Route: typeof AuthOnboarding1Route
   AuthOnboardingImportRoute: typeof AuthOnboardingImportRoute
   AuthOnboardingSetupRoute: typeof AuthOnboardingSetupRoute
+  AuthOnboardingWebhookRoute: typeof AuthOnboardingWebhookRoute
   AuthProductsProductIdRoute: typeof AuthProductsProductIdRoute
   AuthSettingsApiRoute: typeof AuthSettingsApiRoute
   AuthSettingsBillingRoute: typeof AuthSettingsBillingRoute
@@ -700,6 +680,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthOnboarding1Route: AuthOnboarding1Route,
   AuthOnboardingImportRoute: AuthOnboardingImportRoute,
   AuthOnboardingSetupRoute: AuthOnboardingSetupRoute,
+  AuthOnboardingWebhookRoute: AuthOnboardingWebhookRoute,
   AuthProductsProductIdRoute: AuthProductsProductIdRoute,
   AuthSettingsApiRoute: AuthSettingsApiRoute,
   AuthSettingsBillingRoute: AuthSettingsBillingRoute,
@@ -728,8 +709,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiBillingWebhookRoute: ApiBillingWebhookRoute,
   ApiHooksOrganizationIdRoute: ApiHooksOrganizationIdRoute,
-  ApiStripeCallbackRoute: ApiStripeCallbackRoute,
-  ApiStripeConnectRoute: ApiStripeConnectRoute,
   ApiV1ActivateRoute: ApiV1ActivateRoute,
   ApiV1DeactivateRoute: ApiV1DeactivateRoute,
   ApiV1ValidateRoute: ApiV1ValidateRoute,

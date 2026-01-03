@@ -40,6 +40,11 @@ export const Route = createFileRoute("/_auth/onboarding/import")({
       throw redirect({ to: "/onboarding/1" });
     }
 
+    // If no webhook secret, redirect to webhook setup
+    if (!status.hasWebhookSecret) {
+      throw redirect({ to: "/onboarding/webhook" });
+    }
+
     // If already onboarded, go to products
     if (status.isOnboarded) {
       throw redirect({ to: "/products" });
@@ -101,8 +106,13 @@ function OnboardingImport() {
           </span>
           <span>Connect</span>
           <ArrowRight className="h-4 w-4" />
+          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-600 text-white text-xs font-medium">
+            <Check className="h-3 w-3" />
+          </span>
+          <span>Webhook</span>
+          <ArrowRight className="h-4 w-4" />
           <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-            2
+            3
           </span>
           <span>Import</span>
         </div>
@@ -165,7 +175,7 @@ function OnboardingImport() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate({ to: "/onboarding/1" })}
+                    onClick={() => navigate({ to: "/onboarding/webhook" })}
                     disabled={importing || skipping}
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />

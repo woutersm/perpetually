@@ -122,6 +122,140 @@ export const getOnboardingStatus = createServerFn({ method: "GET" })
     };
   });
 
+// Connect with restricted API key (alternative to OAuth)
+export const connectWithApiKey = createServerFn({ method: "POST" })
+  .middleware([authMiddleware, loggingMiddleware("connectWithApiKey")])
+  .inputValidator((data: { apiKey: string }) => data)
+  .handler(async ({ data, context: { organizationId } }) => {
+    const { apiKey } = data;
+
+    if (!apiKey || (!apiKey.startsWith("rk_") && !apiKey.startsWith("sk_"))) {
+      throw new Error(
+        "Invalid API key. Use a restricted key (rk_) or secret key (sk_)"
+      );
+    }
+
+    // Verify the key works by fetching account info
+    const stripe = new Stripe(apiKey, {
+      apiVersion: "2025-02-24.acacia",
+    });
+
+    try {
+      const account = await stripe.accounts.retrieve();
+
+      // Store the API key (using same field as OAuth access token)
+      await db
+        .update(organization)
+        .set({
+          stripeConnectId: account.id,
+          stripeAccessToken: apiKey,
+          stripeRefreshToken: null, // No refresh token for API keys
+          stripeScope: "api_key", // Mark as API key connection
+          stripeTokenType: "api_key",
+          stripeConnectedAt: new Date(),
+        })
+        .where(eq(organization.id, organizationId));
+
+      return {
+        success: true,
+        accountId: account.id,
+      };
+    } catch (e) {
+      if (e instanceof Stripe.errors.StripeAuthenticationError) {
+        throw new Error("Invalid API key. Please check and try again.");
+      }
+      if (e instanceof Stripe.errors.StripePermissionError) {
+        throw new Error(
+          "API key doesn't have permission to read account info. Please enable 'Account' read permission."
+        );
+      }
+      throw new Error("Failed to verify API key. Please try again.");
+    }
+  });
+
+// Test API key connection
+export const testApiKeyConnection = createServerFn({ method: "POST" })
+  .middleware([authMiddleware, loggingMiddleware("testApiKeyConnection")])
+  .handler(async ({ context: { organizationId } }) => {
+    const [org] = await db
+      .select()
+      .from(organization)
+      .where(eq(organization.id, organizationId))
+      .limit(1);
+
+    if (!org?.stripeAccessToken) {
+      throw new Error("Stripe not connected");
+    }
+
+    const stripe = new Stripe(org.stripeAccessToken, {
+      apiVersion: "2025-02-24.acacia",
+    });
+
+    try {
+      // Try to list products to verify the key works
+      const products = await stripe.products.list({ limit: 1 });
+
+      return {
+        success: true,
+        message: "API key is working",
+        productCount: products.data.length,
+        hasMore: products.has_more,
+      };
+    } catch (e) {
+      if (e instanceof Stripe.errors.StripeAuthenticationError) {
+        throw new Error("API key is invalid or has been revoked");
+      }
+      if (e instanceof Stripe.errors.StripePermissionError) {
+        throw new Error(
+          "API key doesn't have permission to read products. Please check your key permissions."
+        );
+      }
+      throw new Error("Failed to connect to Stripe. Please try again.");
+    }
+  });
+
+// Save webhook secret (manual setup)
+export const saveWebhookSecret = createServerFn({ method: "POST" })
+  .middleware([authMiddleware, loggingMiddleware("saveWebhookSecret")])
+  .inputValidator((data: { webhookSecret: string }) => data)
+  .handler(async ({ data, context: { organizationId } }) => {
+    const { webhookSecret } = data;
+
+    if (!webhookSecret || !webhookSecret.startsWith("whsec_")) {
+      throw new Error("Invalid webhook secret. It should start with 'whsec_'");
+    }
+
+    await db
+      .update(organization)
+      .set({ stripeWebhookSecret: webhookSecret })
+      .where(eq(organization.id, organizationId));
+
+    return { success: true };
+  });
+
+// Get webhook test status (checks if we've received a test event recently)
+export const getWebhookTestStatus = createServerFn({ method: "GET" })
+  .middleware([authMiddleware, loggingMiddleware("getWebhookTestStatus")])
+  .handler(async ({ context: { organizationId } }) => {
+    const [org] = await db
+      .select({
+        webhookLastTestedAt: organization.webhookLastTestedAt,
+        stripeWebhookSecret: organization.stripeWebhookSecret,
+      })
+      .from(organization)
+      .where(eq(organization.id, organizationId))
+      .limit(1);
+
+    if (!org) {
+      throw new Error("Organization not found");
+    }
+
+    return {
+      hasWebhookSecret: !!org.stripeWebhookSecret,
+      lastTestedAt: org.webhookLastTestedAt,
+    };
+  });
+
 // Disconnect Stripe
 export const disconnectStripe = createServerFn({ method: "POST" })
   .middleware([authMiddleware, loggingMiddleware("disconnectStripe")])

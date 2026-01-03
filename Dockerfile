@@ -1,6 +1,10 @@
 FROM oven/bun:1.3.5 AS builder
 WORKDIR /app
 
+# Memory limit for build (can be overridden via --build-arg)
+ARG NODE_OPTIONS="--max-old-space-size=1536"
+ENV NODE_OPTIONS=${NODE_OPTIONS}
+
 COPY package.json bun.lock ./
 RUN bun install
 

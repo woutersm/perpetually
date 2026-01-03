@@ -724,6 +724,12 @@ export const Route = createFileRoute("/api/hooks/$organizationId")({
 
           console.log("Webhook processed successfully:", event.type);
 
+          // Update last tested timestamp
+          await db
+            .update(organization)
+            .set({ webhookLastTestedAt: new Date() })
+            .where(eq(organization.id, organizationId));
+
           return new Response(JSON.stringify({ received: true }), {
             status: 200,
             headers: { "Content-Type": "application/json" },

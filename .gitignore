@@ -18,3 +18,4 @@ data
 
 # Local Netlify folder
 .netlify
+.playwright*
