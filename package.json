@@ -6,7 +6,7 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"start": "bun run .output/server/index.mjs",
+		"start": "bun run dist/server/server.js",
 		"test": "bun --bun test",
 		"typecheck": "bunx tsc --noEmit",
 		"db:generate": "bunx drizzle-kit generate",

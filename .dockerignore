@@ -15,10 +15,10 @@ node_modules
 .env.local
 .env.*.local
 .cache
-dist
 build
 
 # Build outputs and caches (critical - avoid stale CSS hash issues)
+dist
 .output
 .nitro
 .tanstack
