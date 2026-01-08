@@ -1,12 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import { loggingMiddleware } from "@/middleware/logging";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { license, activation, product, customer } from "@/lib/db/schema";
 import { eq, and, desc, count, gte, sql } from "drizzle-orm";
 
 export const getDashboardStats = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getDashboardStats")])
+  .middleware([authMiddleware])
   .inputValidator((data: { isTestMode?: boolean }) => data)
   .handler(async ({ data, context: { organizationId } }) => {
     const isTestMode = data?.isTestMode ?? false;

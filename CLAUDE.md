@@ -250,6 +250,179 @@ function MyComponent() {
 
 ---
 
+## Observability & Logging
+
+### Structured Logger
+
+All logging should use the structured logger (`@/lib/logger`) instead of `console.log`:
+
+```typescript
+import { logger } from "@/lib/logger";
+
+// Basic logging with levels
+logger.debug("Processing started", { fn: "myFunction" });
+logger.info("Operation completed", { ms: 123, result: "success" });
+logger.warn("Rate limit approaching", { current: 95, limit: 100 });
+logger.error("Operation failed", { err: "Connection timeout" });
+
+// Log exceptions with stack traces
+try {
+  await riskyOperation();
+} catch (error) {
+  logger.exception("Operation failed", error, { context: "myFunction" });
+}
+
+// Create child logger with preset context
+const log = logger.child({ fn: "createLicense", org: orgId });
+log.info("Creating license");  // Automatically includes fn and org
+```
+
+### Log Context Fields
+
+Standard context fields (automatically injected from trace context):
+- `traceId`: Request correlation ID (auto-injected)
+- `org`: Organization ID (first 8 chars, auto-injected)
+- `user`: User ID (first 8 chars, auto-injected)
+- `fn`: Function/operation name
+- `ms`: Duration in milliseconds
+- `err`: Error message
+
+### Trace Context
+
+Requests are automatically wrapped with trace context for correlation:
+
+```typescript
+import { runWithTrace, getTraceId, updateTraceContext } from "@/lib/trace-context";
+
+// Manually wrap operations (webhooks do this automatically)
+return runWithTrace(
+  { traceId: generateTraceId(), method: "POST", path: "/api/webhook" },
+  async () => {
+    // All logs within this callback share the same traceId
+    logger.info("Processing webhook");
+    await processEvent();
+    logger.info("Webhook complete");
+  }
+);
+
+// Update trace context with user/org info (auth middleware does this)
+updateTraceContext({ userId, organizationId });
+```
+
+### Logging Middleware
+
+Server functions use logging middleware for automatic instrumentation:
+
+```typescript
+import { loggingMiddleware } from "@/middleware/logging";
+
+export const myFunction = createServerFn({ method: "POST" })
+  .middleware([authMiddleware, loggingMiddleware("myFunction")])
+  .handler(async ({ data, context }) => {
+    // Logs: request start, completion with duration, or error
+  });
+```
+
+### Log Naming Convention
+
+Use hierarchical names with colons for log messages:
+
+```typescript
+// Webhooks
+logger.info("webhook:license:created", { key, product });
+logger.warn("webhook:refund:detected", { licenseId, amount });
+logger.error("webhook:error", { eventType });
+
+// Billing
+logger.info("billing:subscription:updated", { tier, status });
+logger.warn("billing:payment:failed", { invoiceId });
+
+// General pattern: domain:entity:action
+```
+
+### Environment Configuration
+
+```bash
+# Log level filter (default: debug)
+LOG_LEVEL=info           # debug|info|warn|error
+
+# Output format (auto-detected based on NODE_ENV)
+LOG_FORMAT=json          # json|pretty
+
+# OpenTelemetry tracing (optional)
+OTEL_ENABLED=true
+OTEL_SERVICE_NAME=perpetually
+OTEL_EXPORTER=otlp       # console|otlp
+OTEL_EXPORTER_OTLP_ENDPOINT=https://traces.example.com/v1/traces
+```
+
+### Wide Events (Canonical Log Lines)
+
+For complex operations (webhooks, multi-step processes), use wide events instead of multiple log statements:
+
+```typescript
+import { createWideEvent, withWideEvent } from "@/lib/wide-event";
+
+// Manual control
+const event = createWideEvent("webhook.payment");
+event.set("org", { id: orgId, tier: "pro" });
+event.set("product.action", "created");
+event.set("license.key", licenseKey);
+event.success();  // or event.error(err)
+
+// Auto-emit on completion
+await withWideEvent("api.license.validate", async (event) => {
+  event.set("license.id", licenseId);
+  event.set("activation.machine_id", machineId);
+  // Auto-emits success or error when function completes
+  return result;
+});
+```
+
+**Output (single event with full context):**
+```json
+{
+  "event": "webhook.payment",
+  "trace_id": "abc123",
+  "duration_ms": 234,
+  "org": { "id": "org-xxx", "tier": "pro" },
+  "product": { "action": "created", "id": "prod-xxx" },
+  "license": { "key": "XXXX-XXXX", "expires_days": 365 },
+  "status": "success"
+}
+```
+
+**When to use wide events vs regular logging:**
+- **Wide events**: Webhooks, API requests, multi-step operations
+- **Regular logger**: Single operations, background tasks, debugging
+
+See `src/lib/wide-event.example.ts` for full patterns.
+
+### Audit Trail
+
+License operations are logged to the database for compliance:
+
+```typescript
+import { logLicenseEvent, createStatusChangeData } from "@/lib/audit";
+
+await logLicenseEvent({
+  licenseId,
+  organizationId,
+  type: "license.status_changed",
+  actorType: "user",        // user|api|system|customer
+  actorId: userId,
+  data: createStatusChangeData({
+    previousStatus: "active",
+    newStatus: "suspended",
+    reason: "Payment dispute",
+  }),
+  ipAddress: request.ip,
+  userAgent: request.headers.get("user-agent"),
+});
+```
+
+---
+
 ## Routing Patterns
 
 ### Route Guards (Protected Routes)

@@ -4,6 +4,8 @@ import db from "@/lib/db/db";
 import { organization } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type { SubscriptionTier } from "@/lib/limits";
+import { logger } from "@/lib/logger";
+import { runWithTrace, generateTraceId } from "@/lib/trace-context";
 
 /**
  * Webhook handler for Perpetually's own Stripe billing.
@@ -25,8 +27,15 @@ export const Route = createFileRoute("/api/billing/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        return runWithTrace(
+          {
+            traceId: generateTraceId(),
+            method: "POST",
+            path: "/api/billing/webhook",
+          },
+          async () => {
         if (!stripe) {
-          console.error("Stripe is not configured");
+          logger.error("billing:webhook:stripe-not-configured");
           return new Response(
             JSON.stringify({ error: "Stripe not configured" }),
             { status: 500, headers: { "Content-Type": "application/json" } }
@@ -35,7 +44,7 @@ export const Route = createFileRoute("/api/billing/webhook")({
 
         const webhookSecret = process.env.STRIPE_BILLING_WEBHOOK_SECRET;
         if (!webhookSecret) {
-          console.error("STRIPE_BILLING_WEBHOOK_SECRET not configured");
+          logger.error("billing:webhook:secret-not-configured");
           return new Response(
             JSON.stringify({ error: "Webhook secret not configured" }),
             { status: 500, headers: { "Content-Type": "application/json" } }
@@ -56,14 +65,14 @@ export const Route = createFileRoute("/api/billing/webhook")({
         try {
           event = Stripe.webhooks.constructEvent(payload, signature, webhookSecret);
         } catch (err) {
-          console.error("Webhook signature verification failed:", err);
+          logger.exception("billing:webhook:signature-failed", err);
           return new Response(
             JSON.stringify({ error: "Invalid signature" }),
             { status: 400, headers: { "Content-Type": "application/json" } }
           );
         }
 
-        console.log("Billing webhook received:", event.type);
+        logger.info("billing:webhook:received", { eventType: event.type });
 
         try {
           switch (event.type) {
@@ -99,7 +108,7 @@ export const Route = createFileRoute("/api/billing/webhook")({
             }
 
             default:
-              console.log("Unhandled billing event:", event.type);
+              logger.debug("billing:webhook:unhandled", { eventType: event.type });
           }
 
           return new Response(
@@ -107,12 +116,14 @@ export const Route = createFileRoute("/api/billing/webhook")({
             { status: 200, headers: { "Content-Type": "application/json" } }
           );
         } catch (error) {
-          console.error("Error processing billing webhook:", error);
+          logger.exception("billing:webhook:error", error);
           return new Response(
             JSON.stringify({ error: "Webhook processing failed" }),
             { status: 500, headers: { "Content-Type": "application/json" } }
           );
         }
+          }
+        );
       },
     },
   },
@@ -134,11 +145,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const tier = session.metadata?.tier as SubscriptionTier | undefined;
 
   if (!organizationId) {
-    console.error("Checkout session missing organizationId metadata");
+    logger.error("billing:checkout:missing-org-id", { sessionId: session.id });
     return;
   }
 
-  console.log("Checkout completed for org:", organizationId, "tier:", tier);
+  logger.info("billing:checkout:completed", { org: organizationId.slice(0, 8), tier });
 
   // Update organization with subscription info
   await db
@@ -151,7 +162,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     })
     .where(eq(organization.id, organizationId));
 
-  console.log("Organization updated from checkout:", organizationId);
+  logger.info("billing:org:updated", { org: organizationId.slice(0, 8), source: "checkout" });
 }
 
 // Handle subscription updates
@@ -167,7 +178,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       .limit(1);
 
     if (!org) {
-      console.error("Could not find organization for subscription:", subscription.id);
+      logger.error("billing:subscription:org-not-found", { subscriptionId: subscription.id });
       return;
     }
 
@@ -221,7 +232,7 @@ async function updateOrgSubscription(organizationId: string, subscription: Strip
     .set(updateData)
     .where(eq(organization.id, organizationId));
 
-  console.log("Subscription updated for org:", organizationId, { tier, status });
+  logger.info("billing:subscription:updated", { org: organizationId.slice(0, 8), tier, status });
 }
 
 // Handle subscription deletion (canceled)
@@ -234,7 +245,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .limit(1);
 
   if (!org) {
-    console.error("Could not find organization for deleted subscription:", subscription.id);
+    logger.error("billing:subscription:deleted:org-not-found", { subscriptionId: subscription.id });
     return;
   }
 
@@ -250,7 +261,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     })
     .where(eq(organization.id, org.id));
 
-  console.log("Organization downgraded to starter:", org.id);
+  logger.info("billing:subscription:canceled", { org: org.id.slice(0, 8), newTier: "starter" });
 }
 
 // Handle failed payment
@@ -264,7 +275,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
     .limit(1);
 
   if (!org) {
-    console.error("Could not find organization for failed payment");
+    logger.error("billing:payment:org-not-found", { invoiceId: invoice.id });
     return;
   }
 
@@ -273,7 +284,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
     .set({ subscriptionStatus: "past_due" })
     .where(eq(organization.id, org.id));
 
-  console.log("Organization marked as past_due:", org.id);
+  logger.warn("billing:payment:failed", { org: org.id.slice(0, 8), invoiceId: invoice.id });
 }
 
 // Handle successful payment (clears past_due)
@@ -295,6 +306,6 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
       .set({ subscriptionStatus: "active" })
       .where(eq(organization.id, org.id));
 
-    console.log("Organization payment recovered:", org.id);
+    logger.info("billing:payment:recovered", { org: org.id.slice(0, 8) });
   }
 }

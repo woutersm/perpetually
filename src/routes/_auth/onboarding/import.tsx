@@ -35,14 +35,9 @@ export const Route = createFileRoute("/_auth/onboarding/import")({
   loader: async () => {
     const status = await getOnboardingStatus();
 
-    // If not connected to Stripe, redirect back to step 1
+    // If not connected to Stripe, redirect back to API setup
     if (!status.isStripeConnected) {
-      throw redirect({ to: "/onboarding/1" });
-    }
-
-    // If no webhook secret, redirect to webhook setup
-    if (!status.hasWebhookSecret) {
-      throw redirect({ to: "/onboarding/webhook" });
+      throw redirect({ to: "/onboarding/api" });
     }
 
     // If already onboarded, go to products
@@ -50,12 +45,12 @@ export const Route = createFileRoute("/_auth/onboarding/import")({
       throw redirect({ to: "/products" });
     }
 
-    return { status };
+    return {};
   },
 });
 
 function OnboardingImport() {
-  const { status } = Route.useLoaderData();
+  Route.useLoaderData();
   const navigate = useNavigate();
   const [importing, setImporting] = useState(false);
   const [skipping, setSkipping] = useState(false);
@@ -148,10 +143,7 @@ function OnboardingImport() {
                   <div className="p-3 rounded-md bg-green-50 border border-green-200 text-green-800">
                     <p className="flex items-center gap-2">
                       <Check className="h-4 w-4" />
-                      Connected to Stripe as{" "}
-                      <code className="bg-green-100 px-1 rounded">
-                        {status.stripeConnectId}
-                      </code>
+                      Stripe connected successfully
                     </p>
                   </div>
                   <p>

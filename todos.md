@@ -23,15 +23,6 @@ This is your Stripe account for charging Perpetually subscription fees to your c
 - [ ] Select events: `checkout.session.completed`, `customer.subscription.*`, `invoice.*`
 - [ ] Copy webhook secret → `STRIPE_BILLING_WEBHOOK_SECRET`
 
-## 3. Stripe Connect (Customer payment processing)
-
-This allows YOUR customers to connect their own Stripe accounts to sell software licenses.
-
-- [ ] Enable Connect at [dashboard.stripe.com/settings/connect](https://dashboard.stripe.com/settings/connect)
-- [ ] Set platform type (likely "Platform or marketplace")
-- [ ] Copy Client ID → `STRIPE_CLIENT_ID=ca_xxx`
-- [ ] Set OAuth redirect URI → `{APP_URL}/api/stripe/callback`
-
 ## 4. Production Deployment
 
 - [ ] Set `APP_URL` to your production domain
@@ -39,3 +30,7 @@ This allows YOUR customers to connect their own Stripe accounts to sell software
 - [ ] Generate new `BETTER_AUTH_SECRET` for production
 - [ ] Switch Stripe keys from test to live mode
 - [ ] Update webhook endpoints to production URLs
+
+
+
+Test setup with stripe

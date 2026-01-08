@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { loggingMiddleware } from "@/middleware/logging";
+import { wideEventMiddleware, type WideEventContext } from "@/middleware/wide-event";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { product, licensePolicy, license } from "@/lib/db/schema";
@@ -7,22 +7,30 @@ import { eq, and, desc } from "drizzle-orm";
 
 // Get all products for the current organization
 export const getProducts = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getProducts")])
-  .handler(async ({ context: { organizationId } }) => {
+  .middleware([authMiddleware, wideEventMiddleware("product.list")])
+  .handler(async ({ context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const products = await db
       .select()
       .from(product)
       .where(eq(product.organizationId, organizationId))
       .orderBy(desc(product.createdAt));
 
+    event.set("result.count", products.length);
+
     return products;
   });
 
 // Get a single product with relations
 export const getProduct = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getProduct")])
+  .middleware([authMiddleware, wideEventMiddleware("product.get")])
   .inputValidator((data: { productId: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
+    event.set("product.id", data.productId);
+
     const [productData] = await db
       .select()
       .from(product)
@@ -48,6 +56,10 @@ export const getProduct = createServerFn({ method: "GET" })
       .from(license)
       .where(eq(license.productId, data.productId));
 
+    event.set("product.name", productData.name);
+    event.set("policies.count", policies.length);
+    event.set("licenses.count", licenses.length);
+
     return {
       ...productData,
       licensePolicies: policies,
@@ -61,15 +73,18 @@ export const getProduct = createServerFn({ method: "GET" })
 // Update a product (local settings like description only)
 // Note: name and slug come from Stripe, only description is editable locally
 export const updateProduct = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("updateProduct")])
+  .middleware([authMiddleware, wideEventMiddleware("product.update")])
   .inputValidator(
     (data: {
       productId: string;
       description?: string;
     }) => data
   )
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
     const { productId, description } = data;
+
+    event.set("product.id", productId);
 
     const [updated] = await db
       .update(product)
@@ -83,6 +98,8 @@ export const updateProduct = createServerFn({ method: "POST" })
       throw new Error("Product not found");
     }
 
+    event.set("product.name", updated.name);
+
     return updated;
   });
 
@@ -91,7 +108,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 
 // Create a license policy
 export const createLicensePolicy = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("createLicensePolicy")])
+  .middleware([authMiddleware, wideEventMiddleware("policy.create")])
   .inputValidator(
     (data: {
       productId: string;
@@ -100,7 +117,11 @@ export const createLicensePolicy = createServerFn({ method: "POST" })
       activationLimit?: number;
     }) => data
   )
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
+    event.set("product.id", data.productId);
+
     // Verify product belongs to org
     const [productData] = await db
       .select()
@@ -123,6 +144,11 @@ export const createLicensePolicy = createServerFn({ method: "POST" })
         activationLimit: data.activationLimit ?? null,
       })
       .returning();
+
+    event.set("policy.id", newPolicy.id);
+    event.set("policy.name", newPolicy.name);
+    event.set("policy.license_length_days", newPolicy.licenseLengthDays);
+    event.set("policy.activation_limit", newPolicy.activationLimit);
 
     return newPolicy;
   });

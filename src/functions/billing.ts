@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { loggingMiddleware } from "@/middleware/logging";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { organization } from "@/lib/db/schema";
@@ -14,7 +13,7 @@ const stripe = process.env.STRIPE_SECRET_KEY
 
 // Get billing info and usage summary
 export const getBillingInfo = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getBillingInfo")])
+  .middleware([authMiddleware])
   .handler(async ({ context: { organizationId } }) => {
     const [org] = await db
       .select({
@@ -54,7 +53,7 @@ export const getBillingInfo = createServerFn({ method: "GET" })
 
 // Create Stripe Checkout session for upgrading
 export const createCheckoutSession = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("createCheckoutSession")])
+  .middleware([authMiddleware])
   .inputValidator((data: { tier: "pro" | "business" }) => data)
   .handler(async ({ data, context: { organizationId } }) => {
     if (!stripe) {
@@ -128,7 +127,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
 // Create Stripe Customer Portal session
 export const createPortalSession = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("createPortalSession")])
+  .middleware([authMiddleware])
   .handler(async ({ context: { organizationId } }) => {
     if (!stripe) {
       throw new Error("Stripe is not configured. Please set STRIPE_SECRET_KEY.");
@@ -156,7 +155,7 @@ export const createPortalSession = createServerFn({ method: "POST" })
 
 // Get all tier information for display
 export const getTierInfo = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getTierInfo")])
+  .middleware([authMiddleware])
   .handler(async () => {
     return {
       tiers: [

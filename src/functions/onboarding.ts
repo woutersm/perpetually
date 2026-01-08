@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { loggingMiddleware } from "@/middleware/logging";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { organization, product } from "@/lib/db/schema";
@@ -8,7 +7,7 @@ import Stripe from "stripe";
 
 // Import products from Stripe
 export const importProductsFromStripe = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("importProductsFromStripe")])
+  .middleware([authMiddleware])
   .handler(async ({ context: { organizationId } }) => {
     // Get organization
     const [org] = await db
@@ -82,7 +81,7 @@ export const importProductsFromStripe = createServerFn({ method: "POST" })
 
 // Complete onboarding (skip import)
 export const completeOnboarding = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("completeOnboarding")])
+  .middleware([authMiddleware])
   .handler(async ({ context: { organizationId } }) => {
     const [updated] = await db
       .update(organization)
@@ -95,7 +94,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
 
 // Get onboarding status
 export const getOnboardingStatus = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getOnboardingStatus")])
+  .middleware([authMiddleware])
   .handler(async ({ context: { organizationId } }) => {
     const [org] = await db
       .select({
@@ -124,7 +123,7 @@ export const getOnboardingStatus = createServerFn({ method: "GET" })
 
 // Connect with restricted API key (alternative to OAuth)
 export const connectWithApiKey = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("connectWithApiKey")])
+  .middleware([authMiddleware])
   .inputValidator((data: { apiKey: string }) => data)
   .handler(async ({ data, context: { organizationId } }) => {
     const { apiKey } = data;
@@ -135,19 +134,26 @@ export const connectWithApiKey = createServerFn({ method: "POST" })
       );
     }
 
-    // Verify the key works by fetching account info
+    // Verify the key works by testing required permissions
     const stripe = new Stripe(apiKey, {
       apiVersion: "2025-02-24.acacia",
     });
 
     try {
-      const account = await stripe.accounts.retrieve();
+      // Test both required permissions in parallel
+      await Promise.all([
+        stripe.products.list({ limit: 1 }),
+        stripe.customers.list({ limit: 1 }),
+      ]);
+
+      // Generate a unique identifier for this connection since we can't get account ID
+      const connectionId = `api_${crypto.randomUUID().slice(0, 8)}`;
 
       // Store the API key (using same field as OAuth access token)
       await db
         .update(organization)
         .set({
-          stripeConnectId: account.id,
+          stripeConnectId: connectionId,
           stripeAccessToken: apiKey,
           stripeRefreshToken: null, // No refresh token for API keys
           stripeScope: "api_key", // Mark as API key connection
@@ -158,7 +164,7 @@ export const connectWithApiKey = createServerFn({ method: "POST" })
 
       return {
         success: true,
-        accountId: account.id,
+        accountId: connectionId,
       };
     } catch (e) {
       if (e instanceof Stripe.errors.StripeAuthenticationError) {
@@ -166,7 +172,7 @@ export const connectWithApiKey = createServerFn({ method: "POST" })
       }
       if (e instanceof Stripe.errors.StripePermissionError) {
         throw new Error(
-          "API key doesn't have permission to read account info. Please enable 'Account' read permission."
+          "API key is missing required permissions. Please ensure 'Products' and 'Customers' read permissions are enabled."
         );
       }
       throw new Error("Failed to verify API key. Please try again.");
@@ -175,7 +181,7 @@ export const connectWithApiKey = createServerFn({ method: "POST" })
 
 // Test API key connection
 export const testApiKeyConnection = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("testApiKeyConnection")])
+  .middleware([authMiddleware])
   .handler(async ({ context: { organizationId } }) => {
     const [org] = await db
       .select()
@@ -216,7 +222,7 @@ export const testApiKeyConnection = createServerFn({ method: "POST" })
 
 // Save webhook secret (manual setup)
 export const saveWebhookSecret = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("saveWebhookSecret")])
+  .middleware([authMiddleware])
   .inputValidator((data: { webhookSecret: string }) => data)
   .handler(async ({ data, context: { organizationId } }) => {
     const { webhookSecret } = data;
@@ -233,9 +239,92 @@ export const saveWebhookSecret = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+// Create webhook endpoint via Stripe API
+export const createWebhookEndpoint = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .inputValidator((data: { webhookUrl: string }) => data)
+  .handler(async ({ data, context: { organizationId } }) => {
+    const { webhookUrl } = data;
+
+    // Get organization with Stripe credentials
+    const [org] = await db
+      .select()
+      .from(organization)
+      .where(eq(organization.id, organizationId))
+      .limit(1);
+
+    if (!org?.stripeAccessToken) {
+      throw new Error("Stripe not connected");
+    }
+
+    // Check if webhook endpoint already exists
+    if (org.stripeWebhookEndpointId && org.stripeWebhookSecret) {
+      return {
+        success: true,
+        alreadyExists: true,
+        endpointId: org.stripeWebhookEndpointId,
+      };
+    }
+
+    const stripe = new Stripe(org.stripeAccessToken, {
+      apiVersion: "2025-02-24.acacia",
+    });
+
+    const enabledEvents: Stripe.WebhookEndpointCreateParams.EnabledEvent[] = [
+      "checkout.session.completed",
+      "payment_intent.succeeded",
+      "invoice.payment_succeeded",
+      "customer.subscription.created",
+      "customer.subscription.updated",
+      "customer.subscription.deleted",
+      "product.created",
+      "product.updated",
+      "product.deleted",
+      "charge.refunded",
+    ];
+
+    try {
+      const endpoint = await stripe.webhookEndpoints.create({
+        url: webhookUrl,
+        enabled_events: enabledEvents,
+        description: "Perpetually license management",
+      });
+
+      // Store the endpoint ID and secret
+      await db
+        .update(organization)
+        .set({
+          stripeWebhookEndpointId: endpoint.id,
+          stripeWebhookSecret: endpoint.secret,
+        })
+        .where(eq(organization.id, organizationId));
+
+      return {
+        success: true,
+        alreadyExists: false,
+        endpointId: endpoint.id,
+      };
+    } catch (e) {
+      if (e instanceof Stripe.errors.StripePermissionError) {
+        throw new Error(
+          "API key doesn't have permission to create webhook endpoints. Please enable 'Webhook Endpoints' write permission."
+        );
+      }
+      if (e instanceof Stripe.errors.StripeInvalidRequestError) {
+        // Check if it's a duplicate URL error
+        if (e.message.includes("already exists")) {
+          throw new Error(
+            "A webhook endpoint with this URL already exists in Stripe. Please delete it first or use a different URL."
+          );
+        }
+      }
+      throw new Error(`Failed to create webhook endpoint: ${e instanceof Error ? e.message : "Unknown error"}`);
+    }
+  });
+
 // Get webhook test status (checks if we've received a test event recently)
 export const getWebhookTestStatus = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getWebhookTestStatus")])
+  .middleware([authMiddleware])
   .handler(async ({ context: { organizationId } }) => {
     const [org] = await db
       .select({
@@ -258,7 +347,7 @@ export const getWebhookTestStatus = createServerFn({ method: "GET" })
 
 // Disconnect Stripe
 export const disconnectStripe = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("disconnectStripe")])
+  .middleware([authMiddleware])
   .handler(async ({ context: { organizationId } }) => {
     const [org] = await db
       .select()

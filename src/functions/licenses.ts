@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { loggingMiddleware } from "@/middleware/logging";
+import { wideEventMiddleware, type WideEventContext } from "@/middleware/wide-event";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { license, activation, product, customer, licenseEvent } from "@/lib/db/schema";
@@ -35,9 +35,10 @@ const activationErrorMessages: Record<ActivationErrorCode, string> = {
 
 // Get all licenses for the current organization
 export const getLicenses = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getLicenses")])
+  .middleware([authMiddleware, wideEventMiddleware("license.list")])
   .inputValidator((data: { isTestMode?: boolean }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
     const isTestMode = data?.isTestMode ?? false;
 
     const licenses = await db
@@ -73,14 +74,19 @@ export const getLicenses = createServerFn({ method: "GET" })
       )
       .orderBy(desc(license.createdAt));
 
+    event.set("result.count", licenses.length);
+    event.set("filter.is_test", isTestMode);
+
     return licenses;
   });
 
 // Get a single license with activations
 export const getLicense = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getLicense")])
+  .middleware([authMiddleware, wideEventMiddleware("license.get")])
   .inputValidator((data: { licenseId: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const [licenseData] = await db
       .select({
         id: license.id,
@@ -127,6 +133,10 @@ export const getLicense = createServerFn({ method: "GET" })
       .where(eq(activation.licenseId, data.licenseId))
       .orderBy(desc(activation.createdAt));
 
+    event.set("license.id", licenseData.id);
+    event.set("license.status", licenseData.status);
+    event.set("activations.count", activations.length);
+
     return {
       ...licenseData,
       activations,
@@ -138,7 +148,7 @@ export const getLicense = createServerFn({ method: "GET" })
 
 // Update a license
 export const updateLicense = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("updateLicense")])
+  .middleware([authMiddleware, wideEventMiddleware("license.update")])
   .inputValidator(
     (data: {
       licenseId: string;
@@ -146,7 +156,8 @@ export const updateLicense = createServerFn({ method: "POST" })
       activationLimit?: number | null;
     }) => data
   )
-  .handler(async ({ data, context: { organizationId, user } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, user, event } = context as typeof context & WideEventContext;
     const { licenseId, ...updates } = data;
 
     // Get current license for comparison
@@ -161,6 +172,9 @@ export const updateLicense = createServerFn({ method: "POST" })
     if (!currentLicense) {
       throw new Error("License not found");
     }
+
+    event.set("license.id", licenseId);
+    event.set("license.previous_status", currentLicense.status);
 
     const updateData: Record<string, unknown> = {};
     const newExpiresAt = updates.expiresAt ? new Date(updates.expiresAt) : undefined;
@@ -189,6 +203,12 @@ export const updateLicense = createServerFn({ method: "POST" })
           newExpiresAt,
         }),
       });
+      event.set("license.extended", true);
+      event.set("license.new_expires_at", newExpiresAt.toISOString());
+    }
+
+    if (updates.activationLimit !== undefined) {
+      event.set("license.new_activation_limit", updates.activationLimit);
     }
 
     return updated;
@@ -196,11 +216,15 @@ export const updateLicense = createServerFn({ method: "POST" })
 
 // Create an activation
 export const createActivation = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("createActivation")])
+  .middleware([authMiddleware, wideEventMiddleware("activation.create")])
   .inputValidator(
     (data: { licenseId: string; name?: string; machineId?: string }) => data
   )
-  .handler(async ({ data, context: { organizationId, user } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, user, event } = context as typeof context & WideEventContext;
+
+    event.set("license.id", data.licenseId);
+
     // Use core service for validation and creation
     const result = await activateLicense({
       licenseId: data.licenseId,
@@ -210,12 +234,19 @@ export const createActivation = createServerFn({ method: "POST" })
     });
 
     if (!result.success) {
+      event.set("activation.error", result.error);
       throw new Error(licenseErrorMessages[result.error]);
     }
 
     const newActivation = result.data;
 
-    // Log activation.created event (audit trail - server function specific)
+    event.set("activation", {
+      id: newActivation.id,
+      name: newActivation.name,
+      machine_id: newActivation.machineId,
+    });
+
+    // Log activation.created event (audit trail)
     await logLicenseEvent({
       licenseId: data.licenseId,
       organizationId,
@@ -234,9 +265,13 @@ export const createActivation = createServerFn({ method: "POST" })
 
 // Delete an activation
 export const deleteActivation = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("deleteActivation")])
+  .middleware([authMiddleware, wideEventMiddleware("activation.delete")])
   .inputValidator((data: { activationId: string }) => data)
-  .handler(async ({ data, context: { organizationId, user } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, user, event } = context as typeof context & WideEventContext;
+
+    event.set("activation.id", data.activationId);
+
     // Use core service for deactivation
     const result = await deactivate({
       activationId: data.activationId,
@@ -244,12 +279,16 @@ export const deleteActivation = createServerFn({ method: "POST" })
     });
 
     if (!result.success) {
+      event.set("activation.error", result.error);
       throw new Error(activationErrorMessages[result.error]);
     }
 
     const deleted = result.data;
 
-    // Log activation.removed event (audit trail - server function specific)
+    event.set("license.id", deleted.licenseId);
+    event.set("activation.deleted", true);
+
+    // Log activation.removed event (audit trail)
     await logLicenseEvent({
       licenseId: deleted.licenseId,
       organizationId,
@@ -268,7 +307,7 @@ export const deleteActivation = createServerFn({ method: "POST" })
 
 // Disable a license
 export const disableLicense = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("disableLicense")])
+  .middleware([authMiddleware, wideEventMiddleware("license.disable")])
   .inputValidator(
     (data: {
       licenseId: string;
@@ -276,7 +315,12 @@ export const disableLicense = createServerFn({ method: "POST" })
       notes?: string;
     }) => data
   )
-  .handler(async ({ data, context: { organizationId, user } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, user, event } = context as typeof context & WideEventContext;
+
+    event.set("license.id", data.licenseId);
+    event.set("license.disable_reason", data.reason);
+
     const [updated] = await db
       .update(license)
       .set({
@@ -293,6 +337,8 @@ export const disableLicense = createServerFn({ method: "POST" })
     if (!updated) {
       throw new Error("License not found");
     }
+
+    event.set("license.new_status", "disabled");
 
     // Log license.status_changed event
     await logLicenseEvent({
@@ -314,9 +360,13 @@ export const disableLicense = createServerFn({ method: "POST" })
 
 // Enable a license (clears disabled fields)
 export const enableLicense = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("enableLicense")])
+  .middleware([authMiddleware, wideEventMiddleware("license.enable")])
   .inputValidator((data: { licenseId: string }) => data)
-  .handler(async ({ data, context: { organizationId, user } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, user, event } = context as typeof context & WideEventContext;
+
+    event.set("license.id", data.licenseId);
+
     const [updated] = await db
       .update(license)
       .set({
@@ -333,6 +383,8 @@ export const enableLicense = createServerFn({ method: "POST" })
     if (!updated) {
       throw new Error("License not found");
     }
+
+    event.set("license.new_status", "active");
 
     // Log license.status_changed event
     await logLicenseEvent({
@@ -352,10 +404,14 @@ export const enableLicense = createServerFn({ method: "POST" })
 
 // Get license events (audit trail)
 export const getLicenseEvents = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getLicenseEvents")])
+  .middleware([authMiddleware, wideEventMiddleware("license.events")])
   .inputValidator((data: { licenseId: string }) => data)
   // @ts-expect-error - Drizzle json mode infers unknown for data field which conflicts with TanStack Start's type inference
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
+    event.set("license.id", data.licenseId);
+
     // First verify the license belongs to this org
     const [licenseData] = await db
       .select({ id: license.id })
@@ -375,6 +431,8 @@ export const getLicenseEvents = createServerFn({ method: "GET" })
       .from(licenseEvent)
       .where(eq(licenseEvent.licenseId, data.licenseId))
       .orderBy(desc(licenseEvent.createdAt));
+
+    event.set("result.count", events.length);
 
     return events;
   });

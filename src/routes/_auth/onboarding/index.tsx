@@ -13,7 +13,12 @@ export const Route = createFileRoute("/_auth/onboarding/")({
 
     // Redirect to appropriate step based on progress
     if (!status.isStripeConnected) {
-      throw redirect({ to: "/onboarding/1" });
+      throw redirect({ to: "/onboarding/api" });
+    }
+
+    // Webhook step (optional - user can skip)
+    if (!status.hasWebhookSecret) {
+      throw redirect({ to: "/onboarding/webhook" });
     }
 
     if (!status.isOnboarded) {

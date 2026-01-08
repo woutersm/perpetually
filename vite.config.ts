@@ -10,7 +10,7 @@ const config = defineConfig({
     port: 3001,
   },
   plugins: [
-    devtools({ eventBusConfig: { port: 42070 } }),
+    devtools({ eventBusConfig: { port: 42071 } }),
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
     }),

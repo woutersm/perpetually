@@ -1,6 +1,6 @@
 import { authClient } from "@/lib/auth-client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { ArrowRight, Check, Sparkles, Mail, Users } from "lucide-react";
 import db from "@/lib/db/db";
 import { invitation, organization } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { checkSlugAvailable } from "@/functions/organizations";
 
 // Fetch invitation details for pre-filling (public)
 const getInvitationForRegister = createServerFn({ method: "GET" })
@@ -68,6 +69,8 @@ function RouteComponent() {
     orgSlug: "",
   });
 
+  const checkSlug = useServerFn(checkSlugAvailable);
+
   // Auto-generate slug from org name
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -112,6 +115,16 @@ function RouteComponent() {
     setLoading(true);
 
     try {
+      // For self-signup, check if slug is available before creating account
+      if (!isInviteFlow && formData.orgSlug) {
+        const { available } = await checkSlug({ data: { slug: formData.orgSlug } });
+        if (!available) {
+          setError("Organization URL is already taken. Please choose a different one.");
+          setLoading(false);
+          return;
+        }
+      }
+
       const { error } = await authClient.signUp.email({
         name: formData.name,
         email: formData.email,

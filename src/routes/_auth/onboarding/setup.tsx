@@ -18,9 +18,9 @@ import { createOrganization } from "@/functions/organizations";
 export const Route = createFileRoute("/_auth/onboarding/setup")({
   component: OnboardingSetup,
   beforeLoad: async ({ context }) => {
-    // If user already has an organization, skip to step 1
+    // If user already has an organization, skip to API setup
     if (context.organization) {
-      throw redirect({ to: "/onboarding/1" });
+      throw redirect({ to: "/onboarding/api" });
     }
   },
 });
@@ -49,7 +49,7 @@ function OnboardingSetup() {
           createOrg({ data: { name, slug } })
             .then(() => {
               localStorage.removeItem("pendingOrg");
-              navigate({ to: "/onboarding/1" });
+              navigate({ to: "/onboarding/api" });
             })
             .catch((err) => {
               // If auto-create fails, show the form with pre-filled data
@@ -104,7 +104,7 @@ function OnboardingSetup() {
       });
 
       localStorage.removeItem("pendingOrg");
-      navigate({ to: "/onboarding/1" });
+      navigate({ to: "/onboarding/api" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create organization");
     } finally {

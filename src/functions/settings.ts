@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { loggingMiddleware } from "@/middleware/logging";
+import { wideEventMiddleware, type WideEventContext } from "@/middleware/wide-event";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { secretKey, organization, membership, user, invitation } from "@/lib/db/schema";
@@ -19,8 +19,10 @@ function generateSecretKey(): string {
 
 // Get organization settings
 export const getOrganizationSettings = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getOrganizationSettings")])
-  .handler(async ({ context: { organizationId } }) => {
+  .middleware([authMiddleware, wideEventMiddleware("org.settings.get")])
+  .handler(async ({ context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const [org] = await db
       .select({
         id: organization.id,
@@ -39,14 +41,19 @@ export const getOrganizationSettings = createServerFn({ method: "GET" })
       throw new Error("Organization not found");
     }
 
+    event.set("org.name", org.name);
+    event.set("org.stripe_connected", !!org.stripeConnectId);
+
     return org;
   });
 
 // Update organization settings
 export const updateOrganizationSettings = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("updateOrganizationSettings")])
+  .middleware([authMiddleware, wideEventMiddleware("org.settings.update")])
   .inputValidator((data: { name?: string; slug?: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const [updated] = await db
       .update(organization)
       .set(data)
@@ -57,13 +64,19 @@ export const updateOrganizationSettings = createServerFn({ method: "POST" })
       throw new Error("Organization not found");
     }
 
+    event.set("org.name", updated.name);
+    if (data.name) event.set("updated.name", true);
+    if (data.slug) event.set("updated.slug", true);
+
     return updated;
   });
 
 // Get team members
 export const getTeamMembers = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getTeamMembers")])
-  .handler(async ({ context: { organizationId } }) => {
+  .middleware([authMiddleware, wideEventMiddleware("team.list")])
+  .handler(async ({ context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const members = await db
       .select({
         id: membership.id,
@@ -81,16 +94,23 @@ export const getTeamMembers = createServerFn({ method: "GET" })
       .where(eq(membership.organizationId, organizationId))
       .orderBy(desc(membership.createdAt));
 
+    event.set("result.count", members.length);
+
     return members;
   });
 
 // Update team member role
 export const updateTeamMemberRole = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("updateTeamMemberRole")])
+  .middleware([authMiddleware, wideEventMiddleware("team.update_role")])
   .inputValidator(
     (data: { membershipId: string; role: "owner" | "admin" | "member" }) => data
   )
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
+    event.set("membership.id", data.membershipId);
+    event.set("membership.new_role", data.role);
+
     const [updated] = await db
       .update(membership)
       .set({ role: data.role })
@@ -111,9 +131,13 @@ export const updateTeamMemberRole = createServerFn({ method: "POST" })
 
 // Remove team member
 export const removeTeamMember = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("removeTeamMember")])
+  .middleware([authMiddleware, wideEventMiddleware("team.remove")])
   .inputValidator((data: { membershipId: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
+    event.set("membership.id", data.membershipId);
+
     const [deleted] = await db
       .delete(membership)
       .where(
@@ -128,13 +152,17 @@ export const removeTeamMember = createServerFn({ method: "POST" })
       throw new Error("Team member not found");
     }
 
+    event.set("membership.deleted", true);
+
     return { success: true };
   });
 
 // Get all API keys
 export const getApiKeys = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getApiKeys")])
-  .handler(async ({ context: { organizationId } }) => {
+  .middleware([authMiddleware, wideEventMiddleware("apikey.list")])
+  .handler(async ({ context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const keys = await db
       .select({
         id: secretKey.id,
@@ -149,6 +177,8 @@ export const getApiKeys = createServerFn({ method: "GET" })
       .where(eq(secretKey.organizationId, organizationId))
       .orderBy(desc(secretKey.createdAt));
 
+    event.set("result.count", keys.length);
+
     // Mask the keys (only show last 4 chars)
     return keys.map((k) => ({
       ...k,
@@ -158,11 +188,13 @@ export const getApiKeys = createServerFn({ method: "GET" })
 
 // Create a new API key
 export const createApiKey = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("createApiKey")])
+  .middleware([authMiddleware, wideEventMiddleware("apikey.create")])
   .inputValidator(
     (data: { name?: string; scopes?: string[]; expiresAt?: string }) => data
   )
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const key = generateSecretKey();
 
     const [newKey] = await db
@@ -176,15 +208,23 @@ export const createApiKey = createServerFn({ method: "POST" })
       })
       .returning();
 
+    event.set("apikey.id", newKey.id);
+    event.set("apikey.name", newKey.name);
+    event.set("apikey.has_expiry", !!newKey.expiresAt);
+
     // Return the full key only once (on creation)
     return { ...newKey, fullKey: key };
   });
 
 // Delete an API key
 export const deleteApiKey = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("deleteApiKey")])
+  .middleware([authMiddleware, wideEventMiddleware("apikey.delete")])
   .inputValidator((data: { keyId: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
+    event.set("apikey.id", data.keyId);
+
     const [deleted] = await db
       .delete(secretKey)
       .where(
@@ -198,6 +238,8 @@ export const deleteApiKey = createServerFn({ method: "POST" })
     if (!deleted) {
       throw new Error("API key not found");
     }
+
+    event.set("apikey.deleted", true);
 
     return { success: true };
   });
@@ -216,8 +258,10 @@ function generateInviteToken(): string {
 
 // Get pending invitations
 export const getInvitations = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getInvitations")])
-  .handler(async ({ context: { organizationId } }) => {
+  .middleware([authMiddleware, wideEventMiddleware("invitation.list")])
+  .handler(async ({ context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const invitations = await db
       .select({
         id: invitation.id,
@@ -240,19 +284,28 @@ export const getInvitations = createServerFn({ method: "GET" })
       )
       .orderBy(desc(invitation.createdAt));
 
+    event.set("result.count", invitations.length);
+
     return invitations;
   });
 
 // Invite a team member
 export const inviteTeamMember = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("inviteTeamMember")])
+  .middleware([authMiddleware, wideEventMiddleware("invitation.create")])
   .inputValidator((data: { email: string; role?: "member" }) => data)
-  .handler(async ({ data, context: { organizationId, userId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, userId, event } = context as typeof context & WideEventContext & { userId: string };
     const email = data.email.toLowerCase().trim();
+
+    event.set("invitation.email", email);
+    event.set("invitation.role", data.role || "member");
 
     // Check member limit
     const limitCheck = await checkMemberLimit(organizationId);
     if (!limitCheck.allowed) {
+      event.set("limit.blocked", true);
+      event.set("limit.current", limitCheck.current);
+      event.set("limit.max", limitCheck.limit);
       throw new Error(
         `Team member limit reached (${limitCheck.current}/${limitCheck.limit}). Upgrade to add more members.`
       );
@@ -322,6 +375,9 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       })
       .returning();
 
+    event.set("invitation.id", newInvitation.id);
+    event.set("invitation.created", true);
+
     // Send invitation email
     const appUrl = process.env.APP_URL || "http://localhost:3000";
     const inviteUrl = `${appUrl}/invite/${token}`;
@@ -352,14 +408,20 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       `,
     });
 
+    event.set("email.sent", true);
+
     return newInvitation;
   });
 
 // Cancel an invitation
 export const cancelInvitation = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("cancelInvitation")])
+  .middleware([authMiddleware, wideEventMiddleware("invitation.cancel")])
   .inputValidator((data: { invitationId: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
+    event.set("invitation.id", data.invitationId);
+
     const [deleted] = await db
       .delete(invitation)
       .where(
@@ -374,14 +436,20 @@ export const cancelInvitation = createServerFn({ method: "POST" })
       throw new Error("Invitation not found");
     }
 
+    event.set("invitation.cancelled", true);
+
     return { success: true };
   });
 
 // Resend invitation email
 export const resendInvitation = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("resendInvitation")])
+  .middleware([authMiddleware, wideEventMiddleware("invitation.resend")])
   .inputValidator((data: { invitationId: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
+    event.set("invitation.id", data.invitationId);
+
     // Get invitation
     const [invite] = await db
       .select({
@@ -402,6 +470,8 @@ export const resendInvitation = createServerFn({ method: "POST" })
     if (!invite) {
       throw new Error("Invitation not found or expired");
     }
+
+    event.set("invitation.email", invite.email);
 
     // Get organization name
     const [org] = await db
@@ -437,6 +507,8 @@ export const resendInvitation = createServerFn({ method: "POST" })
       `,
     });
 
+    event.set("email.resent", true);
+
     return { success: true };
   });
 
@@ -449,8 +521,10 @@ function isValidHexColor(color: string): boolean {
 
 // Get branding settings
 export const getBrandingSettings = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getBrandingSettings")])
-  .handler(async ({ context: { organizationId } }) => {
+  .middleware([authMiddleware, wideEventMiddleware("branding.get")])
+  .handler(async ({ context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const [org] = await db
       .select({
         id: organization.id,
@@ -473,6 +547,9 @@ export const getBrandingSettings = createServerFn({ method: "GET" })
     // Check feature access
     const { allowed } = await checkFeatureAccess(organizationId, "customBranding");
 
+    event.set("branding.enabled", org.brandingEnabled);
+    event.set("branding.feature_allowed", allowed);
+
     // Get a sample customer for portal preview (if any exist)
     const { customer } = await import("@/lib/db/schema");
     const [sampleCustomer] = await db
@@ -490,7 +567,7 @@ export const getBrandingSettings = createServerFn({ method: "GET" })
 
 // Update branding settings
 export const updateBrandingSettings = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("updateBrandingSettings")])
+  .middleware([authMiddleware, wideEventMiddleware("branding.update")])
   .inputValidator(
     (data: {
       brandLogo?: string | null;
@@ -499,12 +576,17 @@ export const updateBrandingSettings = createServerFn({ method: "POST" })
       brandHidePoweredBy?: boolean;
     }) => data
   )
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     // Check feature access
     const { allowed, tier } = await checkFeatureAccess(
       organizationId,
       "customBranding"
     );
+
+    event.set("branding.feature_allowed", allowed);
+    event.set("branding.tier", tier);
 
     if (!allowed) {
       throw new Error(
@@ -532,15 +614,19 @@ export const updateBrandingSettings = createServerFn({ method: "POST" })
 
     if (data.brandLogo !== undefined) {
       updateData.brandLogo = data.brandLogo;
+      event.set("branding.updated_logo", true);
     }
     if (data.brandAccentColor !== undefined) {
       updateData.brandAccentColor = data.brandAccentColor;
+      event.set("branding.updated_color", true);
     }
     if (data.brandSupportEmail !== undefined) {
       updateData.brandSupportEmail = data.brandSupportEmail;
+      event.set("branding.updated_email", true);
     }
     if (data.brandHidePoweredBy !== undefined) {
       updateData.brandHidePoweredBy = data.brandHidePoweredBy;
+      event.set("branding.updated_hide_powered_by", true);
     }
 
     const [updated] = await db
@@ -564,8 +650,10 @@ export const updateBrandingSettings = createServerFn({ method: "POST" })
 
 // Reset branding to defaults
 export const resetBrandingSettings = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("resetBrandingSettings")])
-  .handler(async ({ context: { organizationId } }) => {
+  .middleware([authMiddleware, wideEventMiddleware("branding.reset")])
+  .handler(async ({ context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
+
     const [updated] = await db
       .update(organization)
       .set({
@@ -581,6 +669,8 @@ export const resetBrandingSettings = createServerFn({ method: "POST" })
     if (!updated) {
       throw new Error("Organization not found");
     }
+
+    event.set("branding.reset", true);
 
     return { success: true };
   });

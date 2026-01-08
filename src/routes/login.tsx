@@ -1,10 +1,11 @@
 import { authClient } from "@/lib/auth-client";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { FormEvent, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Key } from "lucide-react";
+import { getSessionFn } from "@/functions/sessions";
 
 // Validate search params
 type LoginSearch = {
@@ -15,6 +16,12 @@ export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): LoginSearch => ({
     invite: typeof search.invite === "string" ? search.invite : undefined,
   }),
+  beforeLoad: async () => {
+    const session = await getSessionFn();
+    if (session?.user) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: RouteComponent,
 });
 

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { loggingMiddleware } from "@/middleware/logging";
+import { wideEventMiddleware, type WideEventContext } from "@/middleware/wide-event";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { customer, license } from "@/lib/db/schema";
@@ -8,10 +8,13 @@ import { eq, and, desc, sql, inArray } from "drizzle-orm";
 // Get all customers for the current organization
 // Filtered by customers who have at least one license matching the test mode
 export const getCustomers = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getCustomers")])
+  .middleware([authMiddleware, wideEventMiddleware("customer.list")])
   .inputValidator((data: { isTestMode?: boolean }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
     const isTestMode = data?.isTestMode ?? false;
+
+    event.set("filter.is_test", isTestMode);
 
     // Get customer IDs that have licenses in the current mode
     const customerIdsWithLicenses = await db
@@ -30,6 +33,7 @@ export const getCustomers = createServerFn({ method: "GET" })
       .filter((id): id is string => id !== null);
 
     if (customerIds.length === 0) {
+      event.set("result.count", 0);
       return [];
     }
 
@@ -44,15 +48,21 @@ export const getCustomers = createServerFn({ method: "GET" })
       )
       .orderBy(desc(customer.createdAt));
 
+    event.set("result.count", customers.length);
+
     return customers;
   });
 
 // Get a single customer with licenses
 export const getCustomer = createServerFn({ method: "GET" })
-  .middleware([authMiddleware, loggingMiddleware("getCustomer")])
+  .middleware([authMiddleware, wideEventMiddleware("customer.get")])
   .inputValidator((data: { customerId: string; isTestMode?: boolean }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context }) => {
+    const { organizationId, event } = context as typeof context & WideEventContext;
     const isTestMode = data?.isTestMode ?? false;
+
+    event.set("customer.id", data.customerId);
+    event.set("filter.is_test", isTestMode);
 
     const [customerData] = await db
       .select()
@@ -77,6 +87,9 @@ export const getCustomer = createServerFn({ method: "GET" })
         )
       )
       .orderBy(desc(license.createdAt));
+
+    event.set("customer.email", customerData.email);
+    event.set("licenses.count", licenses.length);
 
     return {
       ...customerData,

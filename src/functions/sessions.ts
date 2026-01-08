@@ -4,10 +4,7 @@ import { auth } from "@/lib/auth";
 import db from "@/lib/db/db";
 import { membership, organization } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { loggingMiddleware } from "@/middleware/logging";
-
 export const getSessionFn = createServerFn({ method: "GET" })
-  .middleware([loggingMiddleware("getSessionFn")])
   .handler(async () => {
     const headers = getRequestHeaders();
     const session = await auth.api.getSession({ headers });

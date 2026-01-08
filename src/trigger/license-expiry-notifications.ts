@@ -7,6 +7,7 @@ import {
   sendLicenseExpiredEmail,
   isEmailConfigured,
 } from "@/lib/email/notifications";
+import { logger } from "@/lib/logger";
 
 // Check for expiring licenses and send notifications
 // Runs daily at 9:00 AM UTC
@@ -17,10 +18,10 @@ export const licenseExpiryNotifications = schedules.task({
     timezone: "UTC",
   },
   run: async (payload) => {
-    console.log("Running license expiry notifications check at:", payload.timestamp);
+    logger.info("task:expiry-check:start", { timestamp: payload.timestamp.toISOString() });
 
     if (!isEmailConfigured()) {
-      console.log("Email not configured, skipping notifications");
+      logger.debug("task:expiry-check:skipped", { reason: "Email not configured" });
       return { skipped: true, reason: "Email not configured" };
     }
 
@@ -85,10 +86,10 @@ export const licenseExpiryNotifications = schedules.task({
           .where(eq(license.id, lic.id));
 
         results.sevenDayNotifications++;
-        console.log("Sent 7-day expiry notification for license:", lic.key);
+        logger.info("task:expiry:7day-sent", { licenseKey: lic.key });
       } catch (error) {
         const errorMsg = `Failed to send 7-day notification for ${lic.key}: ${error}`;
-        console.error(errorMsg);
+        logger.exception("task:expiry:7day-failed", error, { licenseKey: lic.key });
         results.errors.push(errorMsg);
       }
     }
@@ -144,10 +145,10 @@ export const licenseExpiryNotifications = schedules.task({
           .where(eq(license.id, lic.id));
 
         results.oneDayNotifications++;
-        console.log("Sent 1-day expiry notification for license:", lic.key);
+        logger.info("task:expiry:1day-sent", { licenseKey: lic.key });
       } catch (error) {
         const errorMsg = `Failed to send 1-day notification for ${lic.key}: ${error}`;
-        console.error(errorMsg);
+        logger.exception("task:expiry:1day-failed", error, { licenseKey: lic.key });
         results.errors.push(errorMsg);
       }
     }
@@ -194,15 +195,20 @@ export const licenseExpiryNotifications = schedules.task({
           .where(eq(license.id, lic.id));
 
         results.expiredNotifications++;
-        console.log("Sent expired notification for license:", lic.key);
+        logger.info("task:expiry:expired-sent", { licenseKey: lic.key });
       } catch (error) {
         const errorMsg = `Failed to send expired notification for ${lic.key}: ${error}`;
-        console.error(errorMsg);
+        logger.exception("task:expiry:expired-failed", error, { licenseKey: lic.key });
         results.errors.push(errorMsg);
       }
     }
 
-    console.log("License expiry notifications completed:", results);
+    logger.info("task:expiry-check:complete", {
+      sevenDay: results.sevenDayNotifications,
+      oneDay: results.oneDayNotifications,
+      expired: results.expiredNotifications,
+      errors: results.errors.length,
+    });
     return results;
   },
 });

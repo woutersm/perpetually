@@ -3,11 +3,22 @@ import db from "@/lib/db/db";
 import { organization, membership } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getSessionFn } from "./sessions";
-import { loggingMiddleware } from "@/middleware/logging";
+
+// Check if organization slug is available (public - no auth required)
+export const checkSlugAvailable = createServerFn({ method: "POST" })
+  .inputValidator((data: { slug: string }) => data)
+  .handler(async ({ data }) => {
+    const existing = await db
+      .select({ id: organization.id })
+      .from(organization)
+      .where(eq(organization.slug, data.slug))
+      .limit(1);
+
+    return { available: existing.length === 0 };
+  });
 
 // Create organization for newly registered user
 export const createOrganization = createServerFn({ method: "POST" })
-  .middleware([loggingMiddleware("createOrganization")])
   .inputValidator((data: { name: string; slug: string }) => data)
   .handler(async ({ data }) => {
     const session = await getSessionFn();
@@ -53,7 +64,6 @@ export const createOrganization = createServerFn({ method: "POST" })
 
 // Get current organization
 export const getCurrentOrganization = createServerFn({ method: "GET" })
-  .middleware([loggingMiddleware("getCurrentOrganization")])
   .handler(async () => {
     const session = await getSessionFn();
 
@@ -67,7 +77,6 @@ export const getCurrentOrganization = createServerFn({ method: "GET" })
 
 // Update organization
 export const updateOrganization = createServerFn({ method: "POST" })
-  .middleware([loggingMiddleware("updateOrganization")])
   .inputValidator(
     (data: {
       name?: string;

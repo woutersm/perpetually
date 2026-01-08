@@ -13,7 +13,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: process.env.NODE_ENV === "production",
     sendResetPassword: async ({ user, url }) => {
       // Don't await to prevent timing attacks
       void sendEmail({

@@ -248,10 +248,9 @@ function SettingsPage() {
                     <div>
                       <p className="font-medium text-green-800">Connected</p>
                       <p className="text-sm text-green-600">
-                        Account: <code className="bg-green-100 px-1 rounded">{settings.stripeConnectId}</code>
                         {settings.stripeConnectedAt && (
-                          <span className="ml-2">
-                            since {new Date(settings.stripeConnectedAt).toLocaleDateString()}
+                          <span>
+                            Connected {new Date(settings.stripeConnectedAt).toLocaleDateString()}
                           </span>
                         )}
                       </p>

@@ -38,7 +38,7 @@ import { Route as AuthProductsProductIdRouteImport } from './routes/_auth/produc
 import { Route as AuthOnboardingWebhookRouteImport } from './routes/_auth/onboarding/webhook'
 import { Route as AuthOnboardingSetupRouteImport } from './routes/_auth/onboarding/setup'
 import { Route as AuthOnboardingImportRouteImport } from './routes/_auth/onboarding/import'
-import { Route as AuthOnboarding1RouteImport } from './routes/_auth/onboarding/1'
+import { Route as AuthOnboardingApiRouteImport } from './routes/_auth/onboarding/api'
 import { Route as AuthLicensesLicenseIdRouteImport } from './routes/_auth/licenses/$licenseId'
 import { Route as AuthCustomersCustomerIdRouteImport } from './routes/_auth/customers/$customerId'
 
@@ -186,9 +186,9 @@ const AuthOnboardingImportRoute = AuthOnboardingImportRouteImport.update({
   path: '/onboarding/import',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthOnboarding1Route = AuthOnboarding1RouteImport.update({
-  id: '/onboarding/1',
-  path: '/onboarding/1',
+const AuthOnboardingApiRoute = AuthOnboardingApiRouteImport.update({
+  id: '/onboarding/api',
+  path: '/onboarding/api',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthLicensesLicenseIdRoute = AuthLicensesLicenseIdRouteImport.update({
@@ -213,7 +213,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/customers/$customerId': typeof AuthCustomersCustomerIdRoute
   '/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
-  '/onboarding/1': typeof AuthOnboarding1Route
+  '/onboarding/api': typeof AuthOnboardingApiRoute
   '/onboarding/import': typeof AuthOnboardingImportRoute
   '/onboarding/setup': typeof AuthOnboardingSetupRoute
   '/onboarding/webhook': typeof AuthOnboardingWebhookRoute
@@ -246,7 +246,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/customers/$customerId': typeof AuthCustomersCustomerIdRoute
   '/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
-  '/onboarding/1': typeof AuthOnboarding1Route
+  '/onboarding/api': typeof AuthOnboardingApiRoute
   '/onboarding/import': typeof AuthOnboardingImportRoute
   '/onboarding/setup': typeof AuthOnboardingSetupRoute
   '/onboarding/webhook': typeof AuthOnboardingWebhookRoute
@@ -281,7 +281,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_auth/customers/$customerId': typeof AuthCustomersCustomerIdRoute
   '/_auth/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
-  '/_auth/onboarding/1': typeof AuthOnboarding1Route
+  '/_auth/onboarding/api': typeof AuthOnboardingApiRoute
   '/_auth/onboarding/import': typeof AuthOnboardingImportRoute
   '/_auth/onboarding/setup': typeof AuthOnboardingSetupRoute
   '/_auth/onboarding/webhook': typeof AuthOnboardingWebhookRoute
@@ -316,7 +316,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/customers/$customerId'
     | '/licenses/$licenseId'
-    | '/onboarding/1'
+    | '/onboarding/api'
     | '/onboarding/import'
     | '/onboarding/setup'
     | '/onboarding/webhook'
@@ -349,7 +349,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/customers/$customerId'
     | '/licenses/$licenseId'
-    | '/onboarding/1'
+    | '/onboarding/api'
     | '/onboarding/import'
     | '/onboarding/setup'
     | '/onboarding/webhook'
@@ -383,7 +383,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_auth/customers/$customerId'
     | '/_auth/licenses/$licenseId'
-    | '/_auth/onboarding/1'
+    | '/_auth/onboarding/api'
     | '/_auth/onboarding/import'
     | '/_auth/onboarding/setup'
     | '/_auth/onboarding/webhook'
@@ -629,11 +629,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOnboardingImportRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_auth/onboarding/1': {
-      id: '/_auth/onboarding/1'
-      path: '/onboarding/1'
-      fullPath: '/onboarding/1'
-      preLoaderRoute: typeof AuthOnboarding1RouteImport
+    '/_auth/onboarding/api': {
+      id: '/_auth/onboarding/api'
+      path: '/onboarding/api'
+      fullPath: '/onboarding/api'
+      preLoaderRoute: typeof AuthOnboardingApiRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/_auth/licenses/$licenseId': {
@@ -657,7 +657,7 @@ interface AuthRouteRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthCustomersCustomerIdRoute: typeof AuthCustomersCustomerIdRoute
   AuthLicensesLicenseIdRoute: typeof AuthLicensesLicenseIdRoute
-  AuthOnboarding1Route: typeof AuthOnboarding1Route
+  AuthOnboardingApiRoute: typeof AuthOnboardingApiRoute
   AuthOnboardingImportRoute: typeof AuthOnboardingImportRoute
   AuthOnboardingSetupRoute: typeof AuthOnboardingSetupRoute
   AuthOnboardingWebhookRoute: typeof AuthOnboardingWebhookRoute
@@ -677,7 +677,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
   AuthCustomersCustomerIdRoute: AuthCustomersCustomerIdRoute,
   AuthLicensesLicenseIdRoute: AuthLicensesLicenseIdRoute,
-  AuthOnboarding1Route: AuthOnboarding1Route,
+  AuthOnboardingApiRoute: AuthOnboardingApiRoute,
   AuthOnboardingImportRoute: AuthOnboardingImportRoute,
   AuthOnboardingSetupRoute: AuthOnboardingSetupRoute,
   AuthOnboardingWebhookRoute: AuthOnboardingWebhookRoute,
@@ -719,10 +719,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
