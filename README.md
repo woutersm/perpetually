@@ -1,290 +1,140 @@
-Welcome to your new TanStack app! 
+# Perpetually
 
-# Getting Started
+License key management for developers who sell desktop apps, CLIs and plugins through Stripe. A Stripe payment creates a license key, your app calls a REST API to validate and activate it, and the dashboard shows every license, device and status change.
 
-To run this application:
+**Live demo:** _add URL_ · Click "Try the live demo" to get a private sandbox with sample data. No sign-up needed, and the sandbox is deleted after 24 hours.
+
+![Dashboard](.github/screenshots/dashboard.png)
+
+## What it does
+
+- **Issues licenses from Stripe payments.** Each organization connects its own Stripe account. A per-organization webhook syncs products and turns `payment_intent.succeeded` and `invoice.payment_succeeded` events into license keys. Product policies set the duration and activation limit, and Stripe metadata can override them.
+- **Has a license API.** `POST /api/v1/validate`, `/activate` and `/deactivate`, authenticated with a secret key. Activation limits, expiry and disabled licenses come back as typed errors with matching HTTP status codes.
+- **Flags refunds.** A refunded charge adds an event to the license's audit trail and emails the organization owner, who decides whether to disable it.
+- **Keeps an audit trail.** Every license event (created, extended, status changed, key regenerated, device added or removed) goes to the database with the actor that caused it: a user, an API key, the system or the customer.
+- **Includes a customer portal.** Customers can see their keys, regenerate a leaked key and free up device slots without contacting support.
+- **Supports teams.** Organizations have owners, admins and members, plus invitations, billing tiers with usage limits, portal branding and a Stripe test/live mode toggle.
+
+## The demo
+
+The public demo runs with `DEMO_MODE=true`. Each visitor gets their own organization, so nobody sees anyone else's changes. In a sandbox you can:
+
+- **Simulate a purchase.** It runs the same `issueLicense()` code path as the Stripe webhook and shows the new key.
+
+  ![Simulated purchase](.github/screenshots/simulate-purchase.png)
+
+- **Call the real API from the browser.** The API playground uses the sandbox's secret key. Activate a license until you hit its limit, then deactivate a device.
+
+  ![API playground](.github/screenshots/api-playground.png)
+
+- Disable, re-enable and extend licenses, browse customers and products, and open the customer portal.
+
+Sandboxes never call Stripe or send email. Public sign-up is turned off in demo mode.
+
+## Stack
+
+| | |
+|---|---|
+| Framework | [TanStack Start](https://tanstack.com/start) (React 19, file-based routing, server functions) |
+| Runtime | Bun |
+| Database | SQLite through Drizzle ORM and libSQL (a local file, or Turso) |
+| Auth | Better Auth (email and password) |
+| Payments | Stripe |
+| UI | Tailwind CSS v4, shadcn/ui |
+| Email | Resend (optional) |
+| Background jobs | Trigger.dev (license expiry reminders) |
+
+## How it fits together
+
+```
+Stripe ──webhook──▶ /api/hooks/$organizationId ──▶ issueLicense() ──▶ license + audit event
+                                                        ▲
+Demo "Simulate purchase" ───────────────────────────────┘
+
+Your app ──Bearer sk_live_…──▶ /api/v1/{validate,activate,deactivate} ──▶ license service
+Dashboard ──server functions──▶ src/functions/* (org-scoped by auth middleware)
+```
+
+Some design decisions:
+
+- **The business logic doesn't know about HTTP.** `src/lib/services/license.ts` returns discriminated unions such as `{ success: false, error: "ACTIVATION_LIMIT_REACHED" }`. The API routes map those to status codes, and server functions and tests call the service directly.
+- **Data is scoped to an organization.** Every table carries `organizationId`, and the auth middleware puts the current organization into each server function's context.
+- **Each operation logs one wide event.** A webhook or server function emits a single structured log line with its context, duration and outcome, rather than many small log lines. A trace ID ties together everything one request logs.
+- **Sandboxes clean themselves up.** A sandbox is an ordinary organization with `sandbox_expires_at` set. Deleting an expired one removes all of its data through foreign keys with `ON DELETE CASCADE`. The cleanup runs every hour and whenever someone starts a new sandbox.
+
+## License API
+
+```bash
+curl -X POST https://your-host/api/v1/validate \
+  -H "Authorization: Bearer sk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{"licenseId": "…", "key": "7X1S-TT0F-3QAX-Z4F0"}'
+```
+
+| Endpoint | Body | Returns |
+|---|---|---|
+| `POST /api/v1/validate` | `licenseId`, `key` | `valid`, expiry, activation count and limit |
+| `POST /api/v1/activate` | `licenseId`, `name?` | the new activation, or `400` once the limit is reached |
+| `POST /api/v1/deactivate` | `activationId` | `deactivated: true` |
+
+## Running locally
 
 ```bash
 bun install
-bun --bun run start
+cp .env.example .env
+bun run db:migrate
+bun run db:seed        # test@perpetually.dev / testpassword123
+bun --bun run dev      # http://localhost:3001
 ```
 
-# Building For Production
-
-To build this application for production:
+Add `DEMO_MODE=true` to `.env` to try the sandbox flow locally.
 
 ```bash
-bun --bun run build
+bun run test           # 81 tests against a local SQLite file
+bun run typecheck
 ```
 
-## Testing
+## Running with Docker
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+The image runs migrations on start and keeps the database in a `/data` volume.
 
 ```bash
-bun --bun run test
+docker build -t perpetually .
+docker run -p 3000:3000 -v perpetually-data:/data \
+  -e DEMO_MODE=true \
+  -e BETTER_AUTH_SECRET="$(openssl rand -base64 32)" \
+  -e BETTER_AUTH_URL=https://your-host \
+  -e APP_URL=https://your-host \
+  perpetually
 ```
 
-## Styling
+With `DEMO_MODE` unset, the entrypoint also seeds the test account.
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+| Variable | Default | |
+|---|---|---|
+| `DATABASE_URL` | `/data/sqlite.db` | file path or `libsql://` URL |
+| `BETTER_AUTH_SECRET` | | required, at least 32 characters |
+| `BETTER_AUTH_URL`, `APP_URL` | | public URL of the app |
+| `DEMO_MODE` | `false` | per-visitor sandboxes; disables sign-up |
+| `SANDBOX_TTL_HOURS` | `24` | sandbox lifetime |
+| `SANDBOX_MAX_ACTIVE` | `500` | cap on live sandboxes |
+| `RESEND_API_KEY` | | enables email |
+| `STRIPE_SECRET_KEY`, `STRIPE_PRICE_*`, `STRIPE_BILLING_WEBHOOK_SECRET` | | Perpetually's own subscription billing |
 
+See `.env.example` for the full list.
 
+## Project layout
 
-
-## Routing
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add another a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
 ```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
+src/
+├── routes/            pages, API routes (api/v1, api/hooks) and the portal
+├── functions/         server functions by domain
+├── lib/
+│   ├── services/      license business logic
+│   ├── demo/          sandboxes and sample data
+│   ├── db/            Drizzle schema and connection
+│   └── audit.ts, logger.ts, wide-event.ts, trace-context.ts
+├── middleware/        auth and wide-event middleware
+└── trigger/           scheduled expiry notifications
+drizzle/               SQL migrations
 ```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import { Link } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
-```
-
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/people",
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
-});
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
-
-```bash
-bun install @tanstack/react-query @tanstack/react-query-devtools
-```
-
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
-
-```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// ...
-
-const queryClient = new QueryClient();
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from "@tanstack/react-query";
-
-import "./App.css";
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ["people"],
-    queryFn: () =>
-      fetch("https://swapi.dev/api/people")
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
-```bash
-bun install @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store, Derived } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
