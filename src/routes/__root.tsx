@@ -3,7 +3,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { Home, ArrowLeft } from "lucide-react";
 
-import { ThemeProvider } from "@/lib/theme-context";
+import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -105,16 +105,17 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark bg-background text-foreground">
+    <html lang="en" className="bg-background text-foreground">
       <head>
         <HeadContent />
       </head>
       <body className="bg-background text-foreground min-h-screen antialiased">
-        <ThemeProvider>
-          {children}
+        {children}
+        <Toaster position="bottom-right" />
+        {import.meta.env.DEV && (
           <TanStackDevtools
             config={{
-              position: "bottom-right",
+              position: "bottom-left",
             }}
             plugins={[
               {
@@ -123,8 +124,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               },
             ]}
           />
-          <Scripts />
-        </ThemeProvider>
+        )}
+        <Scripts />
       </body>
     </html>
   );

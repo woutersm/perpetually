@@ -1,14 +1,7 @@
 import { Fragment } from "react";
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { Link } from "@tanstack/react-router";
+import { CONTENT_WIDTH } from "@/components/top-nav";
+import { cn } from "@/lib/utils";
 
 interface BreadcrumbItem {
   label: string;
@@ -30,62 +23,37 @@ export function PageLayout({
   breadcrumbs,
   actions,
 }: PageLayoutProps) {
+  // Only show a trail when there is somewhere to go back to
+  const trail = breadcrumbs && breadcrumbs.length > 1 ? breadcrumbs.slice(0, -1) : [];
+
   return (
-    <SidebarInset>
-      {/* Header */}
-      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 bg-background/80 backdrop-blur-xl border-b border-border/40">
-        <div className="flex flex-1 items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <Breadcrumb>
-              <BreadcrumbList>
-                {breadcrumbs.map((item, index) => (
-                  <Fragment key={index}>
-                    {index > 0 && <BreadcrumbSeparator />}
-                    <BreadcrumbItem>
-                      {item.href ? (
-                        <BreadcrumbLink href={item.href}>
-                          {item.label}
-                        </BreadcrumbLink>
-                      ) : (
-                        <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                      )}
-                    </BreadcrumbItem>
-                  </Fragment>
-                ))}
-              </BreadcrumbList>
-            </Breadcrumb>
+    <div className={cn(CONTENT_WIDTH, "pb-24 pt-12")}>
+      <header className="mb-10 flex items-end justify-between gap-6">
+        <div className="min-w-0 space-y-2">
+          {trail.length > 0 && (
+            <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              {trail.map((item, index) => (
+                <Fragment key={index}>
+                  {index > 0 && <span>/</span>}
+                  {item.href ? (
+                    <Link to={item.href} className="hover:text-foreground">
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <span>{item.label}</span>
+                  )}
+                </Fragment>
+              ))}
+            </nav>
           )}
+          <h1 className="truncate text-[28px] leading-tight">{title}</h1>
+          {description && <p className="max-w-2xl text-sm text-muted-foreground">{description}</p>}
         </div>
+        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </header>
 
-      {/* Page Content */}
-      <div className="flex flex-1 flex-col">
-        {/* Page Header */}
-        <div className="border-b border-border/40 bg-gradient-to-b from-muted/30 to-transparent relative overflow-hidden">
-          {/* Subtle gradient orb */}
-          <div className="absolute top-0 right-0 w-[400px] h-[200px] bg-vibrant/5 rounded-full blur-[80px] opacity-50" />
-
-          <div className="relative px-6 py-8">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-                {description && (
-                  <p className="text-muted-foreground max-w-2xl">
-                    {description}
-                  </p>
-                )}
-              </div>
-              {actions && <div className="flex items-center gap-2">{actions}</div>}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <main className="flex-1 px-6 py-6">{children}</main>
-      </div>
-    </SidebarInset>
+      <main>{children}</main>
+    </div>
   );
 }
 
@@ -99,11 +67,9 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/60 bg-muted/20 px-6 py-20 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-        {icon}
-      </div>
-      <h3 className="mt-6 text-lg font-semibold">{title}</h3>
+    <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border px-6 py-20 text-center">
+      <div className="text-muted-foreground">{icon}</div>
+      <h3 className="mt-4 text-base">{title}</h3>
       <p className="mt-2 text-sm text-muted-foreground max-w-sm">{description}</p>
       {action && <div className="mt-6">{action}</div>}
     </div>

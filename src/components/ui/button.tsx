@@ -10,13 +10,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        // Vibrant coral - use for primary CTAs that need attention
+        // Primary CTA. Ink, like default; the name predates the paper theme
         vibrant:
-          "bg-vibrant text-vibrant-foreground hover:bg-vibrant/90 shadow-sm hover:shadow-md transition-shadow focus-visible:ring-vibrant/30",
+          "bg-primary text-primary-foreground hover:bg-primary/85",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border border-input bg-card hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
@@ -24,7 +24,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         // Vibrant ghost - coral text that highlights on hover
         "vibrant-ghost":
-          "text-vibrant hover:bg-vibrant/10 hover:text-vibrant",
+          "text-vibrant hover:bg-accent hover:text-vibrant",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

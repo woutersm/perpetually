@@ -28,13 +28,13 @@ const badgeVariants = cva(
           "border-transparent bg-warning text-warning-foreground [a&]:hover:bg-warning/90",
         // Soft variants - subtle backgrounds with colored text
         "outline-vibrant":
-          "border-vibrant/30 bg-vibrant/10 text-vibrant",
+          "bg-transparent border-transparent px-0 gap-1.5 before:size-1.5 before:rounded-full before:bg-vibrant text-foreground",
         "outline-success":
-          "border-success/30 bg-success/10 text-success",
+          "bg-transparent border-transparent px-0 gap-1.5 before:size-1.5 before:rounded-full before:bg-success text-foreground",
         "outline-warning":
-          "border-warning/30 bg-warning/10 text-warning",
+          "bg-transparent border-transparent px-0 gap-1.5 before:size-1.5 before:rounded-full before:bg-warning text-foreground",
         "outline-destructive":
-          "border-destructive/30 bg-destructive/10 text-destructive",
+          "bg-transparent border-transparent px-0 gap-1.5 before:size-1.5 before:rounded-full before:bg-destructive text-foreground",
       },
     },
     defaultVariants: {

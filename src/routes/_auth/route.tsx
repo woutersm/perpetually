@@ -1,9 +1,8 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { createFileRoute, Outlet, redirect, useLocation } from "@tanstack/react-router";
+import { TopNav, SettingsTabs, CONTENT_WIDTH } from "@/components/top-nav";
+import { cn } from "@/lib/utils";
 import { getSessionFn, getTestModeFn } from "@/functions/sessions";
 import { TestModeProvider } from "@/lib/test-mode-context";
-import { FlaskConical } from "lucide-react";
 import { SandboxBanner } from "@/components/demo/sandbox-banner";
 
 export const Route = createFileRoute("/_auth")({
@@ -43,31 +42,30 @@ export const Route = createFileRoute("/_auth")({
 });
 
 function AuthLayout() {
-  const { isTestMode, organization } = Route.useRouteContext();
+  const { isTestMode, organization, user } = Route.useRouteContext();
+  const { pathname } = useLocation();
 
   return (
     <TestModeProvider initialValue={isTestMode}>
-      <SidebarProvider>
-        <AppSidebar isSandbox={!!organization?.sandboxExpiresAt} />
-        <div className="flex-1 flex flex-col min-w-0">
-          {organization?.sandboxExpiresAt && (
-            <SandboxBanner expiresAt={organization.sandboxExpiresAt} />
-          )}
-          {/* Test Mode Banner */}
-          {isTestMode && (
-            <div className="bg-warning/10 border-b border-warning/30 px-4 py-2">
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <FlaskConical className="h-4 w-4 text-warning" />
-                <span className="text-warning font-medium">Test Mode</span>
-                <span className="text-warning/80">
-                  — Viewing test data from Stripe test mode
-                </span>
-              </div>
-            </div>
-          )}
-          <Outlet />
-        </div>
-      </SidebarProvider>
+      <div className="min-h-screen">
+        <TopNav
+          email={user.email}
+          organizationName={organization?.name}
+          isSandbox={!!organization?.sandboxExpiresAt}
+        />
+        {organization?.sandboxExpiresAt && (
+          <SandboxBanner expiresAt={organization.sandboxExpiresAt} />
+        )}
+        {isTestMode && (
+          <div className="border-b border-border bg-warning/5">
+            <p className={cn(CONTENT_WIDTH, "py-2 text-xs text-warning")}>
+              Showing test data from Stripe test mode
+            </p>
+          </div>
+        )}
+        {pathname.startsWith("/settings") && <SettingsTabs />}
+        <Outlet />
+      </div>
     </TestModeProvider>
   );
 }
