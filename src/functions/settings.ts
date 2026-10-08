@@ -6,16 +6,7 @@ import { secretKey, organization, membership, user, invitation } from "@/lib/db/
 import { eq, and, desc, gt } from "drizzle-orm";
 import { sendEmail } from "@/lib/email";
 import { checkMemberLimit, checkFeatureAccess } from "@/lib/limits";
-
-// Generate a secure API key
-function generateSecretKey(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "sk_live_";
-  for (let i = 0; i < 32; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return result;
-}
+import { generateSecretKey } from "@/lib/keys";
 
 // Get organization settings
 export const getOrganizationSettings = createServerFn({ method: "GET" })

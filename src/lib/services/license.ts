@@ -13,7 +13,8 @@
 
 import { eq, and } from "drizzle-orm";
 import db from "@/lib/db/db";
-import { license, activation } from "@/lib/db/schema";
+import { license, activation, licenseEvent, licensePolicy } from "@/lib/db/schema";
+import { generateLicenseKey } from "@/lib/keys";
 
 // ============================================
 // Types
@@ -269,4 +270,80 @@ export async function getActivationCount(licenseId: string): Promise<number> {
     .where(eq(activation.licenseId, licenseId));
 
   return activations.length;
+}
+
+// ============================================
+// Issuing
+// ============================================
+
+export interface IssueLicenseInput {
+  organizationId: string;
+  productId: string;
+  customerId: string;
+  stripePaymentIntentId: string;
+  isTest: boolean;
+  /** Overrides from Stripe metadata; fall back to the product's first policy */
+  activationLimit?: number;
+  licenseDurationDays?: number;
+  /** Extra fields recorded on the license.created audit event */
+  eventData?: Record<string, unknown>;
+}
+
+/**
+ * Create a license for a completed payment and record the audit event.
+ * Shared by the Stripe webhook and the demo purchase simulator.
+ */
+export async function issueLicense(input: IssueLicenseInput) {
+  const [defaultPolicy] = await db
+    .select()
+    .from(licensePolicy)
+    .where(eq(licensePolicy.productId, input.productId))
+    .limit(1);
+
+  const activationLimit =
+    input.activationLimit ?? defaultPolicy?.activationLimit ?? null;
+  // A policy with licenseLengthDays = null is perpetual; with no policy, default to a year
+  const licenseDurationDays =
+    input.licenseDurationDays ??
+    (defaultPolicy ? defaultPolicy.licenseLengthDays : 365);
+
+  const now = new Date();
+  const expiresAt =
+    licenseDurationDays === null || licenseDurationDays === 0
+      ? null
+      : new Date(now.getTime() + licenseDurationDays * 24 * 60 * 60 * 1000);
+
+  const [newLicense] = await db
+    .insert(license)
+    .values({
+      key: generateLicenseKey(),
+      keyCreatedAt: now,
+      status: "active",
+      expiresAt,
+      activationLimit,
+      stripePaymentIntentId: input.stripePaymentIntentId,
+      isTest: input.isTest,
+      productId: input.productId,
+      customerId: input.customerId,
+      organizationId: input.organizationId,
+      licensePolicyId: defaultPolicy?.id,
+    })
+    .returning();
+
+  await db.insert(licenseEvent).values({
+    type: "license.created",
+    actorType: "system",
+    actorId: null,
+    data: {
+      stripePaymentIntentId: input.stripePaymentIntentId,
+      ...input.eventData,
+      isTest: input.isTest,
+      expiresAt: expiresAt?.toISOString() ?? null,
+      activationLimit,
+    },
+    licenseId: newLicense.id,
+    organizationId: input.organizationId,
+  });
+
+  return { license: newLicense, activationLimit, licenseDurationDays, expiresAt };
 }

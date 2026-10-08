@@ -8,7 +8,6 @@ import {
   customer,
   license,
   licenseEvent,
-  licensePolicy,
   membership,
   user,
 } from "@/lib/db/schema";
@@ -20,24 +19,7 @@ import {
 import { checkLicenseLimit, checkProductLimit } from "@/lib/limits";
 import { createWideEvent, type WideEvent } from "@/lib/wide-event";
 import { runWithTrace, generateTraceId } from "@/lib/trace-context";
-
-// Generate license key (e.g., XXXX-XXXX-XXXX-XXXX)
-function generateLicenseKey(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const segments = 4;
-  const segmentLength = 4;
-
-  const parts: string[] = [];
-  for (let i = 0; i < segments; i++) {
-    let segment = "";
-    for (let j = 0; j < segmentLength; j++) {
-      segment += chars[Math.floor(Math.random() * chars.length)];
-    }
-    parts.push(segment);
-  }
-
-  return parts.join("-");
-}
+import { issueLicense } from "@/lib/services/license";
 
 // ==================== Product Sync ====================
 
@@ -378,48 +360,21 @@ async function createLicenseFromPayment(
     ? parseInt(metadata.perpetually_license_duration_days, 10)
     : undefined;
 
-  // Get default policy
-  let defaultActivationLimit: number | null = null;
-  let defaultLicenseDays: number | null = null;
-
-  const [defaultPolicy] = await db
-    .select()
-    .from(licensePolicy)
-    .where(eq(licensePolicy.productId, localProduct.id))
-    .limit(1);
-
-  if (defaultPolicy) {
-    defaultActivationLimit = defaultPolicy.activationLimit;
-    defaultLicenseDays = defaultPolicy.licenseLengthDays;
-  }
-
-  const activationLimit = activationLimitOverride ?? defaultActivationLimit ?? null;
-  const licenseDurationDays = licenseDurationDaysOverride ?? defaultLicenseDays ?? 365;
-
-  // Create license
-  const key = generateLicenseKey();
-  const now = new Date();
-  const expiresAt =
-    licenseDurationDays === null || licenseDurationDays === 0
-      ? null
-      : new Date(now.getTime() + licenseDurationDays * 24 * 60 * 60 * 1000);
-
-  const [newLicense] = await db
-    .insert(license)
-    .values({
-      key,
-      keyCreatedAt: now,
-      status: "active",
-      expiresAt,
-      activationLimit,
-      stripePaymentIntentId,
-      isTest,
-      productId: localProduct.id,
-      customerId: localCustomer.id,
-      organizationId,
-      licensePolicyId: defaultPolicy?.id,
-    })
-    .returning();
+  const {
+    license: newLicense,
+    activationLimit,
+    licenseDurationDays,
+    expiresAt,
+  } = await issueLicense({
+    organizationId,
+    productId: localProduct.id,
+    customerId: localCustomer.id,
+    stripePaymentIntentId,
+    isTest,
+    activationLimit: activationLimitOverride,
+    licenseDurationDays: licenseDurationDaysOverride,
+    eventData: { stripeProductId, stripeCustomerId },
+  });
 
   event.set("license", {
     created: true,
@@ -429,23 +384,6 @@ async function createLicenseFromPayment(
     activation_limit: activationLimit,
     is_test: isTest,
     limit_warning: !limitCheck.allowed,
-  });
-
-  // Audit trail
-  await db.insert(licenseEvent).values({
-    type: "license.created",
-    actorType: "system",
-    actorId: null,
-    data: {
-      stripePaymentIntentId,
-      stripeProductId,
-      stripeCustomerId,
-      isTest,
-      expiresAt: expiresAt?.toISOString() ?? null,
-      activationLimit,
-    },
-    licenseId: newLicense.id,
-    organizationId,
   });
 
   // Send email

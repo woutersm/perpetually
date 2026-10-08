@@ -3,6 +3,7 @@ import db from "@/lib/db/db";
 import { organization, membership } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getSessionFn } from "./sessions";
+import { generatePublishableKey } from "@/lib/keys";
 
 // Check if organization slug is available (public - no auth required)
 export const checkSlugAvailable = createServerFn({ method: "POST" })
@@ -39,7 +40,7 @@ export const createOrganization = createServerFn({ method: "POST" })
     }
 
     // Generate API key
-    const apiKey = `pk_${crypto.randomUUID().replace(/-/g, "")}`;
+    const apiKey = generatePublishableKey();
 
     // Create organization
     const [org] = await db

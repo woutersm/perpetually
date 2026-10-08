@@ -1,3 +1,4 @@
+import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import db from "@/lib/db/db";
 import {
@@ -9,24 +10,7 @@ import {
   licenseEvent,
 } from "@/lib/db/schema";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
-
-// Generate license key (e.g., XXXX-XXXX-XXXX-XXXX)
-function generateLicenseKey(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const segments = 4;
-  const segmentLength = 4;
-
-  const parts: string[] = [];
-  for (let i = 0; i < segments; i++) {
-    let segment = "";
-    for (let j = 0; j < segmentLength; j++) {
-      segment += chars[Math.floor(Math.random() * chars.length)];
-    }
-    parts.push(segment);
-  }
-
-  return parts.join("-");
-}
+import { generateLicenseKey } from "@/lib/keys";
 
 // Get customer with their licenses for the portal (public, no auth required)
 export const getPortalCustomer = createServerFn({ method: "GET" })
@@ -43,7 +27,7 @@ export const getPortalCustomer = createServerFn({ method: "GET" })
       .limit(1);
 
     if (!org) {
-      throw new Error("Organization not found");
+      throw notFound();
     }
 
     // Get customer with licenses for this organization
@@ -61,7 +45,7 @@ export const getPortalCustomer = createServerFn({ method: "GET" })
       .limit(1);
 
     if (!customerData) {
-      throw new Error("Customer not found");
+      throw notFound();
     }
 
     // Get licenses for this customer in this organization
