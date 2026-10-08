@@ -13,6 +13,8 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    // Public demo: visitors get sandboxes (see lib/demo/sandbox.ts), not accounts
+    disableSignUp: process.env.DEMO_MODE === "true",
     requireEmailVerification: process.env.NODE_ENV === "production",
     sendResetPassword: async ({ user, url }) => {
       // Don't await to prevent timing attacks

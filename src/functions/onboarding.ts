@@ -4,11 +4,13 @@ import db from "@/lib/db/db";
 import { organization, product } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
+import { assertNotSandbox } from "@/lib/demo/sandbox";
 
 // Import products from Stripe
 export const importProductsFromStripe = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .handler(async ({ context: { organizationId } }) => {
+  .handler(async ({ context: { organizationId, organization: currentOrg } }) => {
+    assertNotSandbox(currentOrg, "Stripe import");
     // Get organization
     const [org] = await db
       .select()
@@ -125,7 +127,8 @@ export const getOnboardingStatus = createServerFn({ method: "GET" })
 export const connectWithApiKey = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .inputValidator((data: { apiKey: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context: { organizationId, organization: currentOrg } }) => {
+    assertNotSandbox(currentOrg, "Stripe connection");
     const { apiKey } = data;
 
     if (!apiKey || (!apiKey.startsWith("rk_") && !apiKey.startsWith("sk_"))) {
@@ -182,7 +185,8 @@ export const connectWithApiKey = createServerFn({ method: "POST" })
 // Test API key connection
 export const testApiKeyConnection = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .handler(async ({ context: { organizationId } }) => {
+  .handler(async ({ context: { organizationId, organization: currentOrg } }) => {
+    assertNotSandbox(currentOrg, "Stripe connection");
     const [org] = await db
       .select()
       .from(organization)
@@ -224,7 +228,8 @@ export const testApiKeyConnection = createServerFn({ method: "POST" })
 export const saveWebhookSecret = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .inputValidator((data: { webhookSecret: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context: { organizationId, organization: currentOrg } }) => {
+    assertNotSandbox(currentOrg, "Stripe webhooks");
     const { webhookSecret } = data;
 
     if (!webhookSecret || !webhookSecret.startsWith("whsec_")) {
@@ -243,7 +248,8 @@ export const saveWebhookSecret = createServerFn({ method: "POST" })
 export const createWebhookEndpoint = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .inputValidator((data: { webhookUrl: string }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context: { organizationId, organization: currentOrg } }) => {
+    assertNotSandbox(currentOrg, "Stripe webhooks");
     const { webhookUrl } = data;
 
     // Get organization with Stripe credentials
@@ -348,7 +354,8 @@ export const getWebhookTestStatus = createServerFn({ method: "GET" })
 // Disconnect Stripe
 export const disconnectStripe = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .handler(async ({ context: { organizationId } }) => {
+  .handler(async ({ context: { organizationId, organization: currentOrg } }) => {
+    assertNotSandbox(currentOrg, "Stripe connection");
     const [org] = await db
       .select()
       .from(organization)

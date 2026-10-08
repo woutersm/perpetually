@@ -87,6 +87,9 @@ export const organization = sqliteTable("organization", {
   // Onboarding state
   isOnboarded: integer("is_onboarded", { mode: "boolean" }).default(false).notNull(),
 
+  // Demo sandbox: set for throwaway orgs created by "Try the demo"; null for real orgs
+  sandboxExpiresAt: integer("sandbox_expires_at", { mode: "timestamp_ms" }),
+
   // Stripe Connect OAuth (for org's own Stripe account to sell licenses)
   stripeConnectId: text("stripe_connect_id"), // acct_xxx
   stripeAccessToken: text("stripe_access_token"),

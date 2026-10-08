@@ -5,6 +5,7 @@ import { organization } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getUsageSummary, TIER_LIMITS, TIER_PRICES, type SubscriptionTier } from "@/lib/limits";
 import Stripe from "stripe";
+import { assertNotSandbox } from "@/lib/demo/sandbox";
 
 // Initialize Stripe for Perpetually's billing (not customer's Stripe)
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -55,7 +56,8 @@ export const getBillingInfo = createServerFn({ method: "GET" })
 export const createCheckoutSession = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .inputValidator((data: { tier: "pro" | "business" }) => data)
-  .handler(async ({ data, context: { organizationId } }) => {
+  .handler(async ({ data, context: { organizationId, organization: currentOrg } }) => {
+    assertNotSandbox(currentOrg, "Billing");
     if (!stripe) {
       throw new Error("Stripe is not configured. Please set STRIPE_SECRET_KEY.");
     }
@@ -128,7 +130,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 // Create Stripe Customer Portal session
 export const createPortalSession = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .handler(async ({ context: { organizationId } }) => {
+  .handler(async ({ context: { organizationId, organization: currentOrg } }) => {
+    assertNotSandbox(currentOrg, "Billing");
     if (!stripe) {
       throw new Error("Stripe is not configured. Please set STRIPE_SECRET_KEY.");
     }

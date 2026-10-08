@@ -1,0 +1,1 @@
+ALTER TABLE `organization` ADD `sandbox_expires_at` integer;

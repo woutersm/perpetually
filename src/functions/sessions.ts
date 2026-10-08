@@ -29,6 +29,7 @@ export const getSessionFn = createServerFn({ method: "GET" })
           isOnboarded: organization.isOnboarded,
           stripeConnectId: organization.stripeConnectId,
           stripeWebhookSecret: organization.stripeWebhookSecret,
+          sandboxExpiresAt: organization.sandboxExpiresAt,
         },
       })
       .from(membership)
