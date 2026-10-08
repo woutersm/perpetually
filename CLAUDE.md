@@ -32,7 +32,7 @@ bun --bun run test          # Run all tests with Vitest
 
 ### Stack
 - **Framework**: TanStack Start (full-stack React framework with TanStack Router)
-- **Database**: SQLite with Drizzle ORM v2 (using Bun's native SQLite)
+- **Database**: SQLite with Drizzle ORM v2 (libSQL driver: local file or Turso)
 - **Authentication**: Better Auth with email/password
 - **Styling**: Tailwind CSS v4 with shadcn/ui components
 - **Payments**: Stripe integration for license purchases
@@ -309,17 +309,17 @@ return runWithTrace(
 updateTraceContext({ userId, organizationId });
 ```
 
-### Logging Middleware
+### Wide Event Middleware
 
-Server functions use logging middleware for automatic instrumentation:
+Server functions use wide-event middleware for automatic instrumentation:
 
 ```typescript
-import { loggingMiddleware } from "@/middleware/logging";
+import { wideEventMiddleware } from "@/middleware/wide-event";
 
 export const myFunction = createServerFn({ method: "POST" })
-  .middleware([authMiddleware, loggingMiddleware("myFunction")])
-  .handler(async ({ data, context }) => {
-    // Logs: request start, completion with duration, or error
+  .middleware([authMiddleware, wideEventMiddleware("domain.action")])
+  .handler(async ({ data, context: { organizationId, event } }) => {
+    event.set("item.id", data.id); // Emits one event with duration + status
   });
 ```
 
@@ -349,11 +349,6 @@ LOG_LEVEL=info           # debug|info|warn|error
 # Output format (auto-detected based on NODE_ENV)
 LOG_FORMAT=json          # json|pretty
 
-# OpenTelemetry tracing (optional)
-OTEL_ENABLED=true
-OTEL_SERVICE_NAME=perpetually
-OTEL_EXPORTER=otlp       # console|otlp
-OTEL_EXPORTER_OTLP_ENDPOINT=https://traces.example.com/v1/traces
 ```
 
 ### Wide Events (Canonical Log Lines)
@@ -672,7 +667,7 @@ toast.error("Failed to create license");
 ## Environment Variables
 
 ```bash
-# Database (SQLite file path)
+# Database (SQLite file path, or libsql:// URL + DATABASE_AUTH_TOKEN)
 DATABASE_URL=sqlite.db
 
 # Auth
