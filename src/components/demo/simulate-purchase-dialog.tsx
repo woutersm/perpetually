@@ -104,7 +104,7 @@ export function SimulatePurchaseDialog({
                 </li>
               ))}
             </ol>
-            <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-1">
+            <div className="rounded-md border border-border bg-muted/30 p-4 space-y-1">
               <p className="text-xs text-muted-foreground">
                 {result.product.name} · {result.customer.name}
               </p>

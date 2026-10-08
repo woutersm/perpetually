@@ -161,7 +161,7 @@ function OnboardingWebhook() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Webhook className="h-5 w-5" />
-              Set Up Webhook
+              Set up webhook
             </CardTitle>
             <CardDescription>
               Configure webhook to receive payment notifications from Stripe
@@ -184,7 +184,7 @@ function OnboardingWebhook() {
                     <Terminal className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-amber-800">
-                        Local Development Detected
+                        Local development detected
                       </p>
                       <p className="text-sm text-amber-700 mt-1">
                         Stripe can't send webhooks to localhost. For local development,

@@ -1,20 +1,12 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PageLayout, StatCard } from "@/components/page-layout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Package,
-  Key,
-  Users,
-  TrendingUp,
-  ArrowRight,
-  Activity,
-  Clock,
-  AlertTriangle,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { format } from "date-fns";
+import { PageLayout } from "@/components/page-layout";
+import { DataTable, Mono, Section, StatRow } from "@/components/blocks";
+import { Status } from "@/components/status";
 import { getDashboardStats } from "@/functions/dashboard";
+import { formatDate, licenseState } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: DashboardPage,
@@ -24,240 +16,137 @@ export const Route = createFileRoute("/_auth/dashboard")({
   },
 });
 
-function DashboardPage() {
-  const { stats } = Route.useLoaderData();
+type Stats = Awaited<ReturnType<typeof getDashboardStats>>;
+
+/** Single-series bar chart: licenses issued per week, with a hover tooltip per bar */
+function WeeklyChart({ weeks }: { weeks: Stats["weekly"] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const max = Math.max(1, ...weeks.map((w) => w.count));
+  const total = weeks.reduce((sum, w) => sum + w.count, 0);
+  const active = hover === null ? null : weeks[hover];
 
   return (
-    <PageLayout
-      title="Dashboard"
-      description="Overview of your license management activity"
-      breadcrumbs={[{ label: "Dashboard" }]}
-    >
-      <div className="space-y-8">
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Total Products"
-            value={stats.totalProducts}
-            icon={<Package className="h-5 w-5" />}
-            description={`${stats.activeProducts} active`}
-          />
-          <StatCard
-            title="Active Licenses"
-            value={stats.activeLicenses}
-            icon={<Key className="h-5 w-5" />}
-            variant="vibrant"
-            trend={stats.licenseTrend ? { value: stats.licenseTrend, label: "vs last month" } : undefined}
-          />
-          <StatCard
-            title="Customers"
-            value={stats.totalCustomers}
-            icon={<Users className="h-5 w-5" />}
-            description="Total registered"
-          />
-          <StatCard
-            title="Activations"
-            value={stats.totalActivations}
-            icon={<Activity className="h-5 w-5" />}
-            description="Device activations"
-          />
-        </div>
+    <div>
+      <div className="mb-6 flex items-baseline justify-between text-sm">
+        <span className="text-muted-foreground">
+          {active
+            ? `Week of ${format(new Date(active.weekStart), "d MMM")}`
+            : "Last 26 weeks"}
+        </span>
+        <span className="tabular-nums">
+          {active ? `${active.count} issued` : `${total} issued`}
+        </span>
+      </div>
 
-        {/* Main Content Grid */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Recent Activity */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Recent Licenses</h2>
-              <Button variant="ghost" size="sm" className="text-vibrant hover:text-vibrant/80" asChild>
-                <Link to="/licenses">
-                  View all <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
+      <div
+        className="relative h-40 border-b border-border"
+        role="img"
+        aria-label={`Licenses issued per week over the last 26 weeks, ${total} in total, peak ${max} in one week`}
+      >
+        {/* Gridline at the peak value */}
+        <div className="absolute inset-x-0 top-0 border-t border-dashed border-border" />
+        <span className="absolute -top-5 left-0 text-[11px] tabular-nums text-muted-foreground">{max}</span>
+
+        <div className="absolute inset-0 flex items-end gap-[2px]" onMouseLeave={() => setHover(null)}>
+          {weeks.map((w, i) => (
+            <div
+              key={w.weekStart}
+              className="flex h-full flex-1 items-end"
+              onMouseEnter={() => setHover(i)}
+            >
+              <div
+                className={cn(
+                  "w-full rounded-t-[4px] transition-colors",
+                  hover === i ? "bg-vibrant" : "bg-foreground/80"
+                )}
+                style={{ height: `${(w.count / max) * 100}%`, minHeight: w.count ? 2 : 0 }}
+              />
             </div>
-
-            {stats.recentLicenses.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-border/60 bg-muted/20 p-12 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mx-auto mb-4">
-                  <Key className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">No licenses issued yet</h3>
-                <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                  Create your first license to start managing your software distribution.
-                </p>
-                <Button variant="vibrant" className="shadow-lg shadow-vibrant/25" asChild>
-                  <Link to="/licenses">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create License
-                  </Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-border/60 overflow-hidden">
-                <div className="divide-y divide-border/40">
-                  {stats.recentLicenses.map((license) => (
-                    <Link
-                      key={license.id}
-                      to="/licenses/$licenseId"
-                      params={{ licenseId: license.id }}
-                      className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10 group-hover:bg-vibrant/20 transition-colors">
-                          <Key className="h-5 w-5 text-vibrant" />
-                        </div>
-                        <div>
-                          <p className="font-mono text-sm font-medium">
-                            {license.key}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {license.product?.name} &middot; {license.customer?.name}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {(() => {
-                          const isExpired = license.status === "active" && license.expiresAt && new Date(license.expiresAt) < new Date();
-                          const displayStatus = isExpired ? "expired" : license.status;
-                          return (
-                            <Badge
-                              variant={
-                                displayStatus === "active"
-                                  ? "outline-success"
-                                  : displayStatus === "expired"
-                                    ? "outline-warning"
-                                    : "outline-destructive"
-                              }
-                            >
-                              {displayStatus}
-                            </Badge>
-                          );
-                        })()}
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(license.createdAt).toLocaleDateString()}
-                        </span>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-vibrant group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Quick Actions & Alerts */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Quick Actions</h2>
-              <div className="grid gap-2">
-                <Button variant="outline" className="justify-start h-auto py-4 rounded-xl group" asChild>
-                  <Link to="/products">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted group-hover:bg-vibrant/10 transition-colors mr-3">
-                      <Package className="h-5 w-5 text-muted-foreground group-hover:text-vibrant transition-colors" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium">New Product</p>
-                      <p className="text-xs text-muted-foreground">Add a software product</p>
-                    </div>
-                  </Link>
-                </Button>
-                <Button variant="outline" className="justify-start h-auto py-4 rounded-xl group" asChild>
-                  <Link to="/licenses">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted group-hover:bg-vibrant/10 transition-colors mr-3">
-                      <Key className="h-5 w-5 text-muted-foreground group-hover:text-vibrant transition-colors" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium">Issue License</p>
-                      <p className="text-xs text-muted-foreground">Create a new license key</p>
-                    </div>
-                  </Link>
-                </Button>
-                <Button variant="outline" className="justify-start h-auto py-4 rounded-xl group" asChild>
-                  <Link to="/customers">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted group-hover:bg-vibrant/10 transition-colors mr-3">
-                      <Users className="h-5 w-5 text-muted-foreground group-hover:text-vibrant transition-colors" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium">Add Customer</p>
-                      <p className="text-xs text-muted-foreground">Register a new customer</p>
-                    </div>
-                  </Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Expiring Soon */}
-            {stats.expiringLicenses.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-warning/10">
-                    <AlertTriangle className="h-3.5 w-3.5 text-warning" />
-                  </div>
-                  <h2 className="text-lg font-semibold">Expiring Soon</h2>
-                </div>
-                <div className="rounded-2xl border border-warning/30 bg-warning/5 p-4 space-y-3">
-                  {stats.expiringLicenses.slice(0, 3).map((license) => (
-                    <Link
-                      key={license.id}
-                      to="/licenses/$licenseId"
-                      params={{ licenseId: license.id }}
-                      className="flex items-center justify-between text-sm hover:opacity-80 transition-opacity"
-                    >
-                      <span className="font-mono truncate max-w-[140px]">
-                        {license.key}
-                      </span>
-                      <span className="text-xs text-warning flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {license.expiresAt
-                          ? new Date(license.expiresAt).toLocaleDateString()
-                          : "—"}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Growth Indicator */}
-            {stats.licenseTrend && stats.licenseTrend > 0 && (
-              <div className="rounded-2xl border border-vibrant/20 bg-gradient-to-br from-vibrant/10 to-transparent p-5">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-vibrant shadow-lg shadow-vibrant/25">
-                    <TrendingUp className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-lg font-bold text-gradient-vibrant">
-                      +{stats.licenseTrend}%
-                    </span>
-                    <span className="text-sm font-medium ml-1">growth</span>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  License issuance is up compared to last month. Keep it up!
-                </p>
-              </div>
-            )}
-
-            {/* Pro tip */}
-            <div className="rounded-2xl border border-border/60 bg-card p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-4 w-4 text-vibrant" />
-                <span className="text-sm font-semibold">Pro tip</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Connect your Stripe account to automatically create licenses when customers purchase your products.
-              </p>
-              <Button variant="ghost" size="sm" className="mt-3 -ml-2 text-vibrant hover:text-vibrant/80" asChild>
-                <Link to="/settings">
-                  Set up Stripe
-                  <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                </Link>
-              </Button>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
+
+      <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+        {[0, 9, 18, weeks.length - 1].map((i) => (
+          <span key={i}>{weeks[i] && format(new Date(weeks[i].weekStart), "d MMM")}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DashboardPage() {
+  const { stats } = Route.useLoaderData();
+  const trend = stats.licenseTrend;
+
+  return (
+    <PageLayout title="Dashboard" description="How your licenses are doing.">
+      <StatRow
+        items={[
+          {
+            label: "Active licenses",
+            value: stats.activeLicenses,
+            hint: trend ? `${trend > 0 ? "+" : ""}${trend}% issued vs previous 30 days` : undefined,
+          },
+          { label: "Customers", value: stats.totalCustomers },
+          { label: "Devices", value: stats.totalActivations, hint: "Active activations" },
+          { label: "Products", value: stats.totalProducts, hint: `${stats.activeProducts} on sale` },
+        ]}
+      />
+
+      <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Section title="Licenses issued per week" className="mt-0">
+          <WeeklyChart weeks={stats.weekly} />
+        </Section>
+
+        <Section title="Expiring in 30 days" className="mt-0">
+          {stats.expiringLicenses.length === 0 ? (
+            <p className="border-t border-border py-4 text-sm text-muted-foreground">Nothing expires soon.</p>
+          ) : (
+            <ul className="border-t border-border text-sm">
+              {stats.expiringLicenses.map((l) => (
+                <li key={l.id} className="border-b border-border">
+                  <Link
+                    to="/licenses/$licenseId"
+                    params={{ licenseId: l.id }}
+                    className="flex items-center justify-between gap-4 py-3 hover:text-vibrant"
+                  >
+                    <Mono className="truncate">{l.key}</Mono>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">{formatDate(l.expiresAt)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      </div>
+
+      <Section
+        title="Recent licenses"
+        actions={
+          <Link to="/licenses" className="text-vibrant hover:underline">
+            View all
+          </Link>
+        }
+      >
+        <DataTable
+          rows={stats.recentLicenses}
+          rowKey={(l) => l.id}
+          href={(l) => `/licenses/${l.id}`}
+          empty="No licenses yet. They appear here when a customer pays through Stripe."
+          columns={[
+            { header: "License key", width: "minmax(0,2fr)", cell: (l) => <Mono>{l.key}</Mono> },
+            { header: "Product", width: "minmax(0,1.5fr)", cell: (l) => <span className="truncate">{l.product?.name}</span> },
+            { header: "Customer", width: "minmax(0,1.5fr)", cell: (l) => <span className="truncate">{l.customer?.name}</span> },
+            { header: "Status", width: "7rem", cell: (l) => <Status status={licenseState(l.status, l.expiresAt)} /> },
+            {
+              header: "Issued",
+              width: "7rem",
+              cell: (l) => <span className="tabular-nums text-muted-foreground">{formatDate(l.createdAt)}</span>,
+            },
+          ]}
+        />
+      </Section>
     </PageLayout>
   );
 }

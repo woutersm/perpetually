@@ -99,6 +99,7 @@ export const getLicense = createServerFn({ method: "GET" })
         productId: license.productId,
         customerId: license.customerId,
         isTest: license.isTest,
+        stripePaymentIntentId: license.stripePaymentIntentId,
         // Disabled fields
         disabledAt: license.disabledAt,
         disabledReason: license.disabledReason,

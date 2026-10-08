@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, CheckCircle, AlertCircle } from "lucide-react";
+import { Wordmark } from "@/components/top-nav";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
@@ -72,13 +72,10 @@ function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-vibrant shadow-lg shadow-vibrant/25 transition-transform group-hover:scale-105">
-              <span className="text-sm font-bold text-white">P</span>
-            </div>
-            <span className="text-lg font-semibold tracking-tight">Perpetually</span>
+            <Wordmark />
           </Link>
         </div>
       </header>
@@ -87,47 +84,38 @@ function ResetPasswordPage() {
         <div className="w-full max-w-sm space-y-8">
           {success ? (
             <div className="text-center space-y-6">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 mx-auto">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
               <div className="space-y-2">
-                <h1 className="text-2xl font-bold tracking-tight">Password reset!</h1>
+                <h1 className="text-2xl font-medium tracking-tight">Password reset!</h1>
                 <p className="text-muted-foreground">
                   Your password has been successfully reset. Redirecting to login...
                 </p>
               </div>
-              <Button variant="vibrant" className="shadow-lg shadow-vibrant/25" asChild>
+              <Button variant="vibrant" asChild>
                 <Link to="/login">Continue to login</Link>
               </Button>
             </div>
           ) : !hasToken ? (
             <div className="text-center space-y-6">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 mx-auto">
-                <AlertCircle className="h-8 w-8 text-amber-600" />
-              </div>
               <div className="space-y-2">
-                <h1 className="text-2xl font-bold tracking-tight">Invalid link</h1>
+                <h1 className="text-2xl font-medium tracking-tight">Invalid link</h1>
                 <p className="text-muted-foreground">
                   This password reset link is invalid or has expired.
                 </p>
               </div>
-              <Button variant="vibrant" className="shadow-lg shadow-vibrant/25" asChild>
+              <Button variant="vibrant" asChild>
                 <Link to="/forgot-password">Request a new link</Link>
               </Button>
             </div>
           ) : (
             <>
               <div className="text-center space-y-2">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-vibrant/10 mx-auto mb-4">
-                  <Lock className="h-7 w-7 text-vibrant" />
-                </div>
-                <h1 className="text-2xl font-bold tracking-tight">Reset your password</h1>
+                <h1 className="text-2xl font-medium tracking-tight">Reset your password</h1>
                 <p className="text-muted-foreground">Enter your new password below</p>
               </div>
 
               <form className="space-y-6" onSubmit={handleSubmit}>
                 {error && (
-                  <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4">
+                  <div className="rounded-md bg-destructive/10 border border-destructive/20 p-4">
                     <p className="text-sm text-destructive">{error}</p>
                   </div>
                 )}
@@ -166,7 +154,7 @@ function ResetPasswordPage() {
                   type="submit"
                   disabled={loading}
                   variant="vibrant"
-                  className="w-full h-11 shadow-lg shadow-vibrant/25"
+                  className="w-full h-11"
                 >
                   {loading ? "Resetting..." : "Reset password"}
                 </Button>

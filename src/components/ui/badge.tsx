@@ -29,6 +29,8 @@ const badgeVariants = cva(
         // Soft variants - subtle backgrounds with colored text
         "outline-vibrant":
           "bg-transparent border-transparent px-0 gap-1.5 before:size-1.5 before:rounded-full before:bg-vibrant text-foreground",
+        "outline-muted":
+          "bg-transparent border-transparent px-0 gap-1.5 before:size-1.5 before:rounded-full before:bg-muted-foreground text-muted-foreground",
         "outline-success":
           "bg-transparent border-transparent px-0 gap-1.5 before:size-1.5 before:rounded-full before:bg-success text-foreground",
         "outline-warning":

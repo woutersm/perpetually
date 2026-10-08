@@ -1,73 +1,34 @@
 import { HeadContent, Scripts, createRootRoute, Link } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { Home, ArrowLeft } from "lucide-react";
 
 import { Toaster } from "@/components/ui/sonner";
+import { Wordmark } from "@/components/top-nav";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-vibrant to-vibrant/80 shadow-lg shadow-vibrant/25">
-              <span className="text-sm font-bold text-white">P</span>
-            </div>
-            <span className="text-lg font-semibold tracking-tight">Perpetually</span>
+    <div className="flex min-h-screen flex-col">
+      <header className="border-b border-border">
+        <div className="mx-auto flex h-14 max-w-[1100px] items-center px-6">
+          <Link to="/">
+            <Wordmark />
           </Link>
         </div>
       </header>
-
-      {/* Content */}
-      <main className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="text-center max-w-md">
-          {/* 404 Visual */}
-          <div className="relative mb-8">
-            <div className="text-[10rem] font-bold leading-none text-muted-foreground/10 select-none">
-              404
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-vibrant/10 to-vibrant/5 border border-vibrant/20">
-                <Home className="h-12 w-12 text-vibrant" />
-              </div>
-            </div>
-          </div>
-
-          {/* Text */}
-          <h1 className="text-3xl font-bold tracking-tight mb-3">Page not found</h1>
-          <p className="text-muted-foreground mb-8">
-            Sorry, we couldn't find the page you're looking for. It might have been moved or deleted.
-          </p>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              to="/"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-vibrant to-vibrant/90 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-vibrant/25 hover:shadow-xl hover:shadow-vibrant/30 transition-all"
-            >
-              <Home className="h-4 w-4" />
-              Go to Homepage
-            </Link>
-            <button
-              onClick={() => window.history.back()}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-card px-6 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Go Back
-            </button>
-          </div>
+      <main className="mx-auto w-full max-w-[1100px] flex-1 px-6 pt-24">
+        <p className="label-caps">404</p>
+        <h1 className="mt-2 text-[28px]">Page not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">The link may be old, or the page was removed.</p>
+        <div className="mt-8 flex gap-4 text-sm">
+          <Link to="/" className="text-vibrant hover:underline">
+            Go to the homepage
+          </Link>
+          <button onClick={() => window.history.back()} className="text-muted-foreground hover:text-foreground">
+            Go back
+          </button>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/40 py-6">
-        <div className="max-w-7xl mx-auto px-6 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Perpetually. All rights reserved.
-        </div>
-      </footer>
     </div>
   );
 }

@@ -26,8 +26,9 @@ import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
-import { Plus, Key, Trash2, Copy, Check, AlertTriangle, Calendar, Clock } from "lucide-react";
+import { Plus, Trash2, Copy, Check, AlertTriangle, Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { SettingsTabs } from "@/components/top-nav";
 
 export const Route = createFileRoute("/_auth/settings/api")({
   component: ApiKeysPage,
@@ -81,28 +82,22 @@ function ApiKeysPage() {
 
   return (
     <PageLayout
-      title="API Keys"
+      title="Settings"
       description="Manage API keys for server-side integration."
-      breadcrumbs={[
-        { label: "Settings", href: "/settings" },
-        { label: "API Keys" },
-      ]}
+      tabs={<SettingsTabs />}
       actions={
-        <Button variant="vibrant" onClick={() => setCreateOpen(true)} className="shadow-lg shadow-vibrant/25">
+        <Button variant="vibrant" onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4" />
-          Create Key
+          Create key
         </Button>
       }
     >
-      <div className="max-w-4xl">
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+      <div className="max-w-3xl">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Key className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Secret Keys</h2>
+                <h2 className="font-medium">Secret keys</h2>
                 <p className="text-sm text-muted-foreground">
                   {keys.length} {keys.length === 1 ? "key" : "keys"} created
                 </p>
@@ -112,29 +107,23 @@ function ApiKeysPage() {
 
           {keys.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mx-auto mb-4">
-                <Key className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No API keys yet</h3>
+              <h3 className="text-lg font-medium mb-2">No API keys yet</h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
                 Create an API key to integrate Perpetually with your server-side applications.
               </p>
-              <Button variant="vibrant" onClick={() => setCreateOpen(true)} className="shadow-lg shadow-vibrant/25">
+              <Button variant="vibrant" onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Create your first key
               </Button>
             </div>
           ) : (
-            <div className="divide-y divide-border/40">
+            <div className="divide-y divide-border">
               {keys.map((key) => (
                 <div
                   key={key.id}
                   className="flex items-center justify-between px-6 py-4 hover:bg-muted/20 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
-                      <Key className="h-5 w-5 text-muted-foreground" />
-                    </div>
                     <div>
                       <p className="font-medium">
                         {key.name || "Unnamed key"}
@@ -178,10 +167,7 @@ function ApiKeysPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vibrant/10 mb-4">
-              <Key className="h-6 w-6 text-vibrant" />
-            </div>
-            <DialogTitle>Create API Key</DialogTitle>
+            <DialogTitle>Create API key</DialogTitle>
             <DialogDescription>
               This key will have full access to your organization's resources.
             </DialogDescription>
@@ -226,8 +212,8 @@ function ApiKeysPage() {
                 selector={(state) => [state.canSubmit, state.isSubmitting]}
               >
                 {([canSubmit, isSubmitting]) => (
-                  <Button type="submit" variant="vibrant" disabled={!canSubmit} className="shadow-lg shadow-vibrant/25">
-                    {isSubmitting ? "Creating..." : "Create Key"}
+                  <Button type="submit" variant="vibrant" disabled={!canSubmit}>
+                    {isSubmitting ? "Creating..." : "Create key"}
                   </Button>
                 )}
               </form.Subscribe>
@@ -240,12 +226,9 @@ function ApiKeysPage() {
       <Dialog open={!!newKey} onOpenChange={() => setNewKey(null)}>
         <DialogContent>
           <DialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-success/10 mb-4">
-              <Check className="h-6 w-6 text-success" />
-            </div>
             <DialogTitle>API Key Created</DialogTitle>
             <DialogDescription>
-              <div className="flex items-center gap-2 text-warning mt-2 p-3 rounded-xl bg-warning/10 border border-warning/20">
+              <div className="flex items-center gap-2 text-warning mt-2 p-3 rounded-md bg-warning/10 border border-warning/20">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <span className="text-sm">Make sure to copy this key. You won't be able to see it again.</span>
               </div>
@@ -258,7 +241,7 @@ function ApiKeysPage() {
                 readOnly
                 className="font-mono text-sm h-11"
               />
-              <Button variant="vibrant" size="icon" onClick={copyKey} className="h-11 w-11 shadow-lg shadow-vibrant/25">
+              <Button variant="vibrant" size="icon" onClick={copyKey} className="h-11 w-11">
                 {copied ? (
                   <Check className="h-4 w-4" />
                 ) : (
@@ -292,7 +275,7 @@ function ApiKeysPage() {
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Key
+              Delete key
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

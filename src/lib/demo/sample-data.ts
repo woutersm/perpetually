@@ -123,6 +123,9 @@ export async function createDemoOrganization({
       apiKey: generatePublishableKey(),
       isOnboarded: true,
       sandboxExpiresAt,
+      // Show every feature (branding, unlimited licenses) in the demo
+      subscriptionTier: "business",
+      subscriptionStatus: "active",
     })
     .returning();
 

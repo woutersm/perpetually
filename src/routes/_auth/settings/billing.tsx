@@ -15,20 +15,18 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import {
-  CreditCard,
   Zap,
   Package,
   Users,
   Check,
   ArrowRight,
   ExternalLink,
-  Sparkles,
   Shield,
-  Clock,
-} from "lucide-react";
+  Clock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SubscriptionTier } from "@/lib/limits";
+import { SettingsTabs } from "@/components/top-nav";
 
 export const Route = createFileRoute("/_auth/settings/billing")({
   component: BillingPage,
@@ -132,7 +130,7 @@ function BillingPage() {
       case "past_due":
         return (
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            Payment Due
+            Payment due
           </Badge>
         );
       case "canceled":
@@ -148,24 +146,18 @@ function BillingPage() {
 
   return (
     <PageLayout
-      title="Billing"
+      title="Settings"
       description="Manage your subscription and billing."
-      breadcrumbs={[
-        { label: "Settings", href: "/settings" },
-        { label: "Billing" },
-      ]}
+      tabs={<SettingsTabs />}
     >
       <div className="space-y-6 max-w-3xl">
         {/* Current Plan */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                  <CreditCard className="h-5 w-5 text-vibrant" />
-                </div>
                 <div>
-                  <h2 className="font-semibold">Current Plan</h2>
+                  <h2 className="font-medium">Current plan</h2>
                   <p className="text-sm text-muted-foreground">
                     Your subscription details
                   </p>
@@ -180,7 +172,7 @@ function BillingPage() {
                 <Badge variant={getTierBadgeVariant(billing.tier)} className="text-sm px-3 py-1">
                   {billing.tier.charAt(0).toUpperCase() + billing.tier.slice(1)}
                 </Badge>
-                <span className="text-2xl font-bold">
+                <span className="text-2xl font-medium">
                   ${billing.price}
                   <span className="text-sm font-normal text-muted-foreground">/month</span>
                 </span>
@@ -190,7 +182,7 @@ function BillingPage() {
                   <Button
                     variant="vibrant"
                     onClick={() => setUpgradeOpen(true)}
-                    className="shadow-lg shadow-vibrant/25"
+                   
                   >
                     <Zap className="h-4 w-4" />
                     Upgrade
@@ -199,7 +191,7 @@ function BillingPage() {
                 {billing.hasPaymentMethod && (
                   <Button variant="outline" onClick={handleManageBilling} disabled={isLoading}>
                     <ExternalLink className="h-4 w-4" />
-                    Manage Billing
+                    Manage billing
                   </Button>
                 )}
               </div>
@@ -221,14 +213,11 @@ function BillingPage() {
         </div>
 
         {/* Usage */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Package className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Usage</h2>
+                <h2 className="font-medium">Usage</h2>
                 <p className="text-sm text-muted-foreground">
                   Your current resource usage
                 </p>
@@ -247,18 +236,18 @@ function BillingPage() {
               <Progress
                 value={billing.usage.licenses.percentage}
                 className={cn(
-                  "h-2",
-                  billing.usage.licenses.percentage >= 90 && "bg-amber-100 [&>div]:bg-amber-500",
-                  billing.usage.licenses.percentage >= 100 && "bg-red-100 [&>div]:bg-red-500"
+                  "h-1",
+                  billing.usage.licenses.percentage >= 90 && "bg-warning/15 [&>div]:bg-warning",
+                  billing.usage.licenses.percentage >= 100 && "bg-destructive/15 [&>div]:bg-destructive"
                 )}
               />
               {billing.usage.licenses.percentage >= 80 && billing.usage.licenses.percentage < 100 && (
-                <p className="text-xs text-amber-600 mt-1">
+                <p className="text-xs text-warning mt-1">
                   Approaching limit. Consider upgrading for unlimited licenses.
                 </p>
               )}
               {billing.usage.licenses.percentage >= 100 && (
-                <p className="text-xs text-red-600 mt-1">
+                <p className="text-xs text-destructive mt-1">
                   Limit reached. Upgrade to create more licenses.
                 </p>
               )}
@@ -275,9 +264,9 @@ function BillingPage() {
               <Progress
                 value={billing.usage.products.percentage}
                 className={cn(
-                  "h-2",
-                  billing.usage.products.percentage >= 90 && "bg-amber-100 [&>div]:bg-amber-500",
-                  billing.usage.products.percentage >= 100 && "bg-red-100 [&>div]:bg-red-500"
+                  "h-1",
+                  billing.usage.products.percentage >= 90 && "bg-warning/15 [&>div]:bg-warning",
+                  billing.usage.products.percentage >= 100 && "bg-destructive/15 [&>div]:bg-destructive"
                 )}
               />
             </div>
@@ -285,28 +274,25 @@ function BillingPage() {
             {/* Team Members */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Team Members</span>
+                <span className="text-sm font-medium">Team members</span>
                 <span className="text-sm text-muted-foreground">
                   {billing.usage.members.current.toLocaleString()} / {formatLimit(billing.usage.members.limit)}
                 </span>
               </div>
               <Progress
                 value={billing.usage.members.limit === Infinity ? 0 : billing.usage.members.percentage}
-                className="h-2"
+                className="h-1"
               />
             </div>
           </div>
         </div>
 
         {/* Features */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Sparkles className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Features</h2>
+                <h2 className="font-medium">Features</h2>
                 <p className="text-sm text-muted-foreground">
                   What's included in your plan
                 </p>
@@ -316,23 +302,23 @@ function BillingPage() {
           <div className="p-6">
             <div className="grid grid-cols-2 gap-4">
               <FeatureItem
-                label="Customer Portal"
+                label="Customer portal"
                 enabled={billing.usage.features.customerPortal}
               />
               <FeatureItem
-                label="Email Notifications"
+                label="Email notifications"
                 enabled={billing.usage.features.emailNotifications}
               />
               <FeatureItem
-                label="API Access"
+                label="API access"
                 enabled={billing.usage.features.apiAccess}
               />
               <FeatureItem
-                label="Custom Branding"
+                label="Custom branding"
                 enabled={billing.usage.features.customBranding}
               />
               <FeatureItem
-                label="Priority Support"
+                label="Priority support"
                 enabled={billing.usage.features.prioritySupport}
               />
             </div>
@@ -355,8 +341,8 @@ function BillingPage() {
               <div
                 key={tier.id}
                 className={cn(
-                  "relative rounded-xl border p-5 cursor-pointer transition-all",
-                  billing.tier === tier.id && "border-vibrant/50 bg-vibrant/5",
+                  "relative rounded-md border p-5 cursor-pointer transition-all",
+                  billing.tier === tier.id && "border-foreground",
                   selectedTier === tier.id && tier.id !== billing.tier && "border-vibrant ring-2 ring-vibrant/20",
                   tier.id === billing.tier && "cursor-default"
                 )}
@@ -365,8 +351,8 @@ function BillingPage() {
                 {tier.popular && (
                   <Badge className="absolute -top-2 right-4 bg-vibrant">Popular</Badge>
                 )}
-                <h3 className="font-semibold mb-1">{tier.name}</h3>
-                <p className="text-2xl font-bold mb-1">
+                <h3 className="font-medium mb-1">{tier.name}</h3>
+                <p className="text-2xl font-medium mb-1">
                   ${tier.price}
                   <span className="text-sm font-normal text-muted-foreground">/mo</span>
                 </p>
@@ -389,7 +375,7 @@ function BillingPage() {
 
                 {billing.tier === tier.id && (
                   <div className="mt-4 pt-4 border-t">
-                    <Badge variant="secondary">Current Plan</Badge>
+                    <Badge variant="secondary">Current plan</Badge>
                   </div>
                 )}
               </div>
@@ -409,7 +395,7 @@ function BillingPage() {
                 variant="vibrant"
                 onClick={() => selectedTier && handleUpgrade(selectedTier)}
                 disabled={!selectedTier || isLoading}
-                className="shadow-lg shadow-vibrant/25"
+               
               >
                 {isLoading ? "Loading..." : (
                   <>

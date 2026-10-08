@@ -9,9 +9,10 @@ import { useForm } from "@tanstack/react-form";
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
-import { Copy, Check, Building2, Link as LinkIcon, Key, AlertTriangle, Trash2, CreditCard, Unplug } from "lucide-react";
+import { Copy, Check, Link as LinkIcon, Trash2, CreditCard, Unplug } from "lucide-react";
 import { toast } from "sonner";
 import { disconnectStripe } from "@/functions/onboarding";
+import { SettingsTabs } from "@/components/top-nav";
 
 export const Route = createFileRoute("/_auth/settings/")({
   component: SettingsPage,
@@ -78,23 +79,17 @@ function SettingsPage() {
 
   return (
     <PageLayout
-      title="General Settings"
+      title="Settings"
       description="Manage your organization details and configuration."
-      breadcrumbs={[
-        { label: "Settings", href: "/settings" },
-        { label: "General" },
-      ]}
+      tabs={<SettingsTabs />}
     >
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6 max-w-3xl">
         {/* Organization Settings */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Building2 className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Organization</h2>
+                <h2 className="font-medium">Organization</h2>
                 <p className="text-sm text-muted-foreground">
                   Your organization details
                 </p>
@@ -118,7 +113,7 @@ function SettingsPage() {
               >
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor={field.name}>Organization Name</Label>
+                    <Label htmlFor={field.name}>Organization name</Label>
                     <Input
                       id={field.name}
                       value={field.state.value}
@@ -145,7 +140,7 @@ function SettingsPage() {
               >
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor={field.name}>Organization Slug</Label>
+                    <Label htmlFor={field.name}>Organization slug</Label>
                     <div className="flex">
                       <span className="inline-flex items-center px-4 border border-r-0 border-border rounded-l-lg bg-muted text-muted-foreground text-sm h-11">
                         <LinkIcon className="h-3.5 w-3.5 mr-2" />
@@ -174,9 +169,9 @@ function SettingsPage() {
                       type="submit"
                       variant="vibrant"
                       disabled={!canSubmit}
-                      className="shadow-lg shadow-vibrant/25"
+                     
                     >
-                      {isSubmitting ? "Saving..." : "Save Changes"}
+                      {isSubmitting ? "Saving..." : "Save changes"}
                     </Button>
                   )}
                 </form.Subscribe>
@@ -186,14 +181,11 @@ function SettingsPage() {
         </div>
 
         {/* API Key */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Key className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Public API Key</h2>
+                <h2 className="font-medium">Public API key</h2>
                 <p className="text-sm text-muted-foreground">
                   Use this key for client-side license validation
                 </p>
@@ -225,14 +217,11 @@ function SettingsPage() {
         </div>
 
         {/* Stripe Connect */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <CreditCard className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Stripe Integration</h2>
+                <h2 className="font-medium">Stripe</h2>
                 <p className="text-sm text-muted-foreground">
                   Manage your Stripe connection for payment processing
                 </p>
@@ -242,7 +231,7 @@ function SettingsPage() {
           <div className="p-6">
             {settings.stripeConnectId ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-green-50 border border-green-200">
+                <div className="flex items-center justify-between p-4 rounded-md bg-green-50 border border-green-200">
                   <div className="flex items-center gap-3">
                     <Check className="h-5 w-5 text-green-600" />
                     <div>
@@ -280,7 +269,7 @@ function SettingsPage() {
                   variant="vibrant"
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
-                  Connect with Stripe
+                  Connect Stripe
                 </Button>
               </div>
             )}
@@ -288,14 +277,11 @@ function SettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="rounded-2xl border border-destructive/30 overflow-hidden">
-          <div className="border-b border-destructive/20 bg-destructive/5 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-destructive/10">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-              </div>
               <div>
-                <h2 className="font-semibold text-destructive">Danger Zone</h2>
+                <h2 className="font-medium text-destructive">Danger zone</h2>
                 <p className="text-sm text-muted-foreground">
                   Irreversible actions for your organization
                 </p>
@@ -305,7 +291,7 @@ function SettingsPage() {
           <div className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Delete Organization</p>
+                <p className="font-medium">Delete organization</p>
                 <p className="text-sm text-muted-foreground">
                   Permanently delete your organization and all its data
                 </p>

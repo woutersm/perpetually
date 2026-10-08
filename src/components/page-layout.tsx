@@ -14,6 +14,8 @@ interface PageLayoutProps {
   description?: string;
   breadcrumbs?: BreadcrumbItem[];
   actions?: React.ReactNode;
+  /** Sub-navigation rendered under the title, e.g. settings tabs */
+  tabs?: React.ReactNode;
 }
 
 export function PageLayout({
@@ -22,6 +24,7 @@ export function PageLayout({
   description,
   breadcrumbs,
   actions,
+  tabs,
 }: PageLayoutProps) {
   // Only show a trail when there is somewhere to go back to
   const trail = breadcrumbs && breadcrumbs.length > 1 ? breadcrumbs.slice(0, -1) : [];
@@ -52,6 +55,7 @@ export function PageLayout({
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </header>
 
+      {tabs}
       <main>{children}</main>
     </div>
   );
@@ -72,71 +76,6 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
       <h3 className="mt-4 text-base">{title}</h3>
       <p className="mt-2 text-sm text-muted-foreground max-w-sm">{description}</p>
       {action && <div className="mt-6">{action}</div>}
-    </div>
-  );
-}
-
-// Stat card for dashboard metrics
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  description?: string;
-  icon?: React.ReactNode;
-  trend?: {
-    value: number;
-    label: string;
-  };
-  variant?: "default" | "vibrant";
-}
-
-export function StatCard({
-  title,
-  value,
-  description,
-  icon,
-  trend,
-  variant = "default",
-}: StatCardProps) {
-  return (
-    <div
-      className={`relative overflow-hidden rounded-2xl border p-6 transition-all hover:shadow-lg ${
-        variant === "vibrant"
-          ? "bg-gradient-to-br from-vibrant/10 via-vibrant/5 to-transparent border-vibrant/20 hover:border-vibrant/40 hover:shadow-vibrant/10"
-          : "bg-card border-border/60 hover:border-border"
-      }`}
-    >
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className={`text-3xl font-bold tracking-tight ${variant === "vibrant" ? "text-gradient-vibrant" : ""}`}>
-            {value}
-          </p>
-          {description && (
-            <p className="text-xs text-muted-foreground">{description}</p>
-          )}
-          {trend && (
-            <p
-              className={`text-xs font-medium ${
-                trend.value >= 0 ? "text-success" : "text-destructive"
-              }`}
-            >
-              {trend.value >= 0 ? "+" : ""}
-              {trend.value}% {trend.label}
-            </p>
-          )}
-        </div>
-        {icon && (
-          <div
-            className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-              variant === "vibrant"
-                ? "bg-gradient-vibrant text-white shadow-lg shadow-vibrant/25"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {icon}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { wideEventMiddleware } from "@/middleware/wide-event";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { product, licensePolicy, license } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count } from "drizzle-orm";
 
 // Get all products for the current organization
 export const getProducts = createServerFn({ method: "GET" })
@@ -17,9 +17,16 @@ export const getProducts = createServerFn({ method: "GET" })
       .where(eq(product.organizationId, organizationId))
       .orderBy(desc(product.createdAt));
 
+    const licenseCounts = await db
+      .select({ productId: license.productId, licenseCount: count() })
+      .from(license)
+      .where(eq(license.organizationId, organizationId))
+      .groupBy(license.productId);
+    const counts = new Map(licenseCounts.map((c) => [c.productId, c.licenseCount]));
+
     event.set("result.count", products.length);
 
-    return products;
+    return products.map((p) => ({ ...p, licenseCount: counts.get(p.id) ?? 0 }));
   });
 
 // Get a single product with relations

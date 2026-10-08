@@ -4,10 +4,11 @@ import { FormEvent, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Key } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { getSessionFn } from "@/functions/sessions";
 import { getAppConfig } from "@/functions/demo";
 import { TryDemoButton } from "@/components/try-demo-button";
+import { Wordmark } from "@/components/top-nav";
 
 // Validate search params
 type LoginSearch = {
@@ -98,20 +99,17 @@ function RouteComponent() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-vibrant shadow-lg shadow-vibrant/25 transition-transform group-hover:scale-105">
-              <span className="text-sm font-bold text-white">P</span>
-            </div>
-            <span className="text-lg font-semibold tracking-tight">Perpetually</span>
+            <Wordmark />
           </Link>
           {demoMode ? (
-            <TryDemoButton variant="vibrant" size="sm" className="shadow-lg shadow-vibrant/25" label="Try the demo" />
+            <TryDemoButton variant="vibrant" size="sm" label="Try the demo" />
           ) : (
-            <Button variant="vibrant" size="sm" className="shadow-lg shadow-vibrant/25" asChild>
+            <Button variant="vibrant" size="sm" asChild>
               <Link to="/register" search={inviteToken ? { invite: inviteToken } : undefined}>
-                Get Started
+                Get started
                 <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -124,7 +122,7 @@ function RouteComponent() {
         <div className="flex-1 flex items-center justify-center px-6 py-12">
           <div className="w-full max-w-sm space-y-8">
             <div className="text-center space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
+              <h1 className="text-3xl font-medium tracking-tight">Welcome back</h1>
               <p className="text-muted-foreground">
                 {inviteToken
                   ? "Sign in to accept your invitation"
@@ -134,7 +132,7 @@ function RouteComponent() {
 
             <form className="space-y-6" onSubmit={handleSubmit}>
               {error && (
-                <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4">
+                <div className="rounded-md bg-destructive/10 border border-destructive/20 p-4">
                   <p className="text-sm text-destructive">{error}</p>
                 </div>
               )}
@@ -181,7 +179,7 @@ function RouteComponent() {
                 type="submit"
                 disabled={loading}
                 variant="vibrant"
-                className="w-full h-11 shadow-lg shadow-vibrant/25"
+                className="w-full h-11"
               >
                 {loading ? "Signing in..." : "Sign in"}
               </Button>
@@ -206,42 +204,6 @@ function RouteComponent() {
               </p>
               )}
             </form>
-          </div>
-        </div>
-
-        {/* Right side - Visual */}
-        <div className="hidden lg:flex flex-1 items-center justify-center bg-muted/30 border-l border-border/40 relative overflow-hidden">
-          {/* Gradient orbs */}
-          <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-vibrant/20 rounded-full blur-[100px] opacity-60" />
-          <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-vibrant/10 rounded-full blur-[80px] opacity-40" />
-
-          {/* Content */}
-          <div className="relative z-10 max-w-md text-center px-8">
-            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-vibrant shadow-xl shadow-vibrant/30 mx-auto mb-8">
-              <Key className="h-10 w-10 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight mb-3">
-              License Management<br />
-              <span className="text-gradient-vibrant">Made Simple</span>
-            </h2>
-            <p className="text-muted-foreground">
-              Generate, validate, and manage software licenses with a modern API.
-              Built for developers who ship.
-            </p>
-
-            {/* Mini stats */}
-            <div className="flex justify-center gap-8 mt-8">
-              {[
-                { value: "REST", label: "API" },
-                { value: "Stripe", label: "Native" },
-                { value: "Audit", label: "Trail" },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <p className="text-xl font-bold text-vibrant">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </main>

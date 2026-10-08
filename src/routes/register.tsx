@@ -5,12 +5,13 @@ import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Check, Sparkles, Mail, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import db from "@/lib/db/db";
 import { invitation, organization } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { checkSlugAvailable } from "@/functions/organizations";
 import { getAppConfig } from "@/functions/demo";
+import { Wordmark } from "@/components/top-nav";
 
 // Fetch invitation details for pre-filling (public)
 const getInvitationForRegister = createServerFn({ method: "GET" })
@@ -193,13 +194,10 @@ function RouteComponent() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-vibrant shadow-lg shadow-vibrant/25 transition-transform group-hover:scale-105">
-              <span className="text-sm font-bold text-white">P</span>
-            </div>
-            <span className="text-lg font-semibold tracking-tight">Perpetually</span>
+            <Wordmark />
           </Link>
           <Link
             to="/login"
@@ -211,73 +209,13 @@ function RouteComponent() {
       </header>
 
       <main className="flex-1 flex">
-        {/* Left side - Visual */}
-        <div className="hidden lg:flex flex-1 items-center justify-center bg-muted/30 border-r border-border/40 relative overflow-hidden">
-          {/* Gradient orbs */}
-          <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-vibrant/20 rounded-full blur-[100px] opacity-60" />
-          <div className="absolute bottom-1/4 left-1/4 w-[300px] h-[300px] bg-vibrant/10 rounded-full blur-[80px] opacity-40" />
-
-          {/* Content */}
-          <div className="relative z-10 max-w-md px-8">
-            {isInviteFlow ? (
-              <>
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-vibrant/30 bg-vibrant/5 text-sm mb-8">
-                  <Users className="h-3.5 w-3.5 text-vibrant" />
-                  <span className="text-vibrant font-medium">Team Invitation</span>
-                </div>
-                <h2 className="text-3xl font-bold tracking-tight mb-4">
-                  You're invited to join<br />
-                  <span className="text-gradient-vibrant">{inviteData.organizationName}</span>
-                </h2>
-                <p className="text-muted-foreground mb-8">
-                  Create your account to accept the invitation and join the team.
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-vibrant/30 bg-vibrant/5 text-sm mb-8">
-                  <Sparkles className="h-3.5 w-3.5 text-vibrant" />
-                  <span className="text-vibrant font-medium">Free to start</span>
-                </div>
-                <h2 className="text-3xl font-bold tracking-tight mb-4">
-                  Start selling software<br />
-                  <span className="text-gradient-vibrant">in minutes</span>
-                </h2>
-                <p className="text-muted-foreground mb-8">
-                  Join thousands of developers who use Perpetually to manage their software licenses.
-                </p>
-              </>
-            )}
-
-            {/* Features list */}
-            <ul className="space-y-4">
-              {[
-                "Automatic license generation on purchase",
-                "Customer portal for self-service",
-                "Real-time activation tracking",
-                "Stripe integration included",
-              ].map((feature) => (
-                <li key={feature} className="flex items-center gap-3 text-sm">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-vibrant/10">
-                    <Check className="h-3 w-3 text-vibrant" />
-                  </div>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
         {/* Right side - Form */}
         <div className="flex-1 flex items-center justify-center px-6 py-12">
           <div className="w-full max-w-sm space-y-8">
             {step === "verify" ? (
               <div className="text-center space-y-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-vibrant/10 mx-auto">
-                  <Mail className="h-8 w-8 text-vibrant" />
-                </div>
                 <div className="space-y-2">
-                  <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
+                  <h1 className="text-2xl font-medium tracking-tight">Check your email</h1>
                   <p className="text-muted-foreground">
                     We sent a verification link to{" "}
                     <span className="font-medium text-foreground">{formData.email}</span>
@@ -289,7 +227,7 @@ function RouteComponent() {
                 <div className="space-y-3">
                   <Button
                     variant="vibrant"
-                    className="w-full shadow-lg shadow-vibrant/25"
+                    className="w-full"
                     onClick={handleContinueToLogin}
                   >
                     Continue to login
@@ -317,7 +255,7 @@ function RouteComponent() {
             ) : (
               <>
                 <div className="text-center space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tight">
+                  <h1 className="text-3xl font-medium tracking-tight">
                     {isInviteFlow ? "Create your account" : "Get started"}
                   </h1>
                   <p className="text-muted-foreground">
@@ -328,7 +266,7 @@ function RouteComponent() {
                 </div>
 
                 {error && (
-                  <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4">
+                  <div className="rounded-md bg-destructive/10 border border-destructive/20 p-4">
                     <p className="text-sm text-destructive">{error}</p>
                   </div>
                 )}
@@ -336,7 +274,7 @@ function RouteComponent() {
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
+                      <Label htmlFor="name">Full name</Label>
                       <Input
                         id="name"
                         name="name"
@@ -384,7 +322,7 @@ function RouteComponent() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <Label htmlFor="confirmPassword">Confirm password</Label>
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
@@ -412,7 +350,7 @@ function RouteComponent() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="orgName">Organization Name</Label>
+                          <Label htmlFor="orgName">Organization name</Label>
                           <Input
                             id="orgName"
                             name="orgName"
@@ -455,7 +393,7 @@ function RouteComponent() {
                     type="submit"
                     disabled={loading}
                     variant="vibrant"
-                    className="w-full h-11 shadow-lg shadow-vibrant/25"
+                    className="w-full h-11"
                   >
                     {loading ? "Creating account..." : "Create account"}
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -479,7 +417,7 @@ function RouteComponent() {
               By creating an account, you agree to our{" "}
               <a href="#" className="underline hover:text-foreground">Terms</a>
               {" "}and{" "}
-              <a href="#" className="underline hover:text-foreground">Privacy Policy</a>
+              <a href="#" className="underline hover:text-foreground">Privacy policy</a>
             </p>
           </div>
         </div>

@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { Package } from "lucide-react";
 import { PageLayout, EmptyState } from "@/components/page-layout";
+import { DataTable } from "@/components/blocks";
+import { Status } from "@/components/status";
 import { getProducts } from "@/functions/products";
-import { Badge } from "@/components/ui/badge";
-import { Package, ArrowRight, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_auth/products/")({
   component: ProductsPage,
@@ -17,77 +18,44 @@ function ProductsPage() {
   const { products } = Route.useLoaderData();
 
   return (
-    <PageLayout
-      title="Products"
-      description="Your products synced from Stripe."
-      breadcrumbs={[{ label: "Products" }]}
-    >
+    <PageLayout title="Products" description="Synced from your Stripe account. Edit them in Stripe.">
       {products.length === 0 ? (
         <EmptyState
-          icon={<Package className="h-8 w-8" />}
+          icon={<Package className="size-6" />}
           title="No products yet"
-          description="Products are automatically synced from your Stripe account. Create a product in Stripe and it will appear here."
-          action={
-            <Button variant="vibrant" asChild className="shadow-lg shadow-vibrant/25">
-              <a
-                href="https://dashboard.stripe.com/products/create"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Create in Stripe
-              </a>
-            </Button>
-          }
+          description="Create a product in Stripe and it shows up here within seconds."
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              to="/products/$productId"
-              params={{ productId: product.id }}
-              className="group relative flex flex-col rounded-2xl border border-border/60 bg-card p-6 transition-all hover:border-vibrant/40 hover:shadow-xl hover:shadow-vibrant/5"
-            >
-              {/* Status badge */}
-              <div className="absolute right-5 top-5">
-                <Badge
-                  variant={product.isActive ? "outline-success" : "secondary"}
-                >
-                  {product.isActive ? "active" : "inactive"}
-                </Badge>
-              </div>
-
-              {/* Icon */}
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted group-hover:bg-gradient-vibrant group-hover:shadow-lg group-hover:shadow-vibrant/25 transition-all">
-                <Package className="h-6 w-6 text-muted-foreground group-hover:text-white transition-colors" />
-              </div>
-
-              {/* Content */}
-              <div className="mt-5 flex-1">
-                <h3 className="font-semibold text-lg group-hover:text-vibrant transition-colors">
-                  {product.name}
-                </h3>
-                <p className="text-sm text-muted-foreground font-mono mt-1">
-                  {product.slug}
-                </p>
-                {product.description && (
-                  <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
-                    {product.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className="mt-5 pt-5 border-t border-border/40 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  Created {new Date(product.createdAt).toLocaleDateString()}
-                </p>
-                <ArrowRight className="h-4 w-4 text-muted-foreground/0 group-hover:text-vibrant transition-all group-hover:translate-x-1" />
-              </div>
-            </Link>
-          ))}
-        </div>
+        <DataTable
+          rows={products}
+          rowKey={(p) => p.id}
+          href={(p) => `/products/${p.id}`}
+          columns={[
+            {
+              header: "Product",
+              width: "minmax(0,2.5fr)",
+              cell: (p) => (
+                <>
+                  <div className="truncate">{p.name}</div>
+                  {p.description && <div className="truncate text-xs text-muted-foreground">{p.description}</div>}
+                </>
+              ),
+            },
+            { header: "Status", width: "7rem", cell: (p) => <Status status={p.isActive ? "active" : "inactive"} /> },
+            {
+              header: "Licenses",
+              width: "6rem",
+              className: "text-right",
+              cell: (p) => <span className="tabular-nums">{p.licenseCount}</span>,
+            },
+            {
+              header: "Last synced",
+              width: "9rem",
+              className: "text-right",
+              cell: (p) => <span className="tabular-nums text-muted-foreground">{formatDate(p.syncedAt, "Never")}</span>,
+            },
+          ]}
+        />
       )}
     </PageLayout>
   );

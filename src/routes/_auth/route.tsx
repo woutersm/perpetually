@@ -1,5 +1,5 @@
-import { createFileRoute, Outlet, redirect, useLocation } from "@tanstack/react-router";
-import { TopNav, SettingsTabs, CONTENT_WIDTH } from "@/components/top-nav";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { TopNav, CONTENT_WIDTH } from "@/components/top-nav";
 import { cn } from "@/lib/utils";
 import { getSessionFn, getTestModeFn } from "@/functions/sessions";
 import { TestModeProvider } from "@/lib/test-mode-context";
@@ -43,7 +43,6 @@ export const Route = createFileRoute("/_auth")({
 
 function AuthLayout() {
   const { isTestMode, organization, user } = Route.useRouteContext();
-  const { pathname } = useLocation();
 
   return (
     <TestModeProvider initialValue={isTestMode}>
@@ -63,7 +62,6 @@ function AuthLayout() {
             </p>
           </div>
         )}
-        {pathname.startsWith("/settings") && <SettingsTabs />}
         <Outlet />
       </div>
     </TestModeProvider>

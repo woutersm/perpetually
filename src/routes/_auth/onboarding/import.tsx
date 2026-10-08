@@ -116,7 +116,7 @@ function OnboardingImport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              Import Products
+              Import products
             </CardTitle>
             <CardDescription>
               Import your existing products from Stripe to start managing
@@ -129,7 +129,7 @@ function OnboardingImport() {
                 <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mx-auto mb-4">
                   <Check className="h-8 w-8 text-green-600" />
                 </div>
-                <h3 className="text-lg font-semibold">Import Complete!</h3>
+                <h3 className="text-lg font-medium">Import Complete!</h3>
                 <p className="text-muted-foreground mt-2">
                   Imported {result.imported} of {result.total} products
                 </p>

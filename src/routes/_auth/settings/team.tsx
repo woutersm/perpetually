@@ -42,18 +42,16 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
 import {
-  Users,
   Trash2,
   Crown,
   Shield,
   User,
   Plus,
-  Mail,
   Clock,
   RotateCw,
-  X,
-} from "lucide-react";
+  X } from "lucide-react";
 import { toast } from "sonner";
+import { SettingsTabs } from "@/components/top-nav";
 
 export const Route = createFileRoute("/_auth/settings/team")({
   component: TeamPage,
@@ -154,33 +152,27 @@ function TeamPage() {
 
   return (
     <PageLayout
-      title="Team"
+      title="Settings"
       description="Manage who has access to your organization."
-      breadcrumbs={[
-        { label: "Settings", href: "/settings" },
-        { label: "Team" },
-      ]}
+      tabs={<SettingsTabs />}
       actions={
         <Button
           variant="vibrant"
-          className="shadow-lg shadow-vibrant/25"
+         
           onClick={() => setInviteOpen(true)}
         >
           <Plus className="h-4 w-4" />
-          Invite Member
+          Invite member
         </Button>
       }
     >
-      <div className="max-w-4xl space-y-6">
+      <div className="max-w-3xl space-y-6">
         {/* Team Members */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Users className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Team Members</h2>
+                <h2 className="font-medium">Team members</h2>
                 <p className="text-sm text-muted-foreground">
                   {members.length} {members.length === 1 ? "member" : "members"}
                 </p>
@@ -190,24 +182,21 @@ function TeamPage() {
 
           {members.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mx-auto mb-4">
-                <Users className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No team members</h3>
+              <h3 className="text-lg font-medium mb-2">No team members</h3>
               <p className="text-sm text-muted-foreground mb-6">
                 Invite team members to collaborate on your organization.
               </p>
               <Button
                 variant="vibrant"
-                className="shadow-lg shadow-vibrant/25"
+               
                 onClick={() => setInviteOpen(true)}
               >
                 <Plus className="h-4 w-4" />
-                Invite Member
+                Invite member
               </Button>
             </div>
           ) : (
-            <div className="divide-y divide-border/40">
+            <div className="divide-y divide-border">
               {members.map((member) => (
                 <div
                   key={member.id}
@@ -218,10 +207,10 @@ function TeamPage() {
                       <img
                         src={member.user.image}
                         alt={member.user.name || ""}
-                        className="h-11 w-11 rounded-xl object-cover"
+                        className="h-11 w-11 rounded-md object-cover"
                       />
                     ) : (
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-vibrant text-white font-semibold text-sm shadow-lg shadow-vibrant/25">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-gradient-vibrant text-white font-medium text-sm">
                         {member.user?.name?.[0]?.toUpperCase() || "?"}
                       </div>
                     )}
@@ -289,14 +278,11 @@ function TeamPage() {
 
         {/* Pending Invitations */}
         {invitations.length > 0 && (
-          <div className="rounded-2xl border border-border/60 overflow-hidden">
-            <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+          <div className="rounded-md border border-border overflow-hidden">
+            <div className="border-b border-border px-6 py-5">
               <div className="flex items-center gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100">
-                  <Mail className="h-5 w-5 text-amber-600" />
-                </div>
                 <div>
-                  <h2 className="font-semibold">Pending Invitations</h2>
+                  <h2 className="font-medium">Pending invitations</h2>
                   <p className="text-sm text-muted-foreground">
                     {invitations.length} pending
                   </p>
@@ -304,16 +290,13 @@ function TeamPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-border/40">
+            <div className="divide-y divide-border">
               {invitations.map((invite) => (
                 <div
                   key={invite.id}
                   className="flex items-center justify-between px-6 py-4 hover:bg-muted/20 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                      <Mail className="h-5 w-5" />
-                    </div>
                     <div>
                       <p className="font-medium">{invite.email}</p>
                       <p className="text-sm text-muted-foreground flex items-center gap-1.5">
@@ -353,7 +336,7 @@ function TeamPage() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite Team Member</DialogTitle>
+            <DialogTitle>Invite a team member</DialogTitle>
             <DialogDescription>
               Send an invitation to join your organization. They'll receive an email
               with a link to accept.
@@ -379,7 +362,7 @@ function TeamPage() {
               variant="vibrant"
               onClick={handleInvite}
               disabled={!inviteEmail || inviteLoading}
-              className="shadow-lg shadow-vibrant/25"
+             
             >
               {inviteLoading ? "Sending..." : "Send Invitation"}
             </Button>
@@ -431,7 +414,7 @@ function TeamPage() {
               onClick={handleCancelInvite}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Cancel Invitation
+              Cancel invitation
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

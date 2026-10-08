@@ -6,9 +6,10 @@ import db from "@/lib/db/db";
 import { invitation, organization, user, membership } from "@/lib/db/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
-import { Users, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { XCircle, AlertCircle } from "lucide-react";
 import { getSessionFn } from "@/functions/sessions";
 import { toast } from "sonner";
+import { Wordmark } from "@/components/top-nav";
 
 // Get invitation details (public)
 const getInvitationDetails = createServerFn({ method: "GET" })
@@ -154,7 +155,7 @@ function InvitePage() {
         <Header />
         <main className="flex-1 flex items-center justify-center px-6 py-12">
           <div className="w-full max-w-sm text-center space-y-6">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 mx-auto">
+            <div className="flex h-16 w-16 items-center justify-center rounded-md bg-destructive/10 mx-auto">
               {inviteResult.error === "expired" ? (
                 <AlertCircle className="h-8 w-8 text-amber-500" />
               ) : (
@@ -162,7 +163,7 @@ function InvitePage() {
               )}
             </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight">
+              <h1 className="text-2xl font-medium tracking-tight">
                 {inviteResult.error === "expired"
                   ? "Invitation Expired"
                   : "Invitation Not Found"}
@@ -173,7 +174,7 @@ function InvitePage() {
                   : "This invitation link is invalid or has already been used."}
               </p>
             </div>
-            <Button variant="vibrant" className="shadow-lg shadow-vibrant/25" asChild>
+            <Button variant="vibrant" asChild>
               <Link to="/">Go to Homepage</Link>
             </Button>
           </div>
@@ -191,11 +192,8 @@ function InvitePage() {
         <Header />
         <main className="flex-1 flex items-center justify-center px-6 py-12">
           <div className="w-full max-w-sm text-center space-y-6">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 mx-auto">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight">You're in!</h1>
+              <h1 className="text-2xl font-medium tracking-tight">You're in!</h1>
               <p className="text-muted-foreground">
                 You've joined <strong>{invite.organization?.name}</strong>. Redirecting to dashboard...
               </p>
@@ -217,17 +215,14 @@ function InvitePage() {
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm space-y-8">
           <div className="text-center space-y-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-vibrant/10 mx-auto">
-              <Users className="h-8 w-8 text-vibrant" />
-            </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight">You're invited!</h1>
+              <h1 className="text-2xl font-medium tracking-tight">You're invited!</h1>
               <p className="text-muted-foreground">
                 {invite.invitedBy?.name || "Someone"} invited you to join
               </p>
             </div>
-            <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
-              <p className="text-lg font-semibold">{invite.organization?.name}</p>
+            <div className="rounded-md border border-border bg-muted/30 p-4">
+              <p className="text-lg font-medium">{invite.organization?.name}</p>
               <p className="text-sm text-muted-foreground">as a team member</p>
             </div>
           </div>
@@ -242,23 +237,23 @@ function InvitePage() {
                 <div className="space-y-3">
                   <Button
                     variant="vibrant"
-                    className="w-full shadow-lg shadow-vibrant/25"
+                    className="w-full"
                     asChild
                   >
                     <Link to="/register" search={{ invite: token }}>
-                      Create Account
+                      Create account
                     </Link>
                   </Button>
                   <Button variant="outline" className="w-full" asChild>
                     <Link to="/login" search={{ invite: token }}>
-                      Sign In
+                      Sign in
                     </Link>
                   </Button>
                 </div>
               </>
             ) : !emailMatches ? (
               <>
-                <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
+                <div className="rounded-md bg-amber-50 border border-amber-200 p-4">
                   <p className="text-sm text-amber-800">
                     You're signed in as <strong>{session.user.email}</strong>, but this invitation
                     was sent to <strong>{invite.email}</strong>.
@@ -280,11 +275,11 @@ function InvitePage() {
                 </p>
                 <Button
                   variant="vibrant"
-                  className="w-full shadow-lg shadow-vibrant/25"
+                  className="w-full"
                   onClick={handleAccept}
                   disabled={loading}
                 >
-                  {loading ? "Joining..." : "Accept Invitation"}
+                  {loading ? "Joining..." : "Accept invitation"}
                 </Button>
               </>
             )}
@@ -306,13 +301,10 @@ function InvitePage() {
 
 function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-vibrant shadow-lg shadow-vibrant/25 transition-transform group-hover:scale-105">
-            <span className="text-sm font-bold text-white">P</span>
-          </div>
-          <span className="text-lg font-semibold tracking-tight">Perpetually</span>
+          <Wordmark />
         </Link>
       </div>
     </header>

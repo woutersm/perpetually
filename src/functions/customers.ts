@@ -2,8 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { wideEventMiddleware } from "@/middleware/wide-event";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
-import { customer, license } from "@/lib/db/schema";
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { customer, license, product } from "@/lib/db/schema";
+import { eq, and, desc, sql, inArray, count } from "drizzle-orm";
 
 // Get all customers for the current organization
 // Filtered by customers who have at least one license matching the test mode
@@ -18,7 +18,7 @@ export const getCustomers = createServerFn({ method: "GET" })
 
     // Get customer IDs that have licenses in the current mode
     const customerIdsWithLicenses = await db
-      .selectDistinct({ customerId: license.customerId })
+      .select({ customerId: license.customerId, licenseCount: count() })
       .from(license)
       .where(
         and(
@@ -26,7 +26,9 @@ export const getCustomers = createServerFn({ method: "GET" })
           eq(license.isTest, isTestMode),
           sql`${license.customerId} IS NOT NULL`
         )
-      );
+      )
+      .groupBy(license.customerId);
+    const licenseCounts = new Map(customerIdsWithLicenses.map((c) => [c.customerId, c.licenseCount]));
 
     const customerIds = customerIdsWithLicenses
       .map((c) => c.customerId)
@@ -50,7 +52,7 @@ export const getCustomers = createServerFn({ method: "GET" })
 
     event.set("result.count", customers.length);
 
-    return customers;
+    return customers.map((c) => ({ ...c, licenseCount: licenseCounts.get(c.id) ?? 0 }));
   });
 
 // Get a single customer with licenses
@@ -78,8 +80,16 @@ export const getCustomer = createServerFn({ method: "GET" })
 
     // Get licenses for this customer (filtered by test mode)
     const licenses = await db
-      .select()
+      .select({
+        id: license.id,
+        key: license.key,
+        status: license.status,
+        expiresAt: license.expiresAt,
+        createdAt: license.createdAt,
+        productName: product.name,
+      })
       .from(license)
+      .leftJoin(product, eq(license.productId, product.id))
       .where(
         and(
           eq(license.customerId, data.customerId),

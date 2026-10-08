@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Copy, Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
@@ -52,7 +52,9 @@ function PlaygroundPage() {
     return { activationId };
   }, [endpoint, licenseId, selected, deviceName, activationId]);
 
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  // Set after mount so server and client render the same text
+  const [origin, setOrigin] = useState("");
+  useEffect(() => setOrigin(window.location.origin), []);
   const curl = [
     `curl -X POST ${origin}/api/v1/${endpoint} \\`,
     `  -H "Authorization: Bearer ${apiKey}" \\`,
@@ -98,7 +100,7 @@ function PlaygroundPage() {
                   setResponse(null);
                 }}
                 className={cn(
-                  "rounded-xl border px-3 py-2 text-left transition-colors",
+                  "rounded-md border px-3 py-2 text-left transition-colors",
                   endpoint === e.id
                     ? "border-vibrant bg-vibrant/5"
                     : "border-border/60 hover:bg-muted/50"
@@ -156,11 +158,11 @@ function PlaygroundPage() {
             </div>
           )}
 
-          <div className="relative rounded-2xl border border-border/60 bg-[#0d1117] p-4">
+          <div className="relative rounded-md border border-border bg-muted/60 p-4">
             <Button
               size="icon"
               variant="ghost"
-              className="absolute right-2 top-2 h-8 w-8 text-white/60 hover:text-white"
+              className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-foreground"
               onClick={() => {
                 navigator.clipboard.writeText(curl);
                 toast.success("Copied curl command");
@@ -168,7 +170,7 @@ function PlaygroundPage() {
             >
               <Copy className="h-4 w-4" />
             </Button>
-            <pre className="overflow-x-auto text-xs leading-relaxed text-[#c9d1d9]">
+            <pre className="overflow-x-auto pr-8 text-xs leading-relaxed">
               <code>{curl}</code>
             </pre>
           </div>
@@ -180,9 +182,9 @@ function PlaygroundPage() {
         </div>
 
         {/* Response */}
-        <div className="rounded-2xl border border-border/60 bg-card">
-          <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-            <span className="text-sm font-medium">Response</span>
+        <div className="rounded-md border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <span className="label-caps">Response</span>
             {response && (
               <span className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Badge variant={response.status < 300 ? "default" : "destructive"}>{response.status}</Badge>

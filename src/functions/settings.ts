@@ -379,14 +379,14 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
           <div style="text-align: center; margin-bottom: 32px;">
-            <div style="display: inline-block; background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%); width: 48px; height: 48px; border-radius: 12px; line-height: 48px; color: white; font-weight: bold; font-size: 20px;">P</div>
+            <div style="display: inline-block; background: #171615; width: 48px; height: 48px; border-radius: 12px; line-height: 48px; color: white; font-weight: bold; font-size: 20px;">P</div>
           </div>
           <h1 style="font-size: 24px; font-weight: 600; margin: 0 0 16px; text-align: center; color: #111;">You're invited!</h1>
           <p style="color: #666; font-size: 16px; line-height: 1.6; margin: 0 0 24px; text-align: center;">
             You've been invited to join <strong>${org?.name || "an organization"}</strong> on Perpetually, the modern license management platform.
           </p>
           <div style="text-align: center; margin: 32px 0;">
-            <a href="${inviteUrl}" style="display: inline-block; background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">Accept Invitation</a>
+            <a href="${inviteUrl}" style="display: inline-block; background: #171615; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">Accept Invitation</a>
           </div>
           <p style="color: #999; font-size: 14px; line-height: 1.6; margin: 24px 0 0; text-align: center;">
             This invitation expires in 7 days. If you didn't expect this invitation, you can safely ignore this email.
@@ -481,14 +481,14 @@ export const resendInvitation = createServerFn({ method: "POST" })
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
           <div style="text-align: center; margin-bottom: 32px;">
-            <div style="display: inline-block; background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%); width: 48px; height: 48px; border-radius: 12px; line-height: 48px; color: white; font-weight: bold; font-size: 20px;">P</div>
+            <div style="display: inline-block; background: #171615; width: 48px; height: 48px; border-radius: 12px; line-height: 48px; color: white; font-weight: bold; font-size: 20px;">P</div>
           </div>
           <h1 style="font-size: 24px; font-weight: 600; margin: 0 0 16px; text-align: center; color: #111;">Reminder: You're invited!</h1>
           <p style="color: #666; font-size: 16px; line-height: 1.6; margin: 0 0 24px; text-align: center;">
             This is a reminder that you've been invited to join <strong>${org?.name || "an organization"}</strong> on Perpetually.
           </p>
           <div style="text-align: center; margin: 32px 0;">
-            <a href="${inviteUrl}" style="display: inline-block; background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">Accept Invitation</a>
+            <a href="${inviteUrl}" style="display: inline-block; background: #171615; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">Accept Invitation</a>
           </div>
           <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
           <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
@@ -587,7 +587,7 @@ export const updateBrandingSettings = createServerFn({ method: "POST" })
 
     // Validate accent color if provided
     if (data.brandAccentColor && !isValidHexColor(data.brandAccentColor)) {
-      throw new Error("Invalid accent color. Please use a hex color like #FF6B35");
+      throw new Error("Invalid accent color. Please use a hex color like #C2461A");
     }
 
     // Validate email if provided

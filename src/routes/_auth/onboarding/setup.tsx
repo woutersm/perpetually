@@ -155,7 +155,7 @@ function OnboardingSetup() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building className="h-5 w-5" />
-              Set Up Your Organization
+              Set up your organization
             </CardTitle>
             <CardDescription>
               Create your organization to start managing licenses
@@ -171,7 +171,7 @@ function OnboardingSetup() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Organization Name</Label>
+                  <Label htmlFor="name">Organization name</Label>
                   <Input
                     id="name"
                     name="name"

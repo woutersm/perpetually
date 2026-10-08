@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageLayout } from "@/components/page-layout";
+import { DataTable, DefinitionList, Mono, Section } from "@/components/blocks";
+import { Status } from "@/components/status";
+import { formatDate } from "@/lib/format";
 import { getProduct, createLicensePolicy } from "@/functions/products";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +20,6 @@ import { useForm } from "@tanstack/react-form";
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
-import { Plus, Package, Key, FileText, Layers, Clock, Infinity } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_auth/products/$productId")({
@@ -74,149 +75,57 @@ function ProductDetailPage() {
     },
   });
 
-  const getStatusVariant = (isActive: boolean) => {
-    return isActive ? "outline-success" : "secondary";
-  };
-
   return (
     <PageLayout
       title={product.name}
       description={product.description || undefined}
-      breadcrumbs={[
-        { label: "Products", href: "/products" },
-        { label: product.name },
-      ]}
+      breadcrumbs={[{ label: "Products", href: "/products" }, { label: product.name }]}
     >
-      <div className="space-y-6 max-w-5xl">
-        {/* Hero Header */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="bg-gradient-to-br from-vibrant/5 via-transparent to-transparent p-6">
-            <div className="flex items-start gap-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-vibrant text-white shadow-lg shadow-vibrant/25">
-                <Package className="h-8 w-8" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl font-bold">{product.name}</h1>
-                  <Badge variant={getStatusVariant(product.isActive)}>
-                    {product.isActive ? "active" : "inactive"}
-                  </Badge>
-                </div>
-                {product.description && (
-                  <p className="text-muted-foreground">{product.description}</p>
-                )}
-                <p className="text-sm text-muted-foreground mt-2">
-                  Created {new Date(product.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-border/60 p-5 hover:border-vibrant/40 hover:shadow-lg hover:shadow-vibrant/5 transition-all">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-vibrant/10">
-                <Key className="h-5 w-5 text-vibrant" />
-              </div>
-              <span className="text-sm text-muted-foreground">Licenses</span>
-            </div>
-            <p className="text-3xl font-bold">{product.licenseCount}</p>
-          </div>
-          <div className="rounded-2xl border border-border/60 p-5 hover:border-vibrant/40 hover:shadow-lg hover:shadow-vibrant/5 transition-all">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-vibrant/10">
-                <Layers className="h-5 w-5 text-vibrant" />
-              </div>
-              <span className="text-sm text-muted-foreground">Policies</span>
-            </div>
-            <p className="text-3xl font-bold">{product.licensePolicies.length}</p>
-          </div>
-        </div>
-
-        {/* License Policies */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Layers className="h-5 w-5 text-vibrant" />
-              </div>
-              <div>
-                <h2 className="font-semibold">License Policies</h2>
-                <p className="text-sm text-muted-foreground">
-                  Templates for issuing licenses to customers
-                </p>
-              </div>
-            </div>
-            <Button variant="vibrant" size="sm" onClick={() => setPolicyOpen(true)} className="shadow-lg shadow-vibrant/25">
-              <Plus className="h-4 w-4" />
-              New Policy
-            </Button>
-          </div>
-          {product.licensePolicies.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mx-auto mb-4">
-                <Layers className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No license policies yet</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Create a policy to define license terms.
-              </p>
-              <Button variant="vibrant" onClick={() => setPolicyOpen(true)} className="shadow-lg shadow-vibrant/25">
-                <Plus className="h-4 w-4" />
-                Create Policy
-              </Button>
-            </div>
-          ) : (
-            <div className="divide-y divide-border/40">
-              {product.licensePolicies.map((policy) => (
-                <div
-                  key={policy.id}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-muted/20 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{policy.name}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      {policy.licenseLengthDays ? `${policy.licenseLengthDays} days` : "Perpetual"}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[100px]">
-                      {policy.activationLimit ? (
-                        <>
-                          <Key className="h-4 w-4" />
-                          {policy.activationLimit} devices
-                        </>
-                      ) : (
-                        <>
-                          <Infinity className="h-4 w-4" />
-                          Unlimited
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <div className="max-w-xl">
+        <DefinitionList
+          items={[
+            { label: "Status", value: <Status status={product.isActive ? "active" : "inactive"} /> },
+            { label: "Licenses issued", value: <span className="tabular-nums">{product.licenseCount}</span> },
+            { label: "Stripe product", value: <Mono>{product.stripeProductId ?? "—"}</Mono> },
+            { label: "Last synced", value: formatDate(product.syncedAt, "Never") },
+          ]}
+        />
       </div>
+
+      <Section
+        title="License policies"
+        description="The first policy sets the duration and device limit for new licenses."
+        actions={
+          <Button variant="outline" size="sm" onClick={() => setPolicyOpen(true)}>
+            New policy
+          </Button>
+        }
+      >
+        <DataTable
+          rows={product.licensePolicies}
+          rowKey={(p) => p.id}
+          empty="No policies yet. Licenses default to one year and unlimited devices."
+          columns={[
+            { header: "Policy", width: "minmax(0,2fr)", cell: (p) => p.name },
+            {
+              header: "Duration",
+              width: "10rem",
+              cell: (p) => (p.licenseLengthDays ? `${p.licenseLengthDays} days` : "Perpetual"),
+            },
+            {
+              header: "Devices",
+              width: "8rem",
+              cell: (p) => (p.activationLimit ? p.activationLimit : "Unlimited"),
+            },
+          ]}
+        />
+      </Section>
 
       {/* New Policy Dialog */}
       <Dialog open={policyOpen} onOpenChange={setPolicyOpen}>
         <DialogContent>
           <DialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vibrant/10 mb-4">
-              <Layers className="h-6 w-6 text-vibrant" />
-            </div>
-            <DialogTitle>Create License Policy</DialogTitle>
+            <DialogTitle>New license policy</DialogTitle>
             <DialogDescription>
               Define a template for issuing licenses.
             </DialogDescription>
@@ -237,7 +146,7 @@ function ProductDetailPage() {
               >
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor={field.name}>Policy Name</Label>
+                    <Label htmlFor={field.name}>Policy name</Label>
                     <Input
                       id={field.name}
                       value={field.state.value}
@@ -309,7 +218,7 @@ function ProductDetailPage() {
                 selector={(state) => [state.canSubmit, state.isSubmitting]}
               >
                 {([canSubmit, isSubmitting]) => (
-                  <Button type="submit" variant="vibrant" disabled={!canSubmit} className="shadow-lg shadow-vibrant/25">
+                  <Button type="submit" variant="vibrant" disabled={!canSubmit}>
                     {isSubmitting ? "Creating..." : "Create Policy"}
                   </Button>
                 )}

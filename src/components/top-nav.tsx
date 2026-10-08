@@ -120,8 +120,8 @@ export function TopNav({
 export function SettingsTabs() {
   const { pathname } = useLocation();
   return (
-    <div className="border-b border-border">
-      <div className={cn(CONTENT_WIDTH, "flex gap-1")}>
+    <div className="-mt-4 mb-10 border-b border-border">
+      <div className="flex gap-6">
         {SETTINGS_TABS.map((tab) => {
           const active = tab.url === "/settings" ? pathname === "/settings" : pathname.startsWith(tab.url);
           return (
@@ -129,7 +129,7 @@ export function SettingsTabs() {
               key={tab.url}
               to={tab.url}
               className={cn(
-                "-mb-px border-b px-3 py-3 text-sm transition-colors",
+                "-mb-px border-b pb-3 text-sm transition-colors",
                 active
                   ? "border-foreground text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"

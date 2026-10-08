@@ -27,6 +27,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         id: license.id,
         status: license.status,
         createdAt: license.createdAt,
+        expiresAt: license.expiresAt,
       })
       .from(license)
       .where(
@@ -36,7 +37,22 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         )
       );
 
-    const activeLicenses = licenses.filter((l) => l.status === "active").length;
+    // Expired licenses keep status "active"; count only ones still valid
+    const activeLicenses = licenses.filter(
+      (l) => l.status === "active" && (!l.expiresAt || new Date(l.expiresAt) > new Date())
+    ).length;
+
+    // Licenses issued per week for the last 26 weeks (oldest first)
+    const WEEK = 7 * 24 * 60 * 60 * 1000;
+    const weekZero = Date.now() - 26 * WEEK;
+    const weekly = Array.from({ length: 26 }, (_, i) => ({
+      weekStart: new Date(weekZero + i * WEEK).toISOString(),
+      count: 0,
+    }));
+    for (const l of licenses) {
+      const index = Math.floor((new Date(l.createdAt).getTime() - weekZero) / WEEK);
+      if (index >= 0 && index < weekly.length) weekly[index].count++;
+    }
 
     // Calculate license trend (last 30 days vs previous 30 days)
     const now = new Date();
@@ -106,7 +122,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         )
       )
       .orderBy(desc(license.createdAt))
-      .limit(5);
+      .limit(8);
 
     // Get expiring licenses (within next 30 days)
     const expiringLicenses = await db
@@ -135,6 +151,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       totalCustomers: customerCount?.count ?? 0,
       totalActivations: activationCount?.count ?? 0,
       licenseTrend,
+      weekly,
       recentLicenses,
       expiringLicenses,
     };

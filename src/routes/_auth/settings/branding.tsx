@@ -23,18 +23,12 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
 import {
-  Palette,
-  Image,
-  Mail,
-  Eye,
-  EyeOff,
   RotateCcw,
-  Lock,
   Sparkles,
   ArrowRight,
-  ExternalLink,
-} from "lucide-react";
+  ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { SettingsTabs } from "@/components/top-nav";
 
 export const Route = createFileRoute("/_auth/settings/branding")({
   component: BrandingPage,
@@ -53,7 +47,7 @@ function BrandingPage() {
   // Form state
   const [logo, setLogo] = useState(branding.brandLogo || "");
   const [accentColor, setAccentColor] = useState(
-    branding.brandAccentColor || "#FF6B35"
+    branding.brandAccentColor || "#C2461A"
   );
   const [supportEmail, setSupportEmail] = useState(
     branding.brandSupportEmail || ""
@@ -91,7 +85,7 @@ function BrandingPage() {
     try {
       await submitReset({});
       setLogo("");
-      setAccentColor("#FF6B35");
+      setAccentColor("#C2461A");
       setSupportEmail("");
       setHidePoweredBy(false);
       setResetOpen(false);
@@ -106,19 +100,13 @@ function BrandingPage() {
   if (!branding.featureEnabled) {
     return (
       <PageLayout
-        title="Branding"
+        title="Settings"
         description="Customize your customer portal and emails with your brand."
-        breadcrumbs={[
-          { label: "Settings", href: "/settings" },
-          { label: "Branding" },
-        ]}
+        tabs={<SettingsTabs />}
       >
-        <div className="max-w-2xl">
-          <div className="rounded-2xl border border-border/60 bg-muted/30 p-8 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 mx-auto mb-4">
-              <Lock className="h-8 w-8 text-amber-600" />
-            </div>
-            <h2 className="text-xl font-semibold mb-2">
+        <div className="max-w-3xl">
+          <div className="rounded-md border border-border bg-muted/30 p-8 text-center">
+            <h2 className="text-xl font-medium mb-2">
               Custom Branding is a Business Feature
             </h2>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
@@ -129,7 +117,7 @@ function BrandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button
                 variant="vibrant"
-                className="shadow-lg shadow-vibrant/25"
+               
                 asChild
               >
                 <Link to="/settings/billing">
@@ -147,12 +135,9 @@ function BrandingPage() {
 
   return (
     <PageLayout
-      title="Branding"
+      title="Settings"
       description="Customize your customer portal and emails with your brand."
-      breadcrumbs={[
-        { label: "Settings", href: "/settings" },
-        { label: "Branding" },
-      ]}
+      tabs={<SettingsTabs />}
       actions={
         <div className="flex items-center gap-3">
           <Button
@@ -161,27 +146,24 @@ function BrandingPage() {
             disabled={!branding.brandingEnabled}
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            Reset to Default
+            Reset to default
           </Button>
           <Button
             variant="vibrant"
-            className="shadow-lg shadow-vibrant/25"
+           
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving..." : "Save changes"}
           </Button>
         </div>
       }
     >
-      <div className="max-w-4xl space-y-6">
+      <div className="max-w-3xl space-y-6">
         {/* Preview Link */}
-        <div className="rounded-2xl border border-vibrant/30 bg-vibrant/5 p-4">
+        <div className="rounded-md border border-border bg-card p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-vibrant/10">
-                <Eye className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
                 <p className="font-medium">Preview your portal</p>
                 <p className="text-sm text-muted-foreground">
@@ -197,7 +179,7 @@ function BrandingPage() {
                   rel="noopener noreferrer"
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  Open Portal
+                  Open portal
                 </a>
               </Button>
             ) : (
@@ -210,14 +192,11 @@ function BrandingPage() {
         </div>
 
         {/* Logo */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Image className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Logo</h2>
+                <h2 className="font-medium">Logo</h2>
                 <p className="text-sm text-muted-foreground">
                   Your logo displayed in the portal header
                 </p>
@@ -239,7 +218,7 @@ function BrandingPage() {
               </p>
             </div>
             {logo && (
-              <div className="p-4 bg-muted/30 rounded-xl">
+              <div className="p-4 bg-muted/30 rounded-md">
                 <p className="text-xs text-muted-foreground mb-2">Preview:</p>
                 <img
                   src={logo}
@@ -255,14 +234,11 @@ function BrandingPage() {
         </div>
 
         {/* Accent Color */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Palette className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Accent Color</h2>
+                <h2 className="font-medium">Accent color</h2>
                 <p className="text-sm text-muted-foreground">
                   Primary color for buttons and accents
                 </p>
@@ -277,7 +253,7 @@ function BrandingPage() {
                   <Input
                     id="accentColor"
                     type="text"
-                    placeholder="#FF6B35"
+                    placeholder="#C2461A"
                     value={accentColor}
                     onChange={(e) => setAccentColor(e.target.value)}
                     className="font-mono"
@@ -286,25 +262,25 @@ function BrandingPage() {
                     type="color"
                     value={accentColor}
                     onChange={(e) => setAccentColor(e.target.value)}
-                    className="h-10 w-14 rounded-lg border border-border cursor-pointer"
+                    className="h-10 w-14 rounded-md border border-border cursor-pointer"
                   />
                 </div>
               </div>
             </div>
-            <div className="p-4 bg-muted/30 rounded-xl space-y-3">
+            <div className="p-4 bg-muted/30 rounded-md space-y-3">
               <p className="text-xs text-muted-foreground">Preview:</p>
               <div className="flex items-center gap-3">
                 <button
-                  className="px-4 py-2 rounded-lg text-white text-sm font-medium"
+                  className="px-4 py-2 rounded-md text-white text-sm font-medium"
                   style={{ backgroundColor: accentColor }}
                 >
-                  Primary Button
+                  Primary button
                 </button>
                 <span
                   className="text-sm font-medium"
                   style={{ color: accentColor }}
                 >
-                  Accent Text
+                  Accent text
                 </span>
                 <div
                   className="h-6 w-6 rounded-full"
@@ -316,14 +292,11 @@ function BrandingPage() {
         </div>
 
         {/* Support Email */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Mail className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">Support Email</h2>
+                <h2 className="font-medium">Support email</h2>
                 <p className="text-sm text-muted-foreground">
                   Contact email shown in the portal
                 </p>
@@ -332,7 +305,7 @@ function BrandingPage() {
           </div>
           <div className="p-6">
             <div className="space-y-2">
-              <Label htmlFor="supportEmail">Email Address</Label>
+              <Label htmlFor="supportEmail">Email address</Label>
               <Input
                 id="supportEmail"
                 type="email"
@@ -348,14 +321,11 @@ function BrandingPage() {
         </div>
 
         {/* Hide Powered By */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5">
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="border-b border-border px-6 py-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <EyeOff className="h-5 w-5 text-vibrant" />
-              </div>
               <div>
-                <h2 className="font-semibold">White Label</h2>
+                <h2 className="font-medium">White label</h2>
                 <p className="text-sm text-muted-foreground">
                   Remove Perpetually branding from your portal
                 </p>
@@ -395,7 +365,7 @@ function BrandingPage() {
               onClick={handleReset}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Reset Branding
+              Reset branding
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

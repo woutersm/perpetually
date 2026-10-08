@@ -124,7 +124,7 @@ export const organization = sqliteTable("organization", {
 
   brandingEnabled: integer("branding_enabled", { mode: "boolean" }).default(false).notNull(),
   brandLogo: text("brand_logo"), // URL to logo image
-  brandAccentColor: text("brand_accent_color"), // Hex color, e.g., "#FF6B35"
+  brandAccentColor: text("brand_accent_color"), // Hex color, e.g., "#C2461A"
   brandSupportEmail: text("brand_support_email"),
   brandHidePoweredBy: integer("brand_hide_powered_by", { mode: "boolean" }).default(false).notNull(),
 });

@@ -4,7 +4,8 @@ import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Mail, CheckCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { Wordmark } from "@/components/top-nav";
 
 export const Route = createFileRoute("/forgot-password")({
   component: ForgotPasswordPage,
@@ -44,13 +45,10 @@ function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-vibrant shadow-lg shadow-vibrant/25 transition-transform group-hover:scale-105">
-              <span className="text-sm font-bold text-white">P</span>
-            </div>
-            <span className="text-lg font-semibold tracking-tight">Perpetually</span>
+            <Wordmark />
           </Link>
           <Button variant="outline" size="sm" asChild>
             <Link to="/login">
@@ -65,11 +63,8 @@ function ForgotPasswordPage() {
         <div className="w-full max-w-sm space-y-8">
           {sent ? (
             <div className="text-center space-y-6">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 mx-auto">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
               <div className="space-y-2">
-                <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
+                <h1 className="text-2xl font-medium tracking-tight">Check your email</h1>
                 <p className="text-muted-foreground">
                   We sent a password reset link to{" "}
                   <span className="font-medium text-foreground">{email}</span>
@@ -88,10 +83,7 @@ function ForgotPasswordPage() {
           ) : (
             <>
               <div className="text-center space-y-2">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-vibrant/10 mx-auto mb-4">
-                  <Mail className="h-7 w-7 text-vibrant" />
-                </div>
-                <h1 className="text-2xl font-bold tracking-tight">Forgot your password?</h1>
+                <h1 className="text-2xl font-medium tracking-tight">Forgot your password?</h1>
                 <p className="text-muted-foreground">
                   Enter your email and we'll send you a reset link
                 </p>
@@ -99,7 +91,7 @@ function ForgotPasswordPage() {
 
               <form className="space-y-6" onSubmit={handleSubmit}>
                 {error && (
-                  <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4">
+                  <div className="rounded-md bg-destructive/10 border border-destructive/20 p-4">
                     <p className="text-sm text-destructive">{error}</p>
                   </div>
                 )}
@@ -122,7 +114,7 @@ function ForgotPasswordPage() {
                   type="submit"
                   disabled={loading}
                   variant="vibrant"
-                  className="w-full h-11 shadow-lg shadow-vibrant/25"
+                  className="w-full h-11"
                 >
                   {loading ? "Sending..." : "Send reset link"}
                 </Button>

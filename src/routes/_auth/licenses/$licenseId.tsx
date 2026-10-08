@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageLayout } from "@/components/page-layout";
+import { DataTable, DefinitionList, Mono, Section } from "@/components/blocks";
+import { Status } from "@/components/status";
+import { formatDate } from "@/lib/format";
+import { format } from "date-fns";
 import {
   getLicense,
   getLicenseEvents,
@@ -10,7 +14,6 @@ import {
   deleteActivation,
 } from "@/functions/licenses";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +45,7 @@ import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
-import { Plus, Key, Monitor, Copy, Check, Calendar, User, Package, Trash2, Clock, Edit2, AlertTriangle, Power, Ban, History } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
@@ -90,7 +93,7 @@ const DISABLED_REASON_LABELS: Record<DisabledReason, string> = {
   refund: "Refund",
   chargeback: "Chargeback",
   fraud: "Fraud",
-  customer_request: "Customer Request",
+  customer_request: "Customer request",
   other: "Other",
 };
 
@@ -103,12 +106,12 @@ type EventType =
   | "activation.removed";
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  "license.created": "License Created",
-  "license.status_changed": "Status Changed",
-  "license.extended": "Expiration Extended",
-  "license.key_regenerated": "Key Regenerated",
-  "activation.created": "Activation Added",
-  "activation.removed": "Activation Removed",
+  "license.created": "License created",
+  "license.status_changed": "Status changed",
+  "license.extended": "Expiry extended",
+  "license.key_regenerated": "Key regenerated",
+  "activation.created": "Device added",
+  "activation.removed": "Device removed",
 };
 
 const ACTOR_TYPE_LABELS: Record<string, string> = {
@@ -228,419 +231,181 @@ function LicenseDetailPage() {
     new Date(license.expiresAt) < new Date();
 
   const displayStatus = isExpired ? "expired" : license.status;
+  const atLimit = license.activationLimit !== null && license.activations.length >= license.activationLimit;
+  const data = (event: LicenseEventData) => (event.data ?? {}) as Record<string, unknown>;
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "active":
-        return "outline-success";
-      case "expired":
-        return "outline-warning";
-      case "disabled":
-        return "outline-destructive";
+  const describeEvent = (event: LicenseEventData) => {
+    const d = data(event);
+    switch (event.type) {
+      case "license.status_changed":
+        return `${d.previousStatus} to ${d.newStatus}${
+          d.reason ? `, ${DISABLED_REASON_LABELS[d.reason as DisabledReason] ?? String(d.reason)}` : ""
+        }`;
+      case "license.extended":
+        return `Now expires ${formatDate(d.newExpiresAt as string | null, "never")}`;
+      case "activation.created":
+      case "activation.removed":
+        return String(d.name ?? "Unnamed device");
+      case "license.created":
+        return d.simulated ? "Simulated Stripe payment" : `Stripe payment${d.isTest ? " (test mode)" : ""}`;
       default:
-        return "secondary";
+        return null;
     }
   };
 
   return (
     <PageLayout
-      title="License Details"
-      breadcrumbs={[
-        { label: "Licenses", href: "/licenses" },
-        { label: license.key.substring(0, 12) + "..." },
-      ]}
+      title={license.key}
+      breadcrumbs={[{ label: "Licenses", href: "/licenses" }, { label: license.key }]}
       actions={
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setEditOpen(true)}>
-            <Edit2 className="h-4 w-4" />
+        <>
+          <Button variant="ghost" size="sm" onClick={copyToClipboard}>
+            {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+            Copy key
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             Edit
           </Button>
           {license.status === "disabled" ? (
-            <Button
-              variant="outline"
-              className="text-success border-success/30 hover:bg-success/10"
-              onClick={handleEnable}
-            >
-              <Power className="h-4 w-4" />
+            <Button variant="outline" size="sm" onClick={handleEnable}>
               Enable
             </Button>
           ) : (
-            <Button
-              variant="outline"
-              className="text-destructive border-destructive/30 hover:bg-destructive/10"
-              onClick={() => setDisableOpen(true)}
-            >
-              <Ban className="h-4 w-4" />
+            <Button variant="outline" size="sm" className="text-destructive" onClick={() => setDisableOpen(true)}>
               Disable
             </Button>
           )}
-        </div>
+        </>
       }
     >
-      <div className="space-y-6 max-w-5xl">
-        {/* Hero Header */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="bg-gradient-to-br from-vibrant/5 via-transparent to-transparent p-6">
-            <div className="flex items-start gap-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-vibrant text-white shadow-lg shadow-vibrant/25">
-                <Key className="h-8 w-8" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <code className="text-xl font-mono font-bold">{license.key}</code>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={copyToClipboard}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-success" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Badge variant={getStatusVariant(displayStatus)}>
-                    {displayStatus}
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Created {new Date(license.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-          </div>
+      {isExpired && (
+        <p className="mb-10 border-l-2 border-warning pl-4 text-sm">
+          Expired on {formatDate(license.expiresAt)}. The customer can't use it until you extend the expiry date.
+        </p>
+      )}
+      {license.status === "disabled" && (
+        <div className="mb-10 border-l-2 border-destructive pl-4 text-sm">
+          <p>
+            Disabled{license.disabledAt && ` on ${formatDate(license.disabledAt)}`}
+            {license.disabledReason && ` for ${DISABLED_REASON_LABELS[license.disabledReason as DisabledReason].toLowerCase()}`}.
+          </p>
+          {license.disabledNotes && <p className="mt-1 text-muted-foreground">{license.disabledNotes}</p>}
         </div>
+      )}
 
-        {/* Expired Status Alert */}
-        {isExpired && (
-          <div className="rounded-2xl border border-warning/30 bg-warning/5 p-5">
-            <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10">
-                <AlertTriangle className="h-5 w-5 text-warning" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-warning mb-1">License Expired</h3>
-                <p className="text-sm text-muted-foreground">
-                  This license expired on{" "}
-                  {new Date(license.expiresAt!).toLocaleDateString()}. The customer
-                  can no longer use it until the expiration date is extended.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Disabled Status Alert */}
-        {license.status === "disabled" && (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
-            <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10">
-                <Ban className="h-5 w-5 text-destructive" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-destructive mb-1">License Disabled</h3>
-                <p className="text-sm text-muted-foreground mb-2">
-                  This license was disabled{" "}
-                  {license.disabledAt
-                    ? `on ${new Date(license.disabledAt).toLocaleDateString()}`
-                    : ""}
-                  {license.disabledReason && (
-                    <>
-                      {" "}for reason:{" "}
-                      <span className="font-medium">
-                        {DISABLED_REASON_LABELS[license.disabledReason as DisabledReason]}
-                      </span>
-                    </>
-                  )}
-                </p>
-                {license.disabledNotes && (
-                  <p className="text-sm text-muted-foreground bg-background/50 rounded-lg p-3 mt-2">
-                    {license.disabledNotes}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Info Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link
-            to="/products/$productId"
-            params={{ productId: license.product?.id || "" }}
-            className="rounded-2xl border border-border/60 p-5 hover:border-vibrant/40 hover:shadow-lg hover:shadow-vibrant/5 transition-all group"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-vibrant/10 group-hover:bg-vibrant/20 transition-colors">
-                <Package className="h-5 w-5 text-vibrant" />
-              </div>
-              <span className="text-sm text-muted-foreground">Product</span>
-            </div>
-            <p className="font-medium truncate group-hover:text-vibrant transition-colors">
-              {license.product?.name || "—"}
-            </p>
-          </Link>
-
-          <Link
-            to="/customers/$customerId"
-            params={{ customerId: license.customer?.id || "" }}
-            className="rounded-2xl border border-border/60 p-5 hover:border-vibrant/40 hover:shadow-lg hover:shadow-vibrant/5 transition-all group"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-vibrant/10 group-hover:bg-vibrant/20 transition-colors">
-                <User className="h-5 w-5 text-vibrant" />
-              </div>
-              <span className="text-sm text-muted-foreground">Customer</span>
-            </div>
-            <p className="font-medium truncate group-hover:text-vibrant transition-colors">
-              {license.customer?.name || "—"}
-            </p>
-            {license.customer?.email && (
-              <p className="text-sm text-muted-foreground truncate">
-                {license.customer.email}
-              </p>
-            )}
-          </Link>
-
-          <div className="rounded-2xl border border-border/60 p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-vibrant/10">
-                <Calendar className="h-5 w-5 text-vibrant" />
-              </div>
-              <span className="text-sm text-muted-foreground">Expires</span>
-            </div>
-            <p className="font-medium">
-              {license.expiresAt
-                ? new Date(license.expiresAt).toLocaleDateString()
-                : "Never"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-border/60 p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-vibrant/10">
-                <Monitor className="h-5 w-5 text-vibrant" />
-              </div>
-              <span className="text-sm text-muted-foreground">Activations</span>
-            </div>
-            <p className="font-medium">
-              {license.activations.length}
-              {license.activationLimit !== null && (
-                <span className="text-muted-foreground font-normal">
-                  {" "}/ {license.activationLimit}
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
-
-        {/* Activations */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-                <Monitor className="h-5 w-5 text-vibrant" />
-              </div>
-              <div>
-                <h2 className="font-semibold">Activations</h2>
-                <p className="text-sm text-muted-foreground">
-                  Devices and machines using this license
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="vibrant"
-              size="sm"
-              onClick={() => setActivationOpen(true)}
-              disabled={
-                license.activationLimit !== null &&
-                license.activations.length >= license.activationLimit
-              }
-              className="shadow-lg shadow-vibrant/25"
-            >
-              <Plus className="h-4 w-4" />
-              Add Activation
-            </Button>
-          </div>
-
-          {license.activations.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mx-auto mb-4">
-                <Monitor className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No activations yet</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                This license hasn't been activated on any devices.
-              </p>
-              <Button
-                variant="vibrant"
-                onClick={() => setActivationOpen(true)}
-                disabled={
-                  license.activationLimit !== null &&
-                  license.activations.length >= license.activationLimit
-                }
-                className="shadow-lg shadow-vibrant/25"
-              >
-                <Plus className="h-4 w-4" />
-                Add Activation
-              </Button>
-            </div>
-          ) : (
-            <div className="divide-y divide-border/40">
-              {license.activations.map((activation: ActivationData) => (
-                <div
-                  key={activation.id}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-muted/20 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
-                      <Monitor className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{activation.name || "Unnamed device"}</p>
-                      {activation.machineId && (
-                        <p className="font-mono text-sm text-muted-foreground">
-                          {activation.machineId}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      {new Date(activation.createdAt).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[120px]">
-                      <Clock className="h-4 w-4" />
-                      {activation.lastSeenAt
-                        ? `Seen ${new Date(activation.lastSeenAt).toLocaleDateString()}`
-                        : "Never seen"}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => setDeleteActivationId(activation.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* History / Audit Trail */}
-        <div className="rounded-2xl border border-border/60 overflow-hidden">
-          <div className="border-b border-border/40 bg-muted/30 px-6 py-5 flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-vibrant/10">
-              <History className="h-5 w-5 text-vibrant" />
-            </div>
-            <div>
-              <h2 className="font-semibold">History</h2>
-              <p className="text-sm text-muted-foreground">
-                Audit trail of all events for this license
-              </p>
-            </div>
-          </div>
-
-          {events.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mx-auto mb-4">
-                <History className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No events yet</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                Events will appear here as actions are taken on this license.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border/40">
-              {events.map((event: LicenseEventData) => (
-                <div
-                  key={event.id}
-                  className="px-6 py-4 hover:bg-muted/20 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">
-                          {EVENT_TYPE_LABELS[event.type as EventType] || event.type}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {ACTOR_TYPE_LABELS[event.actorType] || event.actorType}
-                        </Badge>
-                      </div>
-                      {event.data && (
-                        <div className="text-sm text-muted-foreground">
-                          {event.type === "license.status_changed" && (
-                            <>
-                              {(event.data as Record<string, unknown>).previousStatus} →{" "}
-                              {(event.data as Record<string, unknown>).newStatus}
-                              {(event.data as Record<string, unknown>).reason && (
-                                <span className="ml-2">
-                                  (
-                                  {DISABLED_REASON_LABELS[
-                                    (event.data as Record<string, unknown>).reason as DisabledReason
-                                  ] || String((event.data as Record<string, unknown>).reason)}
-                                  )
-                                </span>
-                              )}
-                            </>
-                          )}
-                          {event.type === "license.extended" && (
-                            <>
-                              Extended to{" "}
-                              {(event.data as Record<string, unknown>).newExpiresAt
-                                ? new Date(
-                                    (event.data as Record<string, unknown>).newExpiresAt as string
-                                  ).toLocaleDateString()
-                                : "Never"}
-                            </>
-                          )}
-                          {event.type === "activation.created" && (
-                            <>
-                              Device:{" "}
-                              {(event.data as Record<string, unknown>).name || "Unnamed"}
-                            </>
-                          )}
-                          {event.type === "activation.removed" && (
-                            <>
-                              Device:{" "}
-                              {(event.data as Record<string, unknown>).name || "Unnamed"}
-                            </>
-                          )}
-                          {event.type === "license.created" && (
-                            <>
-                              Created from Stripe payment
-                              {(event.data as Record<string, unknown>).isTest && " (Test mode)"}
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap">
-                      <Clock className="h-4 w-4" />
-                      {new Date(event.createdAt).toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <Section title="License" className="mt-0">
+          <DefinitionList
+            items={[
+              { label: "Status", value: <Status status={displayStatus} /> },
+              { label: "Issued", value: formatDate(license.createdAt) },
+              { label: "Expires", value: formatDate(license.expiresAt, "Never") },
+              {
+                label: "Devices",
+                value: `${license.activations.length} of ${license.activationLimit ?? "unlimited"}`,
+              },
+            ]}
+          />
+        </Section>
+        <Section title="Bought" className="mt-0">
+          <DefinitionList
+            items={[
+              {
+                label: "Product",
+                value: license.product ? (
+                  <Link to="/products/$productId" params={{ productId: license.product.id }} className="hover:text-vibrant">
+                    {license.product.name}
+                  </Link>
+                ) : (
+                  "—"
+                ),
+              },
+              {
+                label: "Customer",
+                value: license.customer ? (
+                  <Link to="/customers/$customerId" params={{ customerId: license.customer.id }} className="hover:text-vibrant">
+                    {license.customer.name}
+                    <span className="block text-xs text-muted-foreground">{license.customer.email}</span>
+                  </Link>
+                ) : (
+                  "—"
+                ),
+              },
+              { label: "Payment", value: <Mono>{license.stripePaymentIntentId ?? "—"}</Mono> },
+            ]}
+          />
+        </Section>
       </div>
+
+      <Section
+        title="Devices"
+        description={atLimit ? "Activation limit reached." : undefined}
+        actions={
+          <Button variant="outline" size="sm" onClick={() => setActivationOpen(true)} disabled={atLimit}>
+            Add device
+          </Button>
+        }
+      >
+        <DataTable
+          rows={license.activations as ActivationData[]}
+          rowKey={(a) => a.id}
+          empty="Not activated on any device yet."
+          columns={[
+            {
+              header: "Device",
+              width: "minmax(0,2fr)",
+              cell: (a) => (
+                <>
+                  <div className="truncate">{a.name || "Unnamed device"}</div>
+                  {a.machineId && <Mono className="text-xs text-muted-foreground">{a.machineId}</Mono>}
+                </>
+              ),
+            },
+            { header: "Activated", width: "8rem", cell: (a) => <span className="tabular-nums text-muted-foreground">{formatDate(a.createdAt)}</span> },
+            { header: "Last seen", width: "8rem", cell: (a) => <span className="tabular-nums text-muted-foreground">{formatDate(a.lastSeenAt, "Never")}</span> },
+            {
+              header: "",
+              width: "5rem",
+              className: "text-right",
+              cell: (a) => (
+                <button
+                  onClick={() => setDeleteActivationId(a.id)}
+                  className="text-xs text-muted-foreground hover:text-destructive"
+                >
+                  Remove
+                </button>
+              ),
+            },
+          ]}
+        />
+      </Section>
+
+      <Section title="History">
+        {events.length === 0 ? (
+          <p className="border-t border-border py-4 text-sm text-muted-foreground">No events yet.</p>
+        ) : (
+          <ol className="border-t border-border">
+            {(events as LicenseEventData[]).map((event) => (
+              <li key={event.id} className="grid grid-cols-[10rem_minmax(0,1fr)_6rem] gap-6 border-b border-border py-3 text-sm">
+                <span className="tabular-nums text-muted-foreground">
+                  {format(new Date(event.createdAt), "d MMM yyyy, HH:mm")}
+                </span>
+                <span className="min-w-0">
+                  {EVENT_TYPE_LABELS[event.type] ?? event.type}
+                  {describeEvent(event) && <span className="text-muted-foreground"> · {describeEvent(event)}</span>}
+                </span>
+                <span className="text-right text-muted-foreground">{ACTOR_TYPE_LABELS[event.actorType] ?? event.actorType}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </Section>
 
       {/* Add Activation Dialog */}
       <Dialog open={activationOpen} onOpenChange={setActivationOpen}>
         <DialogContent>
           <DialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vibrant/10 mb-4">
-              <Monitor className="h-6 w-6 text-vibrant" />
-            </div>
-            <DialogTitle>Add Activation</DialogTitle>
+            <DialogTitle>Add device</DialogTitle>
             <DialogDescription>
               Manually activate this license on a device.
             </DialogDescription>
@@ -706,7 +471,7 @@ function LicenseDetailPage() {
                 selector={(state) => [state.canSubmit, state.isSubmitting]}
               >
                 {([canSubmit, isSubmitting]) => (
-                  <Button type="submit" variant="vibrant" disabled={!canSubmit} className="shadow-lg shadow-vibrant/25">
+                  <Button type="submit" variant="vibrant" disabled={!canSubmit}>
                     {isSubmitting ? "Adding..." : "Add Activation"}
                   </Button>
                 )}
@@ -720,10 +485,7 @@ function LicenseDetailPage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-vibrant/10 mb-4">
-              <Edit2 className="h-6 w-6 text-vibrant" />
-            </div>
-            <DialogTitle>Edit License</DialogTitle>
+            <DialogTitle>Edit license</DialogTitle>
             <DialogDescription>
               Update license expiration and activation limits.
             </DialogDescription>
@@ -738,7 +500,7 @@ function LicenseDetailPage() {
               <editForm.Field name="expiresAt">
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor={field.name}>Expiration Date</Label>
+                    <Label htmlFor={field.name}>Expiry date</Label>
                     <Input
                       id={field.name}
                       type="date"
@@ -757,7 +519,7 @@ function LicenseDetailPage() {
               <editForm.Field name="activationLimit">
                 {(field) => (
                   <div className="space-y-2">
-                    <Label htmlFor={field.name}>Activation Limit</Label>
+                    <Label htmlFor={field.name}>Device limit</Label>
                     <Input
                       id={field.name}
                       type="number"
@@ -787,7 +549,7 @@ function LicenseDetailPage() {
                 selector={(state) => [state.canSubmit, state.isSubmitting]}
               >
                 {([canSubmit, isSubmitting]) => (
-                  <Button type="submit" variant="vibrant" disabled={!canSubmit} className="shadow-lg shadow-vibrant/25">
+                  <Button type="submit" variant="vibrant" disabled={!canSubmit}>
                     {isSubmitting ? "Saving..." : "Save Changes"}
                   </Button>
                 )}
@@ -801,10 +563,7 @@ function LicenseDetailPage() {
       <Dialog open={disableOpen} onOpenChange={setDisableOpen}>
         <DialogContent>
           <DialogHeader>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 mb-4">
-              <Ban className="h-6 w-6 text-destructive" />
-            </div>
-            <DialogTitle>Disable License</DialogTitle>
+            <DialogTitle>Disable license</DialogTitle>
             <DialogDescription>
               This will disable this license. The customer will no longer be
               able to use it. You can re-enable it later if needed.
@@ -832,7 +591,7 @@ function LicenseDetailPage() {
                         <SelectItem value="refund">Refund</SelectItem>
                         <SelectItem value="chargeback">Chargeback</SelectItem>
                         <SelectItem value="fraud">Fraud</SelectItem>
-                        <SelectItem value="customer_request">Customer Request</SelectItem>
+                        <SelectItem value="customer_request">Customer request</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>

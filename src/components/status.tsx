@@ -14,7 +14,7 @@ export const statuses = [
   {
     value: "inactive",
     label: "Inactive",
-    variant: "secondary" as const,
+    variant: "outline-muted" as const,
   },
   {
     value: "disabled",
@@ -42,7 +42,7 @@ export function Status({ status }: { status: string }) {
   const s = statuses.find((s) => s.value === status.toLowerCase());
 
   if (!s) {
-    return <Badge variant="secondary">{status}</Badge>;
+    return <Badge variant="outline-muted">{status}</Badge>;
   }
 
   return <Badge variant={s.variant}>{s.label}</Badge>;
