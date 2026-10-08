@@ -13,6 +13,7 @@ import {
   FlaskConical,
   CreditCard,
   Palette,
+  Terminal,
 } from "lucide-react";
 
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -91,7 +92,17 @@ const settingsItems = [
   },
 ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+const playgroundItem = {
+  title: "API Playground",
+  url: "/playground",
+  icon: Terminal,
+};
+
+export function AppSidebar({
+  isSandbox = false,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { isSandbox?: boolean }) {
+  const overviewItems = isSandbox ? [...navItems, playgroundItem] : navItems;
   const location = useLocation();
   const { isTestMode, toggleTestMode } = useTestMode();
 
@@ -156,7 +167,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {overviewItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

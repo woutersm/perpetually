@@ -1,5 +1,5 @@
 import { authClient } from "@/lib/auth-client";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import db from "@/lib/db/db";
 import { invitation, organization } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { checkSlugAvailable } from "@/functions/organizations";
+import { getAppConfig } from "@/functions/demo";
 
 // Fetch invitation details for pre-filling (public)
 const getInvitationForRegister = createServerFn({ method: "GET" })
@@ -38,6 +39,11 @@ export const Route = createFileRoute("/register")({
   validateSearch: (search: Record<string, unknown>): RegisterSearch => ({
     invite: typeof search.invite === "string" ? search.invite : undefined,
   }),
+  beforeLoad: async () => {
+    // Public demos hand out sandboxes instead of real accounts
+    const { demoMode } = await getAppConfig();
+    if (demoMode) throw redirect({ to: "/" });
+  },
   component: RouteComponent,
   // @ts-expect-error - TanStack Router loader context type mismatch with validateSearch
   loader: async ({ search }: { search: RegisterSearch }) => {

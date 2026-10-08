@@ -17,10 +17,31 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { TryDemoButton } from "@/components/try-demo-button";
+import { getAppConfig } from "@/functions/demo";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
+  loader: () => getAppConfig(),
 });
+
+function useDemoMode() {
+  return Route.useLoaderData().demoMode;
+}
+
+/** Sign-up link, or a one-click sandbox when the app runs as a public demo */
+function CtaButton({
+  children,
+  ...props
+}: Omit<React.ComponentProps<typeof Button>, "asChild" | "onClick">) {
+  const demoMode = useDemoMode();
+  if (demoMode) return <TryDemoButton {...props}>{children}</TryDemoButton>;
+  return (
+    <Button {...props} asChild>
+      <Link to="/register">{children}</Link>
+    </Button>
+  );
+}
 
 function LandingPage() {
   return (
@@ -40,6 +61,7 @@ function LandingPage() {
 }
 
 function Navigation() {
+  const demoMode = useDemoMode();
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
@@ -56,8 +78,8 @@ function Navigation() {
           <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted">
             Pricing
           </a>
-          <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted">
-            Docs
+          <a href="#api" className="text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted">
+            API
           </a>
         </nav>
         <div className="flex items-center gap-3">
@@ -67,12 +89,10 @@ function Navigation() {
           >
             Sign in
           </Link>
-          <Button variant="vibrant" size="sm" className="shadow-lg shadow-vibrant/25" asChild>
-            <Link to="/register">
-              Get Started
-              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-            </Link>
-          </Button>
+          <CtaButton variant="vibrant" size="sm" className="shadow-lg shadow-vibrant/25">
+            {demoMode ? "Try the demo" : "Get Started"}
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </CtaButton>
         </div>
       </div>
     </header>
@@ -80,6 +100,7 @@ function Navigation() {
 }
 
 function Hero() {
+  const demoMode = useDemoMode();
   return (
     <section className="relative pt-16 pb-24 md:pt-24 md:pb-32 overflow-hidden">
       {/* Gradient orbs */}
@@ -118,17 +139,14 @@ function Hero() {
 
           {/* CTA buttons */}
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
+            <CtaButton
               variant="vibrant"
               size="lg"
               className="w-full sm:w-auto h-12 px-8 text-base shadow-xl shadow-vibrant/30 hover:shadow-vibrant/40 transition-shadow"
-              asChild
             >
-              <Link to="/register">
-                Start building free
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+              {demoMode ? "Try the live demo" : "Start building free"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </CtaButton>
             <Button
               variant="outline"
               size="lg"
@@ -143,7 +161,9 @@ function Hero() {
 
           {/* Trust line */}
           <p className="mt-6 text-sm text-muted-foreground/80">
-            Free to start &middot; No credit card required &middot; Setup in 5 minutes
+            {demoMode
+              ? "Your own private sandbox with sample data · No sign-up · Deleted after 24 hours"
+              : "Free to start · No credit card required · Setup in 5 minutes"}
           </p>
         </div>
 
@@ -344,9 +364,9 @@ function BentoFeatures() {
               </div>
               <div className="flex gap-8">
                 {[
-                  { value: "99.9%", label: "Uptime" },
-                  { value: "<50ms", label: "API Latency" },
                   { value: "REST", label: "API" },
+                  { value: "6", label: "Event types" },
+                  { value: "100%", label: "Audited" },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
                     <p className="text-2xl font-bold text-vibrant">{stat.value}</p>
@@ -363,6 +383,7 @@ function BentoFeatures() {
 }
 
 function CodePreview() {
+  const demoMode = useDemoMode();
   const [copied, setCopied] = useState(false);
 
   const code = `// Validate a license in your app
@@ -393,7 +414,7 @@ if (valid) {
   };
 
   return (
-    <section className="py-24 bg-muted/30 border-y border-border/40">
+    <section id="api" className="py-24 bg-muted/30 border-y border-border/40">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
@@ -423,12 +444,16 @@ if (valid) {
             </ul>
 
             <div className="mt-8">
-              <Button variant="vibrant" asChild>
-                <Link to="/login">
-                  View API docs
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+              {demoMode ? (
+                <TryDemoButton variant="vibrant" label="Try it in the API playground" />
+              ) : (
+                <Button variant="vibrant" asChild>
+                  <Link to="/login">
+                    View API docs
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
 
@@ -515,10 +540,10 @@ function Stats() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
-            { value: "99.9%", label: "Uptime", sublabel: "always available" },
-            { value: "<50ms", label: "API Response", sublabel: "p99 latency" },
-            { value: "Stripe", label: "Native", sublabel: "auto-sync" },
-            { value: "5 min", label: "Setup", sublabel: "to first license" },
+            { value: "3", label: "API endpoints", sublabel: "validate · activate · deactivate" },
+            { value: "16", label: "Character keys", sublabel: "XXXX-XXXX-XXXX-XXXX" },
+            { value: "Stripe", label: "Native", sublabel: "webhook-driven" },
+            { value: "Multi", label: "Tenant", sublabel: "teams & roles" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="text-4xl md:text-5xl font-bold tracking-tight text-gradient-vibrant">
@@ -565,6 +590,7 @@ function WhyPerpetually() {
 }
 
 function Pricing() {
+  const demoMode = useDemoMode();
   return (
     <section id="pricing" className="py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6">
@@ -575,6 +601,11 @@ function Pricing() {
           </h2>
           <p className="mt-4 text-muted-foreground">
             Start free, scale as you grow. No hidden fees.
+            {demoMode && (
+              <span className="block mt-2 text-sm">
+                Plans and limits are part of the demo; no real payments are taken.
+              </span>
+            )}
           </p>
         </div>
 
@@ -595,9 +626,9 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <Button variant="outline" className="w-full mt-8" asChild>
-              <Link to="/register">Get started free</Link>
-            </Button>
+            <CtaButton variant="outline" className="w-full mt-8">
+              Get started free
+            </CtaButton>
           </div>
 
           {/* Pro tier */}
@@ -619,9 +650,9 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <Button variant="vibrant" className="w-full mt-8 shadow-lg shadow-vibrant/25" asChild>
-              <Link to="/register">Start free trial</Link>
-            </Button>
+            <CtaButton variant="vibrant" className="w-full mt-8 shadow-lg shadow-vibrant/25">
+              Start free trial
+            </CtaButton>
           </div>
 
           {/* Business tier */}
@@ -640,9 +671,9 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <Button variant="outline" className="w-full mt-8" asChild>
-              <Link to="/register">Contact us</Link>
-            </Button>
+            <CtaButton variant="outline" className="w-full mt-8">
+              Contact us
+            </CtaButton>
           </div>
         </div>
       </div>
@@ -651,6 +682,7 @@ function Pricing() {
 }
 
 function FinalCTA() {
+  const demoMode = useDemoMode();
   return (
     <section className="py-24">
       <div className="max-w-7xl mx-auto px-6">
@@ -669,16 +701,13 @@ function FinalCTA() {
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <Button
+              <CtaButton
                 size="lg"
                 className="bg-white text-vibrant hover:bg-white/90 shadow-xl h-12 px-8"
-                asChild
               >
-                <Link to="/register">
-                  Start free
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+                {demoMode ? "Try the live demo" : "Start free"}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </CtaButton>
               <Button
                 size="lg"
                 variant="outline"
@@ -716,7 +745,13 @@ function Footer() {
           </nav>
 
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Perpetually. All rights reserved.
+            A portfolio project by{" "}
+            <a
+              href="https://github.com/woutersm/perpetually"
+              className="underline underline-offset-4 hover:text-foreground transition-colors"
+            >
+              Martijn Wouters
+            </a>
           </p>
         </div>
       </div>

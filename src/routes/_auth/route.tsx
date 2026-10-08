@@ -4,6 +4,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { getSessionFn, getTestModeFn } from "@/functions/sessions";
 import { TestModeProvider } from "@/lib/test-mode-context";
 import { FlaskConical } from "lucide-react";
+import { SandboxBanner } from "@/components/demo/sandbox-banner";
 
 export const Route = createFileRoute("/_auth")({
   beforeLoad: async ({ location }) => {
@@ -42,13 +43,16 @@ export const Route = createFileRoute("/_auth")({
 });
 
 function AuthLayout() {
-  const { isTestMode } = Route.useRouteContext();
+  const { isTestMode, organization } = Route.useRouteContext();
 
   return (
     <TestModeProvider initialValue={isTestMode}>
       <SidebarProvider>
-        <AppSidebar />
+        <AppSidebar isSandbox={!!organization?.sandboxExpiresAt} />
         <div className="flex-1 flex flex-col min-w-0">
+          {organization?.sandboxExpiresAt && (
+            <SandboxBanner expiresAt={organization.sandboxExpiresAt} />
+          )}
           {/* Test Mode Banner */}
           {isTestMode && (
             <div className="bg-warning/10 border-b border-warning/30 px-4 py-2">

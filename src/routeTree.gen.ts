@@ -17,6 +17,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite/$token'
+import { Route as AuthPlaygroundRouteImport } from './routes/_auth/playground'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthSettingsIndexRouteImport } from './routes/_auth/settings/index'
 import { Route as AuthProductsIndexRouteImport } from './routes/_auth/products/index'
@@ -80,6 +81,11 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthPlaygroundRoute = AuthPlaygroundRouteImport.update({
+  id: '/playground',
+  path: '/playground',
+  getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
   id: '/dashboard',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/playground': typeof AuthPlaygroundRoute
   '/invite/$token': typeof InviteTokenRoute
   '/customers/$customerId': typeof AuthCustomersCustomerIdRoute
   '/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/playground': typeof AuthPlaygroundRoute
   '/invite/$token': typeof InviteTokenRoute
   '/customers/$customerId': typeof AuthCustomersCustomerIdRoute
   '/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/playground': typeof AuthPlaygroundRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_auth/customers/$customerId': typeof AuthCustomersCustomerIdRoute
   '/_auth/licenses/$licenseId': typeof AuthLicensesLicenseIdRoute
@@ -313,6 +322,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/dashboard'
+    | '/playground'
     | '/invite/$token'
     | '/customers/$customerId'
     | '/licenses/$licenseId'
@@ -346,6 +356,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/dashboard'
+    | '/playground'
     | '/invite/$token'
     | '/customers/$customerId'
     | '/licenses/$licenseId'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/_auth/dashboard'
+    | '/_auth/playground'
     | '/invite/$token'
     | '/_auth/customers/$customerId'
     | '/_auth/licenses/$licenseId'
@@ -481,6 +493,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_auth/playground': {
+      id: '/_auth/playground'
+      path: '/playground'
+      fullPath: '/playground'
+      preLoaderRoute: typeof AuthPlaygroundRouteImport
+      parentRoute: typeof AuthRouteRoute
     }
     '/_auth/dashboard': {
       id: '/_auth/dashboard'
@@ -655,6 +674,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthPlaygroundRoute: typeof AuthPlaygroundRoute
   AuthCustomersCustomerIdRoute: typeof AuthCustomersCustomerIdRoute
   AuthLicensesLicenseIdRoute: typeof AuthLicensesLicenseIdRoute
   AuthOnboardingApiRoute: typeof AuthOnboardingApiRoute
@@ -675,6 +695,7 @@ interface AuthRouteRouteChildren {
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthPlaygroundRoute: AuthPlaygroundRoute,
   AuthCustomersCustomerIdRoute: AuthCustomersCustomerIdRoute,
   AuthLicensesLicenseIdRoute: AuthLicensesLicenseIdRoute,
   AuthOnboardingApiRoute: AuthOnboardingApiRoute,

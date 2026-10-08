@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Key } from "lucide-react";
 import { getSessionFn } from "@/functions/sessions";
+import { getAppConfig } from "@/functions/demo";
+import { TryDemoButton } from "@/components/try-demo-button";
 
 // Validate search params
 type LoginSearch = {
@@ -22,10 +24,12 @@ export const Route = createFileRoute("/login")({
       throw redirect({ to: "/dashboard" });
     }
   },
+  loader: () => getAppConfig(),
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const { demoMode } = Route.useLoaderData();
   const navigate = useNavigate();
   const { invite: inviteToken } = Route.useSearch();
   const [loading, setLoading] = useState(false);
@@ -102,12 +106,16 @@ function RouteComponent() {
             </div>
             <span className="text-lg font-semibold tracking-tight">Perpetually</span>
           </Link>
-          <Button variant="vibrant" size="sm" className="shadow-lg shadow-vibrant/25" asChild>
-            <Link to="/register" search={inviteToken ? { invite: inviteToken } : undefined}>
-              Get Started
-              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-            </Link>
-          </Button>
+          {demoMode ? (
+            <TryDemoButton variant="vibrant" size="sm" className="shadow-lg shadow-vibrant/25" label="Try the demo" />
+          ) : (
+            <Button variant="vibrant" size="sm" className="shadow-lg shadow-vibrant/25" asChild>
+              <Link to="/register" search={inviteToken ? { invite: inviteToken } : undefined}>
+                Get Started
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          )}
         </div>
       </header>
 
@@ -178,6 +186,14 @@ function RouteComponent() {
                 {loading ? "Signing in..." : "Sign in"}
               </Button>
 
+              {demoMode ? (
+                <div className="space-y-3 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Just looking around? Get a private sandbox with sample data.
+                  </p>
+                  <TryDemoButton type="button" variant="outline" className="w-full h-11" />
+                </div>
+              ) : (
               <p className="text-center text-sm text-muted-foreground">
                 Don't have an account?{" "}
                 <Link
@@ -188,6 +204,7 @@ function RouteComponent() {
                   Sign up
                 </Link>
               </p>
+              )}
             </form>
           </div>
         </div>
@@ -215,9 +232,9 @@ function RouteComponent() {
             {/* Mini stats */}
             <div className="flex justify-center gap-8 mt-8">
               {[
-                { value: "10M+", label: "Validations" },
-                { value: "99.9%", label: "Uptime" },
-                { value: "<50ms", label: "Latency" },
+                { value: "REST", label: "API" },
+                { value: "Stripe", label: "Native" },
+                { value: "Audit", label: "Trail" },
               ].map((stat) => (
                 <div key={stat.label} className="text-center">
                   <p className="text-xl font-bold text-vibrant">{stat.value}</p>
