@@ -23,8 +23,11 @@ bun run db:setup            # Run all database setup steps (generate, migrate, s
 
 ### Testing
 ```bash
-bun --bun run test          # Run all tests with Vitest
+bun --bun run test          # Run all tests (Bun test runner, vitest-style imports)
+bun run typecheck           # tsc --noEmit
 ```
+
+Tests hit the local `sqlite.db`, so run `bun run db:migrate` first. A lefthook pre-commit hook runs typecheck and tests.
 
 ---
 
@@ -45,38 +48,38 @@ bun --bun run test          # Run all tests with Vitest
 src/
 ├── routes/                    # File-based routing
 │   ├── __root.tsx            # Root layout (providers, toaster)
+│   ├── index.tsx             # Landing page
 │   ├── _auth/                # Protected routes (auth required)
-│   │   ├── route.tsx         # Auth layout with beforeLoad guard
-│   │   ├── customers/        # Customer management
-│   │   ├── products/         # Product management
-│   │   ├── licenses/         # License management
-│   │   ├── settings/         # Organization settings
-│   │   └── onboarding/       # Onboarding flow
-│   ├── api/                  # API endpoints
+│   │   ├── route.tsx         # Auth layout with beforeLoad guard, sandbox banner
+│   │   ├── dashboard.tsx
+│   │   ├── customers/ products/ licenses/
+│   │   ├── settings/         # General, billing, team, branding, API keys
+│   │   ├── playground.tsx    # API playground (demo sandboxes only)
+│   │   └── onboarding/       # Stripe connection flow
+│   ├── api/
 │   │   ├── auth/$.ts         # Better Auth handler
-│   │   └── hooks/$orgId.ts   # Stripe webhooks per org
-│   ├── login.tsx             # Public login route
-│   └── register.tsx          # Public registration route
-├── functions/                # Server functions by domain
-│   ├── sessions.ts           # Session management
-│   ├── organizations.ts      # Org CRUD
-│   ├── products.ts           # Product management
-│   ├── customers.ts          # Customer management
-│   ├── licenses.ts           # License & activation management
-│   └── settings.ts           # Org settings
+│   │   ├── hooks/$organizationId.ts  # Stripe webhooks per org
+│   │   ├── billing/webhook.ts        # Perpetually's own subscription billing
+│   │   └── v1/               # Public license API: validate, activate, deactivate
+│   ├── portal/$slug/$customerId.tsx  # Public customer portal
+│   ├── login.tsx, register.tsx, invite/$token.tsx, ...
+├── functions/                # Server functions by domain (incl. demo.ts)
 ├── lib/
-│   ├── db/
-│   │   ├── db.ts             # Database connection
-│   │   └── schema.ts         # Drizzle schema + relations
-│   ├── auth.ts               # Better Auth server config
-│   └── auth-client.ts        # Better Auth client
-├── middleware/
-│   └── auth.ts               # Auth middleware for server functions
-└── components/
-    ├── ui/                   # shadcn/ui primitives
-    ├── data-table/           # Reusable data table components
-    └── [component].tsx       # App-specific components
+│   ├── db/                   # db.ts (connection), schema.ts (tables + relations)
+│   ├── services/license.ts   # License business logic (validate, activate, issueLicense)
+│   ├── demo/                 # Sandboxes (sandbox.ts) and sample data (sample-data.ts)
+│   ├── api/utils.ts          # Zod request schemas, error -> status mapping
+│   ├── keys.ts               # License/secret key generation (CSPRNG)
+│   ├── auth.ts, auth-client.ts, audit.ts, logger.ts, wide-event.ts, trace-context.ts
+│   └── email/                # Resend templates and notifications
+├── middleware/               # auth.ts, wide-event.ts, tracing.ts
+├── components/               # ui/ (shadcn), data-table/, demo/, app components
+└── trigger/                  # Trigger.dev scheduled jobs (expiry notifications)
+scripts/seed.ts               # Test user + sample org (uses lib/demo/sample-data)
+server.ts                     # Bun production server (static assets + SSR handler)
 ```
+
+Keep business logic in `lib/services/` and call it from both API routes and server functions. Server functions can't be called from API routes in production builds ("Server function info not found").
 
 ### Path Aliases
 
@@ -673,9 +676,33 @@ DATABASE_URL=sqlite.db
 # Auth
 BETTER_AUTH_SECRET=your-secret-key
 
-# Stripe (per-organization, stored in DB)
-# Organizations store their own stripeApiKey and stripeWebhookSecret
+BETTER_AUTH_URL=http://localhost:3001
+APP_URL=http://localhost:3001
+
+# Public demo (see Demo Mode below)
+DEMO_MODE=true
+SANDBOX_TTL_HOURS=24
+
+# Stripe Connect tokens and webhook secrets are stored per organization in the DB
 ```
+
+See `.env.example` for the full list.
+
+---
+
+## Demo Mode
+
+With `DEMO_MODE=true` the app runs as a public demo:
+
+- "Try the demo" calls `startDemo` (`src/functions/demo.ts`), which creates a throwaway user and an organization with `sandboxExpiresAt` set, filled by `createDemoOrganization()`. The client then signs in with the returned credentials.
+- Sign-up is disabled (`disableSignUp` in `lib/auth.ts`, `/register` redirects). Sandbox users are created through Better Auth's internal adapter instead.
+- Expired sandboxes are deleted hourly and before each new sandbox; foreign keys cascade.
+- Anything calling Stripe or billing must call `assertNotSandbox(context.organization, "Feature")`.
+- `simulatePurchase` uses `issueLicense()`, the same code path as the Stripe webhook.
+
+## Docker
+
+`Dockerfile` builds a single image. `entrypoint.sh` runs migrations, seeds the test account unless `DEMO_MODE=true`, then starts `server.ts`. The database lives in the `/data` volume (`DATABASE_URL=/data/sqlite.db`). `src/styles.css` limits Tailwind to `src/` so client and server builds emit the same CSS hash; keep that `source(".")`.
 
 ---
 
