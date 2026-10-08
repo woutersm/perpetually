@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { wideEventMiddleware, type WideEventContext } from "@/middleware/wide-event";
+import { wideEventMiddleware } from "@/middleware/wide-event";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { customer, license } from "@/lib/db/schema";
@@ -11,7 +11,7 @@ export const getCustomers = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("customer.list")])
   .inputValidator((data: { isTestMode?: boolean }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
     const isTestMode = data?.isTestMode ?? false;
 
     event.set("filter.is_test", isTestMode);
@@ -58,7 +58,7 @@ export const getCustomer = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("customer.get")])
   .inputValidator((data: { customerId: string; isTestMode?: boolean }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
     const isTestMode = data?.isTestMode ?? false;
 
     event.set("customer.id", data.customerId);

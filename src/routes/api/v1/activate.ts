@@ -14,6 +14,7 @@ import {
   ActivateRequestSchema,
   licenseErrorToMessage,
   licenseErrorToStatus,
+  validationErrorResponse,
 } from "@/lib/api/utils";
 
 export const Route = createFileRoute("/api/v1/activate")({
@@ -64,16 +65,7 @@ export const Route = createFileRoute("/api/v1/activate")({
 
         const parsed = ActivateRequestSchema.safeParse(body);
         if (!parsed.success) {
-          return Response.json(
-            {
-              error: "Validation error",
-              details: parsed.error.errors.map((e) => ({
-                path: e.path.join("."),
-                message: e.message,
-              })),
-            },
-            { status: 400 }
-          );
+          return validationErrorResponse(parsed.error);
         }
 
         // Call core service

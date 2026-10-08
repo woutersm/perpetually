@@ -2,7 +2,6 @@ import { createMiddleware } from "@tanstack/react-start";
 import {
   runWithTrace,
   generateTraceId,
-  updateTraceContext,
 } from "@/lib/trace-context";
 
 /**
@@ -43,31 +42,5 @@ export const tracingMiddleware = createMiddleware().server(
     );
   }
 );
-
-/**
- * Function-level tracing middleware.
- *
- * Updates trace context with user/org info from auth middleware.
- */
-export function functionTracingMiddleware(_functionName: string) {
-  return createMiddleware({ type: "function" }).server(
-    async ({ next, context }) => {
-      // Extract context from auth middleware if available
-      const ctx = context as Record<string, unknown>;
-      const userId = ctx?.user?.id as string | undefined;
-      const orgId = ctx?.organizationId as string | undefined;
-
-      // Update trace context with user/org info
-      if (userId || orgId) {
-        updateTraceContext({
-          userId,
-          organizationId: orgId,
-        });
-      }
-
-      return next({ context });
-    }
-  );
-}
 
 export default tracingMiddleware;

@@ -14,6 +14,7 @@ import {
   DeactivateRequestSchema,
   activationErrorToMessage,
   activationErrorToStatus,
+  validationErrorResponse,
 } from "@/lib/api/utils";
 
 export const Route = createFileRoute("/api/v1/deactivate")({
@@ -64,16 +65,7 @@ export const Route = createFileRoute("/api/v1/deactivate")({
 
         const parsed = DeactivateRequestSchema.safeParse(body);
         if (!parsed.success) {
-          return Response.json(
-            {
-              error: "Validation error",
-              details: parsed.error.errors.map((e) => ({
-                path: e.path.join("."),
-                message: e.message,
-              })),
-            },
-            { status: 400 }
-          );
+          return validationErrorResponse(parsed.error);
         }
 
         // Call core service

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { wideEventMiddleware, type WideEventContext } from "@/middleware/wide-event";
+import { wideEventMiddleware } from "@/middleware/wide-event";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { license, activation, product, customer, licenseEvent } from "@/lib/db/schema";
@@ -38,7 +38,7 @@ export const getLicenses = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("license.list")])
   .inputValidator((data: { isTestMode?: boolean }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
     const isTestMode = data?.isTestMode ?? false;
 
     const licenses = await db
@@ -85,7 +85,7 @@ export const getLicense = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("license.get")])
   .inputValidator((data: { licenseId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const [licenseData] = await db
       .select({
@@ -157,7 +157,7 @@ export const updateLicense = createServerFn({ method: "POST" })
     }) => data
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, user, event } = context as typeof context & WideEventContext;
+    const { organizationId, user, event } = context;
     const { licenseId, ...updates } = data;
 
     // Get current license for comparison
@@ -221,7 +221,7 @@ export const createActivation = createServerFn({ method: "POST" })
     (data: { licenseId: string; name?: string; machineId?: string }) => data
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, user, event } = context as typeof context & WideEventContext;
+    const { organizationId, user, event } = context;
 
     event.set("license.id", data.licenseId);
 
@@ -268,7 +268,7 @@ export const deleteActivation = createServerFn({ method: "POST" })
   .middleware([authMiddleware, wideEventMiddleware("activation.delete")])
   .inputValidator((data: { activationId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, user, event } = context as typeof context & WideEventContext;
+    const { organizationId, user, event } = context;
 
     event.set("activation.id", data.activationId);
 
@@ -316,7 +316,7 @@ export const disableLicense = createServerFn({ method: "POST" })
     }) => data
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, user, event } = context as typeof context & WideEventContext;
+    const { organizationId, user, event } = context;
 
     event.set("license.id", data.licenseId);
     event.set("license.disable_reason", data.reason);
@@ -363,7 +363,7 @@ export const enableLicense = createServerFn({ method: "POST" })
   .middleware([authMiddleware, wideEventMiddleware("license.enable")])
   .inputValidator((data: { licenseId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, user, event } = context as typeof context & WideEventContext;
+    const { organizationId, user, event } = context;
 
     event.set("license.id", data.licenseId);
 
@@ -408,7 +408,7 @@ export const getLicenseEvents = createServerFn({ method: "GET" })
   .inputValidator((data: { licenseId: string }) => data)
   // @ts-expect-error - Drizzle json mode infers unknown for data field which conflicts with TanStack Start's type inference
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     event.set("license.id", data.licenseId);
 

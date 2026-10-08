@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { wideEventMiddleware, type WideEventContext } from "@/middleware/wide-event";
+import { wideEventMiddleware } from "@/middleware/wide-event";
 import authMiddleware from "@/middleware/auth";
 import db from "@/lib/db/db";
 import { product, licensePolicy, license } from "@/lib/db/schema";
@@ -9,7 +9,7 @@ import { eq, and, desc } from "drizzle-orm";
 export const getProducts = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("product.list")])
   .handler(async ({ context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const products = await db
       .select()
@@ -27,7 +27,7 @@ export const getProduct = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("product.get")])
   .inputValidator((data: { productId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     event.set("product.id", data.productId);
 
@@ -81,7 +81,7 @@ export const updateProduct = createServerFn({ method: "POST" })
     }) => data
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
     const { productId, description } = data;
 
     event.set("product.id", productId);
@@ -118,7 +118,7 @@ export const createLicensePolicy = createServerFn({ method: "POST" })
     }) => data
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     event.set("product.id", data.productId);
 

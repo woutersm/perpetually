@@ -101,7 +101,7 @@ export function wideEventMiddleware(
       const event = createWideEvent(eventName);
 
       // Extract auth context if available
-      const ctx = context as Record<string, unknown>;
+      const ctx = context as unknown as Record<string, unknown> | undefined;
       const user = ctx?.user as { id?: string; email?: string } | undefined;
       const organizationId = ctx?.organizationId as string | undefined;
 
@@ -126,14 +126,9 @@ export function wideEventMiddleware(
         event.set("input", sanitizeInput(data));
       }
 
-      // Inject event into context for handler to use
-      const enhancedContext = {
-        ...context,
-        event,
-      } as typeof context & WideEventContext;
-
       try {
-        const result = await next({ context: enhancedContext });
+        // Inject event into context for handler to use (merged with upstream context)
+        const result = await next({ context: { event } });
 
         if (!skipEmit) {
           event.success();
@@ -148,31 +143,6 @@ export function wideEventMiddleware(
       }
     }
   );
-}
-
-/**
- * Lightweight version for read-heavy operations.
- * Only emits on errors, not on success.
- *
- * Use for: getLicenses, getProducts, getCustomers, etc.
- */
-export function wideEventReadMiddleware(eventName: string) {
-  return wideEventMiddleware(eventName, {
-    includeInput: true,
-    skipEmit: false, // Still emit, but could be configured to skip success
-  });
-}
-
-/**
- * For mutations where we want full event capture.
- *
- * Use for: createLicense, updateCustomer, disableLicense, etc.
- */
-export function wideEventWriteMiddleware(eventName: string) {
-  return wideEventMiddleware(eventName, {
-    includeInput: true,
-    skipEmit: false,
-  });
 }
 
 export default wideEventMiddleware;

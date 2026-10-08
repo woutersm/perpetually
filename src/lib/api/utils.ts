@@ -91,7 +91,7 @@ export function validationErrorResponse(error: z.ZodError): Response {
   return Response.json(
     {
       error: ApiErrors.validationError,
-      details: error.errors.map((e) => ({
+      details: error.issues.map((e) => ({
         path: e.path.join("."),
         message: e.message,
       })),

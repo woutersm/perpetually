@@ -21,7 +21,7 @@ function generateSecretKey(): string {
 export const getOrganizationSettings = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("org.settings.get")])
   .handler(async ({ context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const [org] = await db
       .select({
@@ -52,7 +52,7 @@ export const updateOrganizationSettings = createServerFn({ method: "POST" })
   .middleware([authMiddleware, wideEventMiddleware("org.settings.update")])
   .inputValidator((data: { name?: string; slug?: string }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const [updated] = await db
       .update(organization)
@@ -75,7 +75,7 @@ export const updateOrganizationSettings = createServerFn({ method: "POST" })
 export const getTeamMembers = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("team.list")])
   .handler(async ({ context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const members = await db
       .select({
@@ -106,7 +106,7 @@ export const updateTeamMemberRole = createServerFn({ method: "POST" })
     (data: { membershipId: string; role: "owner" | "admin" | "member" }) => data
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     event.set("membership.id", data.membershipId);
     event.set("membership.new_role", data.role);
@@ -134,7 +134,7 @@ export const removeTeamMember = createServerFn({ method: "POST" })
   .middleware([authMiddleware, wideEventMiddleware("team.remove")])
   .inputValidator((data: { membershipId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     event.set("membership.id", data.membershipId);
 
@@ -161,7 +161,7 @@ export const removeTeamMember = createServerFn({ method: "POST" })
 export const getApiKeys = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("apikey.list")])
   .handler(async ({ context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const keys = await db
       .select({
@@ -193,7 +193,7 @@ export const createApiKey = createServerFn({ method: "POST" })
     (data: { name?: string; scopes?: string[]; expiresAt?: string }) => data
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const key = generateSecretKey();
 
@@ -221,7 +221,7 @@ export const deleteApiKey = createServerFn({ method: "POST" })
   .middleware([authMiddleware, wideEventMiddleware("apikey.delete")])
   .inputValidator((data: { keyId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     event.set("apikey.id", data.keyId);
 
@@ -260,7 +260,7 @@ function generateInviteToken(): string {
 export const getInvitations = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("invitation.list")])
   .handler(async ({ context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const invitations = await db
       .select({
@@ -418,7 +418,7 @@ export const cancelInvitation = createServerFn({ method: "POST" })
   .middleware([authMiddleware, wideEventMiddleware("invitation.cancel")])
   .inputValidator((data: { invitationId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     event.set("invitation.id", data.invitationId);
 
@@ -446,7 +446,7 @@ export const resendInvitation = createServerFn({ method: "POST" })
   .middleware([authMiddleware, wideEventMiddleware("invitation.resend")])
   .inputValidator((data: { invitationId: string }) => data)
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     event.set("invitation.id", data.invitationId);
 
@@ -523,7 +523,7 @@ function isValidHexColor(color: string): boolean {
 export const getBrandingSettings = createServerFn({ method: "GET" })
   .middleware([authMiddleware, wideEventMiddleware("branding.get")])
   .handler(async ({ context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const [org] = await db
       .select({
@@ -577,7 +577,7 @@ export const updateBrandingSettings = createServerFn({ method: "POST" })
     }) => data
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     // Check feature access
     const { allowed, tier } = await checkFeatureAccess(
@@ -652,7 +652,7 @@ export const updateBrandingSettings = createServerFn({ method: "POST" })
 export const resetBrandingSettings = createServerFn({ method: "POST" })
   .middleware([authMiddleware, wideEventMiddleware("branding.reset")])
   .handler(async ({ context }) => {
-    const { organizationId, event } = context as typeof context & WideEventContext;
+    const { organizationId, event } = context;
 
     const [updated] = await db
       .update(organization)
