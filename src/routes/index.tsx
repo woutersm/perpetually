@@ -278,14 +278,8 @@ function Closing() {
 function Footer() {
   return (
     <footer className="border-t border-border">
-      <div className={`${SECTION} flex flex-wrap items-center justify-between gap-4 py-8 text-sm text-muted-foreground`}>
+      <div className={`${SECTION} flex items-center py-8`}>
         <Wordmark />
-        <span>
-          A portfolio project by{" "}
-          <a href="https://github.com/woutersm/perpetually" className="underline hover:text-foreground">
-            Martijn Wouters
-          </a>
-        </span>
       </div>
     </footer>
   );
