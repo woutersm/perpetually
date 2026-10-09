@@ -5,6 +5,10 @@ WORKDIR /app
 ARG NODE_OPTIONS="--max-old-space-size=1536"
 ENV NODE_OPTIONS=${NODE_OPTIONS}
 
+# Baked into the client bundle at build time
+ARG VITE_APP_URL
+ENV VITE_APP_URL=${VITE_APP_URL}
+
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
