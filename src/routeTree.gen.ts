@@ -9,58 +9,47 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as LogoutRouteImport } from './routes/logout'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as InviteTokenRouteImport } from './routes/invite/$token'
-import { Route as AuthPlaygroundRouteImport } from './routes/_auth/playground'
+import { Route as AuthRouteRouteImport } from './routes/_auth/route'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as LogoutRouteImport } from './routes/logout'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
-import { Route as AuthSettingsIndexRouteImport } from './routes/_auth/settings/index'
-import { Route as AuthProductsIndexRouteImport } from './routes/_auth/products/index'
-import { Route as AuthOnboardingIndexRouteImport } from './routes/_auth/onboarding/index'
-import { Route as AuthLicensesIndexRouteImport } from './routes/_auth/licenses/index'
+import { Route as AuthPlaygroundRouteImport } from './routes/_auth/playground'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as AuthCustomersIndexRouteImport } from './routes/_auth/customers/index'
-import { Route as PortalSlugCustomerIdRouteImport } from './routes/portal/$slug/$customerId'
-import { Route as ApiV1ValidateRouteImport } from './routes/api/v1/validate'
-import { Route as ApiV1DeactivateRouteImport } from './routes/api/v1/deactivate'
-import { Route as ApiV1ActivateRouteImport } from './routes/api/v1/activate'
-import { Route as ApiHooksOrganizationIdRouteImport } from './routes/api/hooks/$organizationId'
-import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as AuthSettingsTeamRouteImport } from './routes/_auth/settings/team'
-import { Route as AuthSettingsBrandingRouteImport } from './routes/_auth/settings/branding'
-import { Route as AuthSettingsBillingRouteImport } from './routes/_auth/settings/billing'
-import { Route as AuthSettingsApiRouteImport } from './routes/_auth/settings/api'
-import { Route as AuthProductsProductIdRouteImport } from './routes/_auth/products/$productId'
-import { Route as AuthOnboardingWebhookRouteImport } from './routes/_auth/onboarding/webhook'
-import { Route as AuthOnboardingSetupRouteImport } from './routes/_auth/onboarding/setup'
-import { Route as AuthOnboardingImportRouteImport } from './routes/_auth/onboarding/import'
-import { Route as AuthOnboardingApiRouteImport } from './routes/_auth/onboarding/api'
-import { Route as AuthLicensesLicenseIdRouteImport } from './routes/_auth/licenses/$licenseId'
 import { Route as AuthCustomersCustomerIdRouteImport } from './routes/_auth/customers/$customerId'
+import { Route as AuthLicensesIndexRouteImport } from './routes/_auth/licenses/index'
+import { Route as AuthLicensesLicenseIdRouteImport } from './routes/_auth/licenses/$licenseId'
+import { Route as AuthOnboardingIndexRouteImport } from './routes/_auth/onboarding/index'
+import { Route as AuthOnboardingApiRouteImport } from './routes/_auth/onboarding/api'
+import { Route as AuthOnboardingImportRouteImport } from './routes/_auth/onboarding/import'
+import { Route as AuthOnboardingSetupRouteImport } from './routes/_auth/onboarding/setup'
+import { Route as AuthOnboardingWebhookRouteImport } from './routes/_auth/onboarding/webhook'
+import { Route as AuthProductsIndexRouteImport } from './routes/_auth/products/index'
+import { Route as AuthProductsProductIdRouteImport } from './routes/_auth/products/$productId'
+import { Route as AuthSettingsIndexRouteImport } from './routes/_auth/settings/index'
+import { Route as AuthSettingsApiRouteImport } from './routes/_auth/settings/api'
+import { Route as AuthSettingsBillingRouteImport } from './routes/_auth/settings/billing'
+import { Route as AuthSettingsBrandingRouteImport } from './routes/_auth/settings/branding'
+import { Route as AuthSettingsTeamRouteImport } from './routes/_auth/settings/team'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiBillingWebhookRouteImport } from './routes/api/billing/webhook'
+import { Route as ApiHooksOrganizationIdRouteImport } from './routes/api/hooks/$organizationId'
+import { Route as ApiV1ActivateRouteImport } from './routes/api/v1/activate'
+import { Route as ApiV1DeactivateRouteImport } from './routes/api/v1/deactivate'
+import { Route as ApiV1ValidateRouteImport } from './routes/api/v1/validate'
+import { Route as PortalSlugCustomerIdRouteImport } from './routes/portal/$slug/$customerId'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LogoutRoute = LogoutRouteImport.update({
-  id: '/logout',
-  path: '/logout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const AuthRouteRoute = AuthRouteRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -68,43 +57,49 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRouteRoute = AuthRouteRouteImport.update({
-  id: '/_auth',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LogoutRoute = LogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InviteTokenRoute = InviteTokenRouteImport.update({
-  id: '/invite/$token',
-  path: '/invite/$token',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthPlaygroundRoute = AuthPlaygroundRouteImport.update({
-  id: '/playground',
-  path: '/playground',
-  getParentRoute: () => AuthRouteRoute,
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthSettingsIndexRoute = AuthSettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
+const AuthPlaygroundRoute = AuthPlaygroundRouteImport.update({
+  id: '/playground',
+  path: '/playground',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthProductsIndexRoute = AuthProductsIndexRouteImport.update({
-  id: '/products/',
-  path: '/products/',
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCustomersIndexRoute = AuthCustomersIndexRouteImport.update({
+  id: '/customers/',
+  path: '/customers/',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthOnboardingIndexRoute = AuthOnboardingIndexRouteImport.update({
-  id: '/onboarding/',
-  path: '/onboarding/',
+const AuthCustomersCustomerIdRoute = AuthCustomersCustomerIdRouteImport.update({
+  id: '/customers/$customerId',
+  path: '/customers/$customerId',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthLicensesIndexRoute = AuthLicensesIndexRouteImport.update({
@@ -112,84 +107,14 @@ const AuthLicensesIndexRoute = AuthLicensesIndexRouteImport.update({
   path: '/licenses/',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthCustomersIndexRoute = AuthCustomersIndexRouteImport.update({
-  id: '/customers/',
-  path: '/customers/',
+const AuthLicensesLicenseIdRoute = AuthLicensesLicenseIdRouteImport.update({
+  id: '/licenses/$licenseId',
+  path: '/licenses/$licenseId',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const PortalSlugCustomerIdRoute = PortalSlugCustomerIdRouteImport.update({
-  id: '/portal/$slug/$customerId',
-  path: '/portal/$slug/$customerId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiV1ValidateRoute = ApiV1ValidateRouteImport.update({
-  id: '/api/v1/validate',
-  path: '/api/v1/validate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiV1DeactivateRoute = ApiV1DeactivateRouteImport.update({
-  id: '/api/v1/deactivate',
-  path: '/api/v1/deactivate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiV1ActivateRoute = ApiV1ActivateRouteImport.update({
-  id: '/api/v1/activate',
-  path: '/api/v1/activate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiHooksOrganizationIdRoute = ApiHooksOrganizationIdRouteImport.update({
-  id: '/api/hooks/$organizationId',
-  path: '/api/hooks/$organizationId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiBillingWebhookRoute = ApiBillingWebhookRouteImport.update({
-  id: '/api/billing/webhook',
-  path: '/api/billing/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthSettingsTeamRoute = AuthSettingsTeamRouteImport.update({
-  id: '/settings/team',
-  path: '/settings/team',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthSettingsBrandingRoute = AuthSettingsBrandingRouteImport.update({
-  id: '/settings/branding',
-  path: '/settings/branding',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthSettingsBillingRoute = AuthSettingsBillingRouteImport.update({
-  id: '/settings/billing',
-  path: '/settings/billing',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthSettingsApiRoute = AuthSettingsApiRouteImport.update({
-  id: '/settings/api',
-  path: '/settings/api',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthProductsProductIdRoute = AuthProductsProductIdRouteImport.update({
-  id: '/products/$productId',
-  path: '/products/$productId',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthOnboardingWebhookRoute = AuthOnboardingWebhookRouteImport.update({
-  id: '/onboarding/webhook',
-  path: '/onboarding/webhook',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthOnboardingSetupRoute = AuthOnboardingSetupRouteImport.update({
-  id: '/onboarding/setup',
-  path: '/onboarding/setup',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const AuthOnboardingImportRoute = AuthOnboardingImportRouteImport.update({
-  id: '/onboarding/import',
-  path: '/onboarding/import',
+const AuthOnboardingIndexRoute = AuthOnboardingIndexRouteImport.update({
+  id: '/onboarding/',
+  path: '/onboarding/',
   getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthOnboardingApiRoute = AuthOnboardingApiRouteImport.update({
@@ -197,15 +122,90 @@ const AuthOnboardingApiRoute = AuthOnboardingApiRouteImport.update({
   path: '/onboarding/api',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthLicensesLicenseIdRoute = AuthLicensesLicenseIdRouteImport.update({
-  id: '/licenses/$licenseId',
-  path: '/licenses/$licenseId',
+const AuthOnboardingImportRoute = AuthOnboardingImportRouteImport.update({
+  id: '/onboarding/import',
+  path: '/onboarding/import',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AuthCustomersCustomerIdRoute = AuthCustomersCustomerIdRouteImport.update({
-  id: '/customers/$customerId',
-  path: '/customers/$customerId',
+const AuthOnboardingSetupRoute = AuthOnboardingSetupRouteImport.update({
+  id: '/onboarding/setup',
+  path: '/onboarding/setup',
   getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthOnboardingWebhookRoute = AuthOnboardingWebhookRouteImport.update({
+  id: '/onboarding/webhook',
+  path: '/onboarding/webhook',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthProductsIndexRoute = AuthProductsIndexRouteImport.update({
+  id: '/products/',
+  path: '/products/',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthProductsProductIdRoute = AuthProductsProductIdRouteImport.update({
+  id: '/products/$productId',
+  path: '/products/$productId',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSettingsIndexRoute = AuthSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSettingsApiRoute = AuthSettingsApiRouteImport.update({
+  id: '/settings/api',
+  path: '/settings/api',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSettingsBillingRoute = AuthSettingsBillingRouteImport.update({
+  id: '/settings/billing',
+  path: '/settings/billing',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSettingsBrandingRoute = AuthSettingsBrandingRouteImport.update({
+  id: '/settings/branding',
+  path: '/settings/branding',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthSettingsTeamRoute = AuthSettingsTeamRouteImport.update({
+  id: '/settings/team',
+  path: '/settings/team',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBillingWebhookRoute = ApiBillingWebhookRouteImport.update({
+  id: '/api/billing/webhook',
+  path: '/api/billing/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHooksOrganizationIdRoute = ApiHooksOrganizationIdRouteImport.update({
+  id: '/api/hooks/$organizationId',
+  path: '/api/hooks/$organizationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1ActivateRoute = ApiV1ActivateRouteImport.update({
+  id: '/api/v1/activate',
+  path: '/api/v1/activate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1DeactivateRoute = ApiV1DeactivateRouteImport.update({
+  id: '/api/v1/deactivate',
+  path: '/api/v1/deactivate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1ValidateRoute = ApiV1ValidateRouteImport.update({
+  id: '/api/v1/validate',
+  path: '/api/v1/validate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalSlugCustomerIdRoute = PortalSlugCustomerIdRouteImport.update({
+  id: '/portal/$slug/$customerId',
+  path: '/portal/$slug/$customerId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -236,11 +236,11 @@ export interface FileRoutesByFullPath {
   '/api/v1/deactivate': typeof ApiV1DeactivateRoute
   '/api/v1/validate': typeof ApiV1ValidateRoute
   '/portal/$slug/$customerId': typeof PortalSlugCustomerIdRoute
-  '/customers': typeof AuthCustomersIndexRoute
-  '/licenses': typeof AuthLicensesIndexRoute
-  '/onboarding': typeof AuthOnboardingIndexRoute
-  '/products': typeof AuthProductsIndexRoute
-  '/settings': typeof AuthSettingsIndexRoute
+  '/customers/': typeof AuthCustomersIndexRoute
+  '/licenses/': typeof AuthLicensesIndexRoute
+  '/onboarding/': typeof AuthOnboardingIndexRoute
+  '/products/': typeof AuthProductsIndexRoute
+  '/settings/': typeof AuthSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -342,11 +342,11 @@ export interface FileRouteTypes {
     | '/api/v1/deactivate'
     | '/api/v1/validate'
     | '/portal/$slug/$customerId'
-    | '/customers'
-    | '/licenses'
-    | '/onboarding'
-    | '/products'
-    | '/settings'
+    | '/customers/'
+    | '/licenses/'
+    | '/onboarding/'
+    | '/products/'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -438,32 +438,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/logout': {
-      id: '/logout'
-      path: '/logout'
-      fullPath: '/logout'
-      preLoaderRoute: typeof LogoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -473,33 +459,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthRouteRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/invite/$token': {
-      id: '/invite/$token'
-      path: '/invite/$token'
-      fullPath: '/invite/$token'
-      preLoaderRoute: typeof InviteTokenRouteImport
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth/playground': {
-      id: '/_auth/playground'
-      path: '/playground'
-      fullPath: '/playground'
-      preLoaderRoute: typeof AuthPlaygroundRouteImport
-      parentRoute: typeof AuthRouteRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_auth/dashboard': {
       id: '/_auth/dashboard'
@@ -508,151 +494,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_auth/settings/': {
-      id: '/_auth/settings/'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthSettingsIndexRouteImport
+    '/_auth/playground': {
+      id: '/_auth/playground'
+      path: '/playground'
+      fullPath: '/playground'
+      preLoaderRoute: typeof AuthPlaygroundRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_auth/products/': {
-      id: '/_auth/products/'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof AuthProductsIndexRouteImport
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/customers/': {
+      id: '/_auth/customers/'
+      path: '/customers'
+      fullPath: '/customers/'
+      preLoaderRoute: typeof AuthCustomersIndexRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_auth/onboarding/': {
-      id: '/_auth/onboarding/'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof AuthOnboardingIndexRouteImport
+    '/_auth/customers/$customerId': {
+      id: '/_auth/customers/$customerId'
+      path: '/customers/$customerId'
+      fullPath: '/customers/$customerId'
+      preLoaderRoute: typeof AuthCustomersCustomerIdRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/_auth/licenses/': {
       id: '/_auth/licenses/'
       path: '/licenses'
-      fullPath: '/licenses'
+      fullPath: '/licenses/'
       preLoaderRoute: typeof AuthLicensesIndexRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/customers/': {
-      id: '/_auth/customers/'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof AuthCustomersIndexRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/portal/$slug/$customerId': {
-      id: '/portal/$slug/$customerId'
-      path: '/portal/$slug/$customerId'
-      fullPath: '/portal/$slug/$customerId'
-      preLoaderRoute: typeof PortalSlugCustomerIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/v1/validate': {
-      id: '/api/v1/validate'
-      path: '/api/v1/validate'
-      fullPath: '/api/v1/validate'
-      preLoaderRoute: typeof ApiV1ValidateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/v1/deactivate': {
-      id: '/api/v1/deactivate'
-      path: '/api/v1/deactivate'
-      fullPath: '/api/v1/deactivate'
-      preLoaderRoute: typeof ApiV1DeactivateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/v1/activate': {
-      id: '/api/v1/activate'
-      path: '/api/v1/activate'
-      fullPath: '/api/v1/activate'
-      preLoaderRoute: typeof ApiV1ActivateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/hooks/$organizationId': {
-      id: '/api/hooks/$organizationId'
-      path: '/api/hooks/$organizationId'
-      fullPath: '/api/hooks/$organizationId'
-      preLoaderRoute: typeof ApiHooksOrganizationIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/billing/webhook': {
-      id: '/api/billing/webhook'
-      path: '/api/billing/webhook'
-      fullPath: '/api/billing/webhook'
-      preLoaderRoute: typeof ApiBillingWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_auth/settings/team': {
-      id: '/_auth/settings/team'
-      path: '/settings/team'
-      fullPath: '/settings/team'
-      preLoaderRoute: typeof AuthSettingsTeamRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/settings/branding': {
-      id: '/_auth/settings/branding'
-      path: '/settings/branding'
-      fullPath: '/settings/branding'
-      preLoaderRoute: typeof AuthSettingsBrandingRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/settings/billing': {
-      id: '/_auth/settings/billing'
-      path: '/settings/billing'
-      fullPath: '/settings/billing'
-      preLoaderRoute: typeof AuthSettingsBillingRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/settings/api': {
-      id: '/_auth/settings/api'
-      path: '/settings/api'
-      fullPath: '/settings/api'
-      preLoaderRoute: typeof AuthSettingsApiRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/products/$productId': {
-      id: '/_auth/products/$productId'
-      path: '/products/$productId'
-      fullPath: '/products/$productId'
-      preLoaderRoute: typeof AuthProductsProductIdRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/onboarding/webhook': {
-      id: '/_auth/onboarding/webhook'
-      path: '/onboarding/webhook'
-      fullPath: '/onboarding/webhook'
-      preLoaderRoute: typeof AuthOnboardingWebhookRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/onboarding/setup': {
-      id: '/_auth/onboarding/setup'
-      path: '/onboarding/setup'
-      fullPath: '/onboarding/setup'
-      preLoaderRoute: typeof AuthOnboardingSetupRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/onboarding/import': {
-      id: '/_auth/onboarding/import'
-      path: '/onboarding/import'
-      fullPath: '/onboarding/import'
-      preLoaderRoute: typeof AuthOnboardingImportRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/_auth/onboarding/api': {
-      id: '/_auth/onboarding/api'
-      path: '/onboarding/api'
-      fullPath: '/onboarding/api'
-      preLoaderRoute: typeof AuthOnboardingApiRouteImport
       parentRoute: typeof AuthRouteRoute
     }
     '/_auth/licenses/$licenseId': {
@@ -662,12 +536,138 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLicensesLicenseIdRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_auth/customers/$customerId': {
-      id: '/_auth/customers/$customerId'
-      path: '/customers/$customerId'
-      fullPath: '/customers/$customerId'
-      preLoaderRoute: typeof AuthCustomersCustomerIdRouteImport
+    '/_auth/onboarding/': {
+      id: '/_auth/onboarding/'
+      path: '/onboarding'
+      fullPath: '/onboarding/'
+      preLoaderRoute: typeof AuthOnboardingIndexRouteImport
       parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/onboarding/api': {
+      id: '/_auth/onboarding/api'
+      path: '/onboarding/api'
+      fullPath: '/onboarding/api'
+      preLoaderRoute: typeof AuthOnboardingApiRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/onboarding/import': {
+      id: '/_auth/onboarding/import'
+      path: '/onboarding/import'
+      fullPath: '/onboarding/import'
+      preLoaderRoute: typeof AuthOnboardingImportRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/onboarding/setup': {
+      id: '/_auth/onboarding/setup'
+      path: '/onboarding/setup'
+      fullPath: '/onboarding/setup'
+      preLoaderRoute: typeof AuthOnboardingSetupRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/onboarding/webhook': {
+      id: '/_auth/onboarding/webhook'
+      path: '/onboarding/webhook'
+      fullPath: '/onboarding/webhook'
+      preLoaderRoute: typeof AuthOnboardingWebhookRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/products/': {
+      id: '/_auth/products/'
+      path: '/products'
+      fullPath: '/products/'
+      preLoaderRoute: typeof AuthProductsIndexRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/products/$productId': {
+      id: '/_auth/products/$productId'
+      path: '/products/$productId'
+      fullPath: '/products/$productId'
+      preLoaderRoute: typeof AuthProductsProductIdRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/settings/': {
+      id: '/_auth/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthSettingsIndexRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/settings/api': {
+      id: '/_auth/settings/api'
+      path: '/settings/api'
+      fullPath: '/settings/api'
+      preLoaderRoute: typeof AuthSettingsApiRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/settings/billing': {
+      id: '/_auth/settings/billing'
+      path: '/settings/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof AuthSettingsBillingRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/settings/branding': {
+      id: '/_auth/settings/branding'
+      path: '/settings/branding'
+      fullPath: '/settings/branding'
+      preLoaderRoute: typeof AuthSettingsBrandingRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/settings/team': {
+      id: '/_auth/settings/team'
+      path: '/settings/team'
+      fullPath: '/settings/team'
+      preLoaderRoute: typeof AuthSettingsTeamRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/webhook': {
+      id: '/api/billing/webhook'
+      path: '/api/billing/webhook'
+      fullPath: '/api/billing/webhook'
+      preLoaderRoute: typeof ApiBillingWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hooks/$organizationId': {
+      id: '/api/hooks/$organizationId'
+      path: '/api/hooks/$organizationId'
+      fullPath: '/api/hooks/$organizationId'
+      preLoaderRoute: typeof ApiHooksOrganizationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/activate': {
+      id: '/api/v1/activate'
+      path: '/api/v1/activate'
+      fullPath: '/api/v1/activate'
+      preLoaderRoute: typeof ApiV1ActivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/deactivate': {
+      id: '/api/v1/deactivate'
+      path: '/api/v1/deactivate'
+      fullPath: '/api/v1/deactivate'
+      preLoaderRoute: typeof ApiV1DeactivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/validate': {
+      id: '/api/v1/validate'
+      path: '/api/v1/validate'
+      fullPath: '/api/v1/validate'
+      preLoaderRoute: typeof ApiV1ValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/$slug/$customerId': {
+      id: '/portal/$slug/$customerId'
+      path: '/portal/$slug/$customerId'
+      fullPath: '/portal/$slug/$customerId'
+      preLoaderRoute: typeof PortalSlugCustomerIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
