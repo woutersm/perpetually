@@ -9,6 +9,7 @@
 		"start": "bun run server.ts",
 		"test": "bun --bun test",
 		"typecheck": "bunx tsc --noEmit",
+		"lint": "biome lint .",
 		"db:generate": "bunx drizzle-kit generate",
 		"db:migrate": "bunx drizzle-kit migrate",
 		"db:push": "bunx drizzle-kit push --force",
@@ -57,6 +58,7 @@
 		"zod": "^4.1.12"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.5.15",
 		"@tanstack/devtools-vite": "^0.3.12",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/react": "^16.2.0",

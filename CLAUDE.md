@@ -25,9 +25,10 @@ bun run db:setup            # Run all database setup steps (generate, migrate, s
 ```bash
 bun --bun run test          # Run all tests (Bun test runner, vitest-style imports)
 bun run typecheck           # tsc --noEmit
+bun run lint                # Biome (lint only, no formatter)
 ```
 
-Tests hit the local `sqlite.db`, so run `bun run db:migrate` first. A lefthook pre-commit hook runs typecheck and tests.
+Tests hit the local `sqlite.db`, so run `bun run db:migrate` first. A lefthook pre-commit hook runs lint, typecheck and tests. GitHub Actions (`.github/workflows/ci.yml`) runs the same on pushes to main and on PRs.
 
 ---
 

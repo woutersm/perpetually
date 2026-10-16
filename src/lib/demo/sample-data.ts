@@ -180,7 +180,7 @@ export async function createDemoOrganization({
     const owner = customers[i % customers.length];
     const productIndex = rand.pick(weightedProducts);
     const policy = rand.pick(PRODUCTS[productIndex].policies);
-    const ageDays = Math.floor(Math.pow(rand.next(), 1.6) * 180) + 1;
+    const ageDays = Math.floor(rand.next() ** 1.6 * 180) + 1;
     const createdAt = new Date(Math.max(owner.createdAt.getTime(), now - ageDays * DAY));
     const expiresAt =
       policy.licenseLengthDays === null
