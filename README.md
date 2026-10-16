@@ -138,3 +138,7 @@ src/
 └── trigger/           scheduled expiry notifications
 drizzle/               SQL migrations
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
