@@ -109,6 +109,21 @@ docker run -p 3000:3000 -v perpetually-data:/data \
   perpetually
 ```
 
+### Deploying the demo
+
+Every push to `main` runs CI. When lint, typecheck and tests pass, the `publish` job builds the image and pushes it to `ghcr.io/woutersm/perpetually` as `latest` and as the commit SHA. Nothing deploys on its own: the VPS keeps running its current image until you pull the new one.
+
+1. Push to `main` and wait for the `ci` run to finish (`gh run watch`).
+2. On the VPS, pull the image and restart the container:
+
+   ```bash
+   cd /root/wouters.dev
+   docker compose pull perpetually
+   docker compose up -d perpetually
+   ```
+
+Migrations run when the container starts. To roll back, point `image:` in the VPS's `compose.yaml` at an earlier SHA tag and run `docker compose up -d perpetually`.
+
 | Variable | Default | |
 |---|---|---|
 | `DATABASE_URL` | `/data/sqlite.db` | file path or `libsql://` URL |
