@@ -386,11 +386,14 @@ function LicenseDetailPage() {
         ) : (
           <ol className="border-t border-border">
             {(events as LicenseEventData[]).map((event) => (
-              <li key={event.id} className="grid grid-cols-[10rem_minmax(0,1fr)_6rem] gap-6 border-b border-border py-3 text-sm">
+              <li
+                key={event.id}
+                className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 border-b border-border py-3 text-sm sm:grid-cols-[10rem_minmax(0,1fr)_6rem] sm:gap-6"
+              >
                 <span className="tabular-nums text-muted-foreground">
                   {format(new Date(event.createdAt), "d MMM yyyy, HH:mm")}
                 </span>
-                <span className="min-w-0">
+                <span className="min-w-0 max-sm:order-last max-sm:col-span-2">
                   {EVENT_TYPE_LABELS[event.type] ?? event.type}
                   {describeEvent(event) && <span className="text-muted-foreground"> · {describeEvent(event)}</span>}
                 </span>

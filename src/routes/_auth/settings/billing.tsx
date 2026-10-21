@@ -153,8 +153,8 @@ function BillingPage() {
       <div className="space-y-6 max-w-3xl">
         {/* Current Plan */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
-            <div className="flex items-center justify-between">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-4">
                 <div>
                   <h2 className="font-medium">Current plan</h2>
@@ -166,8 +166,8 @@ function BillingPage() {
               {getStatusBadge()}
             </div>
           </div>
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="p-4 sm:p-6">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <Badge variant={getTierBadgeVariant(billing.tier)} className="text-sm px-3 py-1">
                   {billing.tier.charAt(0).toUpperCase() + billing.tier.slice(1)}
@@ -177,7 +177,7 @@ function BillingPage() {
                   <span className="text-sm font-normal text-muted-foreground">/month</span>
                 </span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 empty:hidden">
                 {billing.tier !== "business" && (
                   <Button
                     variant="vibrant"
@@ -214,7 +214,7 @@ function BillingPage() {
 
         {/* Usage */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Usage</h2>
@@ -224,7 +224,7 @@ function BillingPage() {
               </div>
             </div>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="space-y-6 p-4 sm:p-6">
             {/* Licenses */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -289,7 +289,7 @@ function BillingPage() {
 
         {/* Features */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Features</h2>
@@ -299,8 +299,8 @@ function BillingPage() {
               </div>
             </div>
           </div>
-          <div className="p-6">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 sm:p-6">
+            <div className="grid gap-4 sm:grid-cols-2">
               <FeatureItem
                 label="Customer portal"
                 enabled={billing.usage.features.customerPortal}
@@ -328,7 +328,7 @@ function BillingPage() {
 
       {/* Upgrade Modal */}
       <Dialog open={upgradeOpen} onOpenChange={setUpgradeOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-xl">Choose a Plan</DialogTitle>
             <DialogDescription>
@@ -336,7 +336,7 @@ function BillingPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-4 py-4">
+          <div className="grid gap-4 py-4 sm:grid-cols-3">
             {tierInfo.tiers.map((tier) => (
               <div
                 key={tier.id}
@@ -382,7 +382,7 @@ function BillingPage() {
             ))}
           </div>
 
-          <DialogFooter className="flex items-center justify-between sm:justify-between">
+          <DialogFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               <Shield className="h-4 w-4 inline mr-1" />
               14-day free trial. Cancel anytime.

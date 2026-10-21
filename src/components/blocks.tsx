@@ -22,7 +22,7 @@ export function Section({
 }) {
   return (
     <section className={cn("mt-12 first:mt-0", className)}>
-      <div className="mb-4 flex items-end justify-between gap-4">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="label-caps">{title}</h2>
           {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
@@ -46,10 +46,10 @@ export function StatRow({
         <div
           key={item.label}
           // 2 columns on mobile, 4 from md: a left hairline wherever a cell has a neighbour
-          className={cn("border-border px-5 py-6", i % 2 === 1 && "border-l", i === 2 && "md:border-l")}
+          className={cn("min-w-0 border-border px-4 py-5 sm:px-5 sm:py-6", i % 2 === 1 && "border-l", i === 2 && "md:border-l")}
         >
           <div className="label-caps">{item.label}</div>
-          <div className="mt-2 text-[28px] leading-none tabular-nums">{item.value}</div>
+          <div className="mt-2 text-2xl leading-none tabular-nums sm:text-[28px]">{item.value}</div>
           {item.hint && <div className="mt-2 text-xs text-muted-foreground">{item.hint}</div>}
         </div>
       ))}
@@ -65,7 +65,11 @@ export type Column<T> = {
   className?: string;
 };
 
-/** Hairline table. Rows become links when `href` is given. */
+/**
+ * Hairline table. Rows become links when `href` is given.
+ * Below md each row stacks: the first column takes the full width, the rest
+ * sit in two columns with their header as a small label.
+ */
 export function DataTable<T>({
   columns,
   rows,
@@ -79,12 +83,16 @@ export function DataTable<T>({
   href?: (row: T) => string;
   empty?: React.ReactNode;
 }) {
-  const template = { gridTemplateColumns: columns.map((c) => c.width ?? "minmax(0,1fr)").join(" ") };
-  const rowClass = "group grid items-center gap-6 border-b border-border px-3 py-3.5 text-sm";
+  // The column template only applies from md up, via the --cols variable
+  const template = {
+    "--cols": columns.map((c) => c.width ?? "minmax(0,1fr)").join(" "),
+  } as React.CSSProperties;
+  const rowClass =
+    "group grid grid-cols-2 items-start gap-x-4 gap-y-3 border-b border-border px-3 py-3.5 text-sm md:grid-cols-(--cols) md:items-center md:gap-6";
 
   return (
     <div>
-      <div className="label-caps grid gap-6 px-3 pb-3" style={template}>
+      <div className="label-caps hidden gap-6 px-3 pb-3 md:grid md:grid-cols-(--cols)" style={template}>
         {columns.map((c, i) => (
           <div key={i} className={c.className}>
             {c.header}
@@ -94,7 +102,8 @@ export function DataTable<T>({
       <div className="border-t border-border">
         {rows.map((row) => {
           const cells = columns.map((c, i) => (
-            <div key={i} className={cn("min-w-0", c.className)}>
+            <div key={i} className={cn("min-w-0", c.className, "max-md:text-left", i === 0 && "max-md:col-span-2")}>
+              {i > 0 && c.header && <div className="label-caps mb-1 md:hidden">{c.header}</div>}
               {c.cell(row)}
             </div>
           ));
@@ -128,11 +137,11 @@ export function DefinitionList({
   items: { label: string; value: React.ReactNode }[];
 }) {
   return (
-    <dl className="grid grid-cols-[10rem_minmax(0,1fr)] border-t border-border text-sm">
+    <dl className="grid grid-cols-[7rem_minmax(0,1fr)] border-t border-border text-sm sm:grid-cols-[10rem_minmax(0,1fr)]">
       {items.map((item) => (
         <Fragment key={item.label}>
           <dt className="border-b border-border py-3 text-muted-foreground">{item.label}</dt>
-          <dd className="min-w-0 border-b border-border py-3">{item.value}</dd>
+          <dd className="min-w-0 border-b border-border py-3 wrap-anywhere">{item.value}</dd>
         </Fragment>
       ))}
     </dl>
@@ -141,7 +150,7 @@ export function DefinitionList({
 
 /** White sheet with a hairline border, for forms and grouped content */
 export function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("rounded-md border border-border bg-card p-6", className)}>{children}</div>;
+  return <div className={cn("rounded-md border border-border bg-card p-4 sm:p-6", className)}>{children}</div>;
 }
 
 /** Underlined tab row; used for filters and sub-navigation */
@@ -155,13 +164,14 @@ export function Tabs<V extends string>({
   options: { value: V; label: React.ReactNode; count?: number }[];
 }) {
   return (
-    <div className="mb-6 flex gap-6 border-b border-border">
+    <div className="mb-6 overflow-x-auto [scrollbar-width:none]">
+      <div className="flex w-max min-w-full gap-6 border-b border-border">
       {options.map((o) => (
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            "-mb-px border-b pb-3 text-sm transition-colors",
+            "-mb-px shrink-0 whitespace-nowrap border-b pb-3 text-sm transition-colors",
             value === o.value
               ? "border-foreground text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -171,6 +181,7 @@ export function Tabs<V extends string>({
           {o.count !== undefined && <span className="ml-1.5 tabular-nums text-muted-foreground">{o.count}</span>}
         </button>
       ))}
+      </div>
     </div>
   );
 }

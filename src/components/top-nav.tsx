@@ -30,7 +30,7 @@ export const SETTINGS_TABS = [
   { title: "Billing", url: "/settings/billing" },
 ];
 
-export const CONTENT_WIDTH = "mx-auto w-full max-w-[1100px] px-6";
+export const CONTENT_WIDTH = "mx-auto w-full max-w-[1100px] px-4 sm:px-6";
 
 export function Wordmark() {
   return (
@@ -41,12 +41,23 @@ export function Wordmark() {
   );
 }
 
-function NavLink({ url, active, children }: { url: string; active: boolean; children: React.ReactNode }) {
+function NavLink({
+  url,
+  active,
+  children,
+  className,
+}: {
+  url: string;
+  active: boolean;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <Link
       to={url}
       className={cn(
-        "-mb-px flex h-14 items-center border-b px-3 text-sm transition-colors",
+        "-mb-px flex h-14 shrink-0 items-center whitespace-nowrap border-b px-3 text-sm transition-colors",
+        className,
         active
           ? "border-foreground text-foreground"
           : "border-transparent text-muted-foreground hover:text-foreground"
@@ -74,14 +85,16 @@ export function TopNav({
   const signOut = () =>
     authClient.signOut({ fetchOptions: { onSuccess: () => router.navigate({ to: "/login" }) } });
 
+  const settingsActive = pathname.startsWith("/settings");
+
   return (
     <header className="border-b border-border bg-background">
-      <div className={cn(CONTENT_WIDTH, "flex h-14 items-center gap-6")}>
-        <Link to="/dashboard">
+      <div className={cn(CONTENT_WIDTH, "flex h-14 items-center gap-4 lg:gap-6")}>
+        <Link to="/dashboard" className="shrink-0">
           <Wordmark />
         </Link>
 
-        <nav className="flex flex-1 items-center">
+        <nav className="hidden flex-1 items-center lg:flex">
           {items.map((item) => (
             <NavLink key={item.url} url={item.url} active={pathname.startsWith(item.url)}>
               {item.title}
@@ -89,19 +102,20 @@ export function TopNav({
           ))}
         </nav>
 
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+        <label className="ml-auto flex shrink-0 cursor-pointer items-center gap-2 text-xs text-muted-foreground lg:ml-0">
           <Switch checked={isTestMode} onCheckedChange={toggleTestMode} className="data-[state=checked]:bg-warning" />
-          Test data
+          <span className="hidden sm:inline">Test data</span>
+          <span className="sm:hidden">Test</span>
         </label>
 
-        <NavLink url="/settings" active={pathname.startsWith("/settings")}>
+        <NavLink url="/settings" active={settingsActive} className="hidden lg:flex">
           Settings
         </NavLink>
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            {organizationName ?? "Account"}
-            <ChevronDown className="size-3.5" />
+          <DropdownMenuTrigger className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+            <span className="max-w-[9rem] truncate sm:max-w-[14rem]">{organizationName ?? "Account"}</span>
+            <ChevronDown className="size-3.5 shrink-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
@@ -113,6 +127,22 @@ export function TopNav({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Below lg the links move to their own row, scrolling sideways when they don't fit */}
+      <nav className="overflow-x-auto border-t border-border [scrollbar-width:none] lg:hidden">
+        <div className={cn(CONTENT_WIDTH, "flex w-max min-w-full")}>
+          {[...items, { title: "Settings", url: "/settings" }].map((item, i) => (
+            <NavLink
+              key={item.url}
+              url={item.url}
+              active={pathname.startsWith(item.url)}
+              className={cn("h-11", i === 0 && "-ml-3")}
+            >
+              {item.title}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </header>
   );
 }
@@ -120,8 +150,8 @@ export function TopNav({
 export function SettingsTabs() {
   const { pathname } = useLocation();
   return (
-    <div className="-mt-4 mb-10 border-b border-border">
-      <div className="flex gap-6">
+    <div className="-mt-4 mb-8 overflow-x-auto [scrollbar-width:none] sm:mb-10">
+      <div className="flex w-max min-w-full gap-6 border-b border-border">
         {SETTINGS_TABS.map((tab) => {
           const active = tab.url === "/settings" ? pathname === "/settings" : pathname.startsWith(tab.url);
           return (
@@ -129,7 +159,7 @@ export function SettingsTabs() {
               key={tab.url}
               to={tab.url}
               className={cn(
-                "-mb-px border-b pb-3 text-sm transition-colors",
+                "-mb-px shrink-0 whitespace-nowrap border-b pb-3 text-sm transition-colors",
                 active
                   ? "border-foreground text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground"

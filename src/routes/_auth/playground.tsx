@@ -90,7 +90,7 @@ function PlaygroundPage() {
     >
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Request */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <div className="grid grid-cols-3 gap-2">
             {ENDPOINTS.map((e) => (
               <button
@@ -100,14 +100,14 @@ function PlaygroundPage() {
                   setResponse(null);
                 }}
                 className={cn(
-                  "rounded-md border px-3 py-2 text-left transition-colors",
+                  "min-w-0 rounded-md border px-2 py-2 text-left transition-colors sm:px-3",
                   endpoint === e.id
                     ? "border-vibrant bg-vibrant/5"
                     : "border-border/60 hover:bg-muted/50"
                 )}
               >
                 <span className="block text-xs font-mono text-muted-foreground">POST</span>
-                <span className="font-medium">/{e.id}</span>
+                <span className="block truncate text-sm font-medium sm:text-base">/{e.id}</span>
               </button>
             ))}
           </div>
@@ -182,7 +182,7 @@ function PlaygroundPage() {
         </div>
 
         {/* Response */}
-        <div className="rounded-md border border-border bg-card">
+        <div className="min-w-0 rounded-md border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="label-caps">Response</span>
             {response && (

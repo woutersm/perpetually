@@ -136,7 +136,7 @@ function PortalHeader({ orgName, branding }: { orgName: string; branding: Brandi
 
   return (
     <header className="border-b border-border">
-      <div className="mx-auto flex h-14 max-w-[880px] items-center justify-between px-6">
+      <div className="mx-auto flex h-14 max-w-[880px] items-center justify-between gap-4 px-4 sm:px-6">
         {branding?.logo ? (
           <img
             src={branding.logo}
@@ -152,7 +152,7 @@ function PortalHeader({ orgName, branding }: { orgName: string; branding: Brandi
             {orgName}
           </span>
         )}
-        <span className="text-sm text-muted-foreground">License portal</span>
+        <span className="shrink-0 text-sm text-muted-foreground">License portal</span>
       </div>
     </header>
   );
@@ -323,11 +323,11 @@ function ActivationsList({
       {activations.map((activation) => (
         <div
           key={activation.id}
-          className="flex items-center justify-between border-b border-border py-3"
+          className="flex items-center justify-between gap-4 border-b border-border py-3"
         >
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-sm font-medium">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">
                 {activation.name || activation.machineId?.substring(0, 12) || "Unknown device"}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -437,10 +437,10 @@ function CustomerPortal() {
     <div className="flex min-h-screen flex-col">
       <PortalHeader orgName={organization.name} branding={branding} />
 
-      <main className="mx-auto w-full max-w-[880px] flex-1 px-6 pb-24 pt-12">
+      <main className="mx-auto w-full max-w-[880px] flex-1 px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
         <header className="mb-12">
           <h1 className="text-[28px] leading-tight">Your licenses</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground wrap-anywhere">
             {customer.name} · {customer.email}
             {customer.company && ` · ${customer.company}`}
           </p>
@@ -454,14 +454,14 @@ function CustomerPortal() {
           <div className="space-y-16">
             {licenses.map((license) => (
               <section key={license.id}>
-                <div className="mb-4 flex items-start justify-between gap-6">
+                <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
                   <div>
                     <h2 className="text-xl">{license.product?.name}</h2>
                     {license.product?.description && (
                       <p className="mt-1 text-sm text-muted-foreground">{license.product.description}</p>
                     )}
                   </div>
-                  <div className="flex shrink-0 gap-2">
+                  <div className="flex shrink-0 flex-wrap gap-2">
                     <ShowKeyDialog licenseKey={license.key} />
                     <GenerateNewKeyDialog
                       licenseId={license.id}
@@ -472,7 +472,7 @@ function CustomerPortal() {
                   </div>
                 </div>
 
-                <dl className="grid grid-cols-[10rem_minmax(0,1fr)] border-t border-border text-sm">
+                <dl className="grid grid-cols-[7rem_minmax(0,1fr)] border-t border-border text-sm sm:grid-cols-[10rem_minmax(0,1fr)]">
                   <dt className="border-b border-border py-3 text-muted-foreground">Status</dt>
                   <dd className="border-b border-border py-3">
                     <Status status={licenseState(license.status, license.expiresAt)} />
@@ -501,7 +501,7 @@ function CustomerPortal() {
       </main>
 
       <footer className="border-t border-border py-6">
-        <div className="mx-auto flex max-w-[880px] items-center justify-between px-6 text-sm text-muted-foreground">
+        <div className="mx-auto flex max-w-[880px] flex-wrap items-center justify-between gap-4 px-4 text-sm text-muted-foreground sm:px-6">
           {branding?.supportEmail ? (
             <a href={`mailto:${branding.supportEmail}`} className="hover:text-foreground">
               Contact support

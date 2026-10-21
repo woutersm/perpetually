@@ -94,7 +94,7 @@ function ApiKeysPage() {
     >
       <div className="max-w-3xl">
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Secret keys</h2>
@@ -121,7 +121,7 @@ function ApiKeysPage() {
               {keys.map((key) => (
                 <div
                   key={key.id}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-muted/20 transition-colors"
+                  className="flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                 >
                   <div className="flex items-center gap-4">
                     <div>
@@ -134,12 +134,12 @@ function ApiKeysPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>Created {new Date(key.createdAt).toLocaleDateString()}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[140px]">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground sm:min-w-[140px]">
                       <Clock className="h-4 w-4" />
                       <span>
                         {key.lastUsedAt

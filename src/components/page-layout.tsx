@@ -30,11 +30,11 @@ export function PageLayout({
   const trail = breadcrumbs && breadcrumbs.length > 1 ? breadcrumbs.slice(0, -1) : [];
 
   return (
-    <div className={cn(CONTENT_WIDTH, "pb-24 pt-12")}>
-      <header className="mb-10 flex items-end justify-between gap-6">
+    <div className={cn(CONTENT_WIDTH, "pb-24 pt-8 sm:pt-12")}>
+      <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
         <div className="min-w-0 space-y-2">
           {trail.length > 0 && (
-            <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
               {trail.map((item, index) => (
                 <Fragment key={index}>
                   {index > 0 && <span>/</span>}
@@ -49,10 +49,10 @@ export function PageLayout({
               ))}
             </nav>
           )}
-          <h1 className="truncate text-[28px] leading-tight">{title}</h1>
+          <h1 className="break-words text-2xl leading-tight sm:truncate sm:text-[28px]">{title}</h1>
           {description && <p className="max-w-2xl text-sm text-muted-foreground">{description}</p>}
         </div>
-        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+        {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </header>
 
       {tabs}
@@ -71,7 +71,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border px-6 py-20 text-center">
+    <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border px-4 py-12 text-center sm:px-6 sm:py-20">
       <div className="text-muted-foreground">{icon}</div>
       <h3 className="mt-4 text-base">{title}</h3>
       <p className="mt-2 text-sm text-muted-foreground max-w-sm">{description}</p>

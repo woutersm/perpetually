@@ -169,7 +169,7 @@ function TeamPage() {
       <div className="max-w-3xl space-y-6">
         {/* Team Members */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Team members</h2>
@@ -200,7 +200,7 @@ function TeamPage() {
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-muted/20 transition-colors"
+                  className="flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                 >
                   <div className="flex items-center gap-4">
                     {member.user?.image ? (
@@ -214,15 +214,15 @@ function TeamPage() {
                         {member.user?.name?.[0]?.toUpperCase() || "?"}
                       </div>
                     )}
-                    <div>
-                      <p className="font-medium">{member.user?.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{member.user?.name}</p>
+                      <p className="truncate text-sm text-muted-foreground">
                         {member.user?.email}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                     {member.role === "owner" ? (
                       <Badge variant={getRoleBadgeVariant(member.role)} className="gap-1.5">
                         {getRoleIcon(member.role)}
@@ -255,7 +255,7 @@ function TeamPage() {
                       </Select>
                     )}
 
-                    <span className="text-sm text-muted-foreground min-w-[100px]">
+                    <span className="text-sm text-muted-foreground sm:min-w-[100px]">
                       Joined {new Date(member.createdAt).toLocaleDateString()}
                     </span>
 
@@ -279,7 +279,7 @@ function TeamPage() {
         {/* Pending Invitations */}
         {invitations.length > 0 && (
           <div className="rounded-md border border-border overflow-hidden">
-            <div className="border-b border-border px-6 py-5">
+            <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
               <div className="flex items-center gap-4">
                 <div>
                   <h2 className="font-medium">Pending invitations</h2>
@@ -294,11 +294,11 @@ function TeamPage() {
               {invitations.map((invite) => (
                 <div
                   key={invite.id}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-muted/20 transition-colors"
+                  className="flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                 >
                   <div className="flex items-center gap-4">
-                    <div>
-                      <p className="font-medium">{invite.email}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{invite.email}</p>
                       <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                         <Clock className="h-3.5 w-3.5" />
                         Expires{" "}

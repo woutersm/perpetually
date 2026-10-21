@@ -162,7 +162,7 @@ function BrandingPage() {
       <div className="max-w-3xl space-y-6">
         {/* Preview Link */}
         <div className="rounded-md border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div>
                 <p className="font-medium">Preview your portal</p>
@@ -193,7 +193,7 @@ function BrandingPage() {
 
         {/* Logo */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Logo</h2>
@@ -235,7 +235,7 @@ function BrandingPage() {
 
         {/* Accent Color */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Accent color</h2>
@@ -293,7 +293,7 @@ function BrandingPage() {
 
         {/* Support Email */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Support email</h2>
@@ -303,7 +303,7 @@ function BrandingPage() {
               </div>
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <div className="space-y-2">
               <Label htmlFor="supportEmail">Email address</Label>
               <Input
@@ -322,7 +322,7 @@ function BrandingPage() {
 
         {/* Hide Powered By */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">White label</h2>
@@ -332,8 +332,8 @@ function BrandingPage() {
               </div>
             </div>
           </div>
-          <div className="p-6">
-            <div className="flex items-center justify-between">
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center justify-between gap-4">
               <div className="space-y-1">
                 <p className="font-medium">Hide "Powered by Perpetually"</p>
                 <p className="text-sm text-muted-foreground">

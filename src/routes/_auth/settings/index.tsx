@@ -86,7 +86,7 @@ function SettingsPage() {
       <div className="space-y-6 max-w-3xl">
         {/* Organization Settings */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Organization</h2>
@@ -96,7 +96,7 @@ function SettingsPage() {
               </div>
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -182,7 +182,7 @@ function SettingsPage() {
 
         {/* API Key */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Public API key</h2>
@@ -192,7 +192,7 @@ function SettingsPage() {
               </div>
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <p className="text-sm text-muted-foreground mb-4">
               This key is safe to include in your application. It can only be used
               to validate licenses, not modify them.
@@ -218,7 +218,7 @@ function SettingsPage() {
 
         {/* Stripe Connect */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium">Stripe</h2>
@@ -228,10 +228,10 @@ function SettingsPage() {
               </div>
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {settings.stripeConnectId ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-md bg-green-50 border border-green-200">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-green-200 bg-green-50 p-4">
                   <div className="flex items-center gap-3">
                     <Check className="h-5 w-5 text-green-600" />
                     <div>
@@ -278,7 +278,7 @@ function SettingsPage() {
 
         {/* Danger Zone */}
         <div className="rounded-md border border-border overflow-hidden">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="font-medium text-destructive">Danger zone</h2>
@@ -288,8 +288,8 @@ function SettingsPage() {
               </div>
             </div>
           </div>
-          <div className="p-6">
-            <div className="flex items-center justify-between">
+          <div className="p-4 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="font-medium">Delete organization</p>
                 <p className="text-sm text-muted-foreground">
